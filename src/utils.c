@@ -14,6 +14,11 @@ bool animateF32ToTarget(float* value, float target, float deltaTime, float rate)
 	return false;
 }
 
+float sinBreathe(float time, float rate)
+{
+	return (sin(time * rate) + 1.0) / 2.0;
+}
+
 void animateV2ToTarget(Vector2* value, Vector2 target, float deltaTime, float rate)
 {
 	animateF32ToTarget(&(value->x), target.x, deltaTime, rate);
@@ -49,7 +54,7 @@ inline float v2_dist(Vector2 a, Vector2 b)
     return v2_length(v2_sub(a, b));
 }
 
-Range2f makeHotSpot(Vector2 size, Vector2 origin)
+Range2f getHotSpot(Vector2 size, Vector2 origin)
 {
   Range2f range = {0};
   range.max = size;

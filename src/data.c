@@ -24,11 +24,6 @@ typedef enum SpriteID
 } SpriteID;
 Sprite sprites[s_MAX];
 
-typedef struct Item
-{
-	// ..
-} Item;
-
 typedef enum ItemID
 {
 	i_nil = 0,
@@ -41,7 +36,15 @@ typedef enum ItemID
 	i_flower_yellow,
 	i_MAX,
 } ItemID;
-Item items[i_MAX];
+
+typedef struct Item
+{
+	u64 flags;
+	bool inInventory;
+	string name;
+	Gfx_Image* image; // image size should be consistent (16*16) or smaller
+	Vector2 size;
+} Item;
 
 typedef struct Room
 {
@@ -62,8 +65,7 @@ typedef enum VerbState
 {
 	v_nil = 0,
 	v_look = 1,
-	v_use = 2,  // --> use, open, pickup, etc interact
-	v_talk = 3,
+	v_use = 2,  // --> use, open, pickup, talk, etc interact
 	// etc...
 	v_MAX = 4,
 } VerbState;
@@ -95,31 +97,24 @@ typedef struct Entity // MegaStruct approach
 	EntityType type;
     u64 flags;
 	Vector2 pos;
+	Vector2 origin;
 	SpriteID spriteID;
 	ItemID itemID;
 	RoomID roomID;
 	bool clickable;
 	string hoverText;
 	VerbState verbState;
+	bool interactable;
+	float interactRadius;
 } Entity;
-
-Sprite* getSprite(SpriteID spriteID)
-{
-	if(spriteID >= 0 && spriteID < s_MAX) return &sprites[spriteID];
-	else return &sprites[0];
-}
-
-Item* getItem(ItemID itemID)
-{
-	if (itemID >= 0 && itemID < i_MAX) return &items[itemID];
-	else return &items[0];
-}
 
 #define MAX_ENTITY_COUNT 1024
 
 typedef struct World
 {
 	Entity entities[MAX_ENTITY_COUNT];
+	Item inventory[i_MAX];
+	// Room rooms[r_MAX];
 } World;
 
 World* world = 0;
@@ -130,6 +125,18 @@ typedef struct WorldFrame
 } WorldFrame;
 
 WorldFrame worldFrame;
+
+Sprite* getSprite(SpriteID spriteID)
+{
+	if(spriteID >= 0 && spriteID < s_MAX) return &sprites[spriteID];
+	else return &sprites[0];
+}
+
+Item* getItem(ItemID itemID)
+{
+	if (itemID >= 0 && itemID < i_MAX) return &world->inventory[itemID];
+	else return &world->inventory[0];
+}
 
 Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 pos, string hoverText, bool clickable, u64 flags) // flags - clickable, active, render etc..
 {
@@ -151,6 +158,8 @@ Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 
 	entityFound->spriteID = spriteID;
 	entityFound->itemID = itemID;
 	entityFound->clickable = clickable;
+	entityFound->interactable = false;
+	entityFound->interactRadius = 20.0f;
 	if (hoverText.count != 0) entityFound->hoverText = hoverText;
 	else entityFound->hoverText = STR("");
 	if (entityFound->type == t_player)  entityFound->verbState = v_look;
@@ -169,9 +178,12 @@ void loadRoom(RoomID roomID)
 	// ..
 }
 
+void loadBackground() {} 	// TODO
+
 void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 origin) // no default values in c -> reason to use c++
 {
 		Sprite sprite;
+		if (spriteID == 0) path = STR("missingTexture.png");
 		Gfx_Image* image = load_image_from_disk(path, get_heap_allocator());
 		// assert(image, "failed to load image")
 		sprite.image = image;
@@ -185,7 +197,23 @@ void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 o
 		if (origin.x) sprite.origin = origin;									// bottom center origin point of the hotspot relative to size
 		else sprite.origin = v2(sprite.size.x * 0.5, 0.0);
 		
-		sprites[spriteID] = sprite;
+		sprites[spriteID] = sprite;			// room->sprites[spriteID]?
 
 		// assert?
 }
+
+void loadInventoryItem(ItemID itemID, string name, string path, u64 flags)
+{
+	Item item;
+	// get the rest of this info from a database? so I can load it midgame?
+	if (itemID == 0) path = STR("missingTexture.png");
+	Gfx_Image* image = load_image_from_disk(path, get_heap_allocator());
+	// assert(image, "failed to load image")
+	item.image = image;
+	item.size = v2(item.image->width, item.image->height);
+	item.name = name;
+	item.flags = flags;
+	item.inInventory = false;
+
+	world->inventory[itemID] = item;
+} 
