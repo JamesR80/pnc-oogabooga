@@ -44,12 +44,15 @@ Vector2 getMouseInWorldCoords()
 	return (Vector2){worldPos.x, worldPos.y};
 }
 
-// inline float v2_len(Vector2 a)
-// {
-//     return sqrt(a.x * a.x + a.y * a.y);
-// }
+inline float v2_dist(Vector2 a, Vector2 b)
+{
+    return v2_length(v2_sub(a, b));
+}
 
-// inline float v2_dist(Vector2 a, Vector2 b)
-// {
-//     return v2_len(v2_sub(a, b));
-// }
+Range2f makeHotSpot(Vector2 size, Vector2 origin)
+{
+  Range2f range = {0};
+  range.max = size;
+  range = range2f_shift(range, v2_mulf(origin, -1.0));
+  return range;
+}
