@@ -14,12 +14,9 @@ typedef enum SpriteID
 	s_door0,
 	s_tree0,
 	s_rock0,
-	s_flower,
-	s_inv_flower0,
-	s_inv_flower1,
-	s_inv_flower2,
-	s_inv_item0,
-	s_inv_item1,
+	s_flower0,
+	s_flower1,
+	s_flower2,
 	s_MAX,
 } SpriteID;
 Sprite sprites[s_MAX];
@@ -33,7 +30,7 @@ typedef enum ItemID
 	i_rock,
 	i_flower_pink,
 	i_flower_blue,
-	i_flower_yellow,
+	i_flower_gold,
 	i_MAX,
 } ItemID;
 
@@ -44,6 +41,7 @@ typedef struct Item
 	string name;
 	Gfx_Image* image; // image size should be consistent (16*16) or smaller
 	Vector2 size;
+	Vector2 origin;
 } Item;
 
 typedef struct Room
@@ -122,6 +120,7 @@ World* world = 0;
 typedef struct WorldFrame
 {
 	Entity* activeEntity;
+	Item* activeItem; // or inventoryFrame?
 } WorldFrame;
 
 WorldFrame worldFrame;
@@ -211,6 +210,7 @@ void loadInventoryItem(ItemID itemID, string name, string path, u64 flags)
 	// assert(image, "failed to load image")
 	item.image = image;
 	item.size = v2(item.image->width, item.image->height);
+	item.origin = v2(item.size.x * 0.5, 0.0);
 	item.name = name;
 	item.flags = flags;
 	item.inInventory = false;

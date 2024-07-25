@@ -14,7 +14,7 @@ bool animateF32ToTarget(float* value, float target, float deltaTime, float rate)
 	return false;
 }
 
-float sinBreathe(float time, float rate)
+float sinBob(float time, float rate)
 {
 	return (sin(time * rate) + 1.0) / 2.0;
 }
@@ -35,9 +35,9 @@ Vector2 roundPosToTile(Vector2 pos, Vector2 tileSize) { return getWorldPos(getTi
 // Vector2i?
 
 
-Vector2 getMouseInWorldCoords()
+Vector2 getMouseCurrentProj()
 {
-	//normalise the mouse coords
+	//normalised device coords for the mouse
 	float normX = (input_frame.mouse_x / (window.width * 0.5f)) - 1.0f;
 	float normY = (input_frame.mouse_y / (window.height * 0.5f)) - 1.0f;
 	Vector4 worldPos = v4(normX, normY, 0.0f, 1.0f);
@@ -60,4 +60,9 @@ Range2f getHotSpot(Vector2 size, Vector2 origin)
   range.max = size;
   range = range2f_shift(range, v2_mulf(origin, -1.0));
   return range;
+}
+
+Vector2 getCenterRange2f(Range2f r)
+{
+	return (Vector2) { ((r.max.x - r.min.x) * 0.5 + r.min.x), ((r.max.y - r.min.y) * 0.5 + r.min.y)};
 }
