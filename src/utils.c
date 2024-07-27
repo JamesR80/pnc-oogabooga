@@ -66,3 +66,16 @@ Vector2 getCenterRange2f(Range2f r)
 {
 	return (Vector2) { ((r.max.x - r.min.x) * 0.5 + r.min.x), ((r.max.y - r.min.y) * 0.5 + r.min.y)};
 }
+
+Vector2 getUIPosFromWorldPos(Vector2 pos)
+{
+	Vector4 worldProj = v4(window.pixel_width * -0.5, window.pixel_width * 0.5, window.pixel_height * -0.5, window.pixel_height * 0.5);
+	Vector4 UIProj = v4(0.0, 640.0, 0.0, 360.0);
+	// can these be constants or the same? I hate this funciton
+	
+	float factorX = (2 * worldProj.y) / UIProj.y;
+	float factorY = (2 * worldProj.w) / UIProj.w;
+	pos.x = (pos.x + worldProj.y) / factorX;
+	pos.y = (pos.y + worldProj.w) / factorY;
+	return pos;
+}

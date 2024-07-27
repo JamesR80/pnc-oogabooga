@@ -42,6 +42,8 @@ typedef struct Item
 	Gfx_Image* image; // image size should be consistent (16*16) or smaller
 	Vector2 size;
 	Vector2 origin;
+	string lookString;
+	string useString;
 } Item;
 
 typedef struct Room
@@ -62,10 +64,10 @@ Room rooms[r_MAX];
 typedef enum VerbState
 {
 	v_nil = 0,
-	v_look = 1,
-	v_use = 2,  // --> use, open, pickup, talk, etc interact
+	v_look,
+	v_use,  // --> use, open, pickup, talk, etc interact
 	// etc...
-	v_MAX = 4,
+	v_MAX,
 } VerbState;
 
 typedef enum EntityFlags
@@ -101,18 +103,31 @@ typedef struct Entity // MegaStruct approach
 	RoomID roomID;
 	bool clickable;
 	string hoverText;
+	string lookText;
+	string useText;
 	VerbState verbState;
 	bool interactable;
+	bool justClicked;
 	float interactRadius;
 } Entity;
 
 #define MAX_ENTITY_COUNT 1024
+
+typedef enum UXState 	// this is randy caveman shit. not sure about this approach
+{
+	ux_nil = 0,
+	ux_inventory,
+	ux_menu,
+} UXState;
 
 typedef struct World
 {
 	Entity entities[MAX_ENTITY_COUNT];
 	Item inventory[i_MAX];
 	// Room rooms[r_MAX];
+	UXState uxState;				// this is randy caveman shit. not sure about this approach
+	float inventoryAlpha; 			// this is randy caveman shit. not sure about this approach
+	float inventoryAplhaTarget;		// this is randy caveman shit. not sure about this approach
 } World;
 
 World* world = 0;
@@ -124,6 +139,7 @@ typedef struct WorldFrame
 } WorldFrame;
 
 WorldFrame worldFrame;
+
 
 Sprite* getSprite(SpriteID spriteID)
 {
@@ -158,11 +174,14 @@ Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 
 	entityFound->itemID = itemID;
 	entityFound->clickable = clickable;
 	entityFound->interactable = false;
+	entityFound->justClicked = false;
 	entityFound->interactRadius = 20.0f;
 	if (hoverText.count != 0) entityFound->hoverText = hoverText;
 	else entityFound->hoverText = STR("");
 	if (entityFound->type == t_player)  entityFound->verbState = v_look;
 	else entityFound->verbState = v_nil;
+	entityFound->lookText = STR("");
+	entityFound->useText = STR("");
 
 	return entityFound;
 }
