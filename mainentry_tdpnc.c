@@ -1,6 +1,4 @@
 
-// const int TILE_WIDTH = 16;
-
 #include "src/utils.c"
 #include "src/data.c"
 #include "src/game.c"
@@ -8,25 +6,35 @@
 
 // TODO:
 // - UXSTATEs - inGame, inMenu, inInventory, Pause, 
-// - VIEWS/LAYERS - Background (1,2,3 for parallax), Objects (including Player and hotspots, walkboxes etc), Foreground, Inventory, Map, Menus
+// - Click to Move
+// - VIEWS/LAYERS - Background (1,2,3 for parallax), Objects (including Player and hotspots, walkboxes etc), 
+//		Foreground, Cursors and Context, Inventory, Journal, Zoom-Ins, Map, Menus
+// - Room loading, doors, 
+// - Room script? click script, scripting lang?
+// - Animations
+// - Inventory item combining
+// - Inventory item use on environment
+// - Dialogue System - 
+// - Settings and Save System
 
 int entry(int argc, char **argv) 
 {
 	// :init
 	window.title = STR("TopDownPointAndClick");
-	window.width = 640;
-	window.height = 360;
-	window.scaled_width = 1280; // We need to set the scaled size if we want to handle system scaling (DPI)
-	window.scaled_height = 720; 
-	window.x = 600;
-	window.y = 900;
+	window.width = 960;
+	window.height = 540;
+	// window.scaled_width = 960; // We need to set the scaled size if we want to handle system scaling (DPI)1
+	// window.scaled_height = 540; 
+	// ^^^ this makes the window go up to in size for some reason and make the text wonky.
+	window.x = -1020;
+	window.y = 1020;
 	window.clear_color = hex_to_rgba(0x6495EDff);
 
 	// Vector2 tileSize = v2((float)TILE_WIDTH, (float)TILE_WIDTH);
 
 	Gfx_Font *font = load_font_from_disk(STR("assets/fonts/arial.ttf"), get_heap_allocator());
 	assert(font, "Failed loading font");
-	const u32 fontHeight = 48;
+	const u32 fontHeight = 32;
 	// render_atlas_if_not_yet_rendered(font, fontHeight, 'A'); // what is this doing?
 
 
@@ -62,7 +70,7 @@ int entry(int argc, char **argv)
 
 	// :camera stuff - this is fugged with text rendering i think
 	// float64 cameraZoom = 4.57; // based on player sprite size 16*24?
-	Vector2 cameraPos = v2(320, 180); // center screen
+	Vector2 cameraPos = v2(480, 270); // center screen
 	
 	// Vector4 worldProj = v4(window.pixel_width * -0.5, window.pixel_width * 0.5, window.pixel_width * -0.5, window.pixel_height * 0.5);
 	// why does this not work when I plug it into the draw_frame.projection below, does it need to update per frame??^^^ 
@@ -83,18 +91,19 @@ int entry(int argc, char **argv)
 		prevTime = now;
 
 		// :camera - if I am doing a fixed camera I should change this to be like the UI proj maybe
-		draw_frame.projection = m4_make_orthographic_projection(0.0, 640.0, 0.0, 360.0, -1, 10); 
+		draw_frame.view = m4_scalar(1.0);
+		draw_frame.projection = m4_make_orthographic_projection(0.0, 960.0, 0.0, 540.0, -1, 10); 
 		// I have no idea what is going on here. ^^^ . Putting this in manually works, but using any window.variable is fugged.
 		// probably just need to go back to SDL
 		// log("w: %f, h: %f", window.width, window.height);
 
-		Vector2 targetPos = player->pos;
+		// Vector2 targetPos = player->pos;
 		// animateV2ToTarget(&cameraPos, targetPos, deltaTime, 5.0f);  // comment this out for single room view
-		draw_frame.view = m4_scalar(1.0);
+		
 		// draw_frame.view = m4_mul(draw_frame.view, m4_make_translation(v3(cameraPos.x, cameraPos.y, 0)));
 		//draw_frame.view = m4_mul(draw_frame.view, m4_make_scale(v3(1.0/3.0, 1.0/3.0, 1.0)));
 
-		Vector2 textScaling = v2(0.2, 0.2);
+		Vector2 textScaling = v2(1, 1);
 
 		//:input
 		float playerSpeed = 100.0;
@@ -162,6 +171,16 @@ int entry(int argc, char **argv)
 				{	
 					entityClicked(eSelected, player);
 				}
+				// set moving flag and keep moving until within radius, then change flag.
+				// Move algorithm - 
+				// If clicking on Obj, get look/use interact Pos
+				// if in world, Check x and or y in a walkbox
+				// if both xy in walkbox move to xy
+				// if x only or y only -> create new point at border of walkbox and walk
+				// if none, create new point to closest walkbox
+				// navigate walkboxes? or polygonal space.
+
+				movePlayerToClick(player, mousePosWorld, playerSpeed, deltaTime);
 			}
 			
 			if (is_key_just_pressed(MOUSE_BUTTON_RIGHT))
@@ -192,31 +211,6 @@ int entry(int argc, char **argv)
 
 		player->pos = v2_add(player->pos, v2_mulf(input_axis, (playerSpeed * deltaTime)));
 		}
-
-		// :tiles drawing background tiles if using tiles...
-		// Vector2 mouseTile = getTilePos(mousePosWorld, tileSize);
-		// log("%i, %i", (int)mouseTile.x, (int)mouseTile.y);
-		// Vector2 playerTile = getTilePos(player->pos, tileSize);
-		// Vector2 tileRadius = v2(160, 90);
-		// for (int x = (int)playerTile.x - (int)tileRadius.x; x < (int)playerTile.x + (int)tileRadius.x; x++)
-		// {
-		// 	for (int y = (int)playerTile.y - (int)tileRadius.y; y < (int)playerTile.y + (int)tileRadius.y; y++)
-		// 	{
-		// 		if ((x + (y % 2 == 0)) % 2 == 0)
-		// 		{
-		// 			Vector2 pos = v2_mul(v2(x, y), tileSize);
-		// 			pos.x = pos.x + (tileSize.x * -0.5);
-		// 			pos.y = pos.y + (tileSize.y * -0.5);
-		// 			draw_rect(pos, tileSize, v4(0.1, 0.1, 0.1, 0.1));
-		// 		}
-		// 	}
-		// 	// // draw active tile as rect
-		// 	// Vector2 activeTile = getWorldPos(mouseTile, tileSize);
-		// 	// activeTile.x = activeTile.x + (tileSize.x * -0.5);
-		// 	// activeTile.y = activeTile.y + (tileSize.y * -0.5);
-		// 	// draw_rect(activeTile, tileSize, v4(0.5, 0.5, 0.5, 0.5));
-		// }
-
 
 
 		// :render loop over entities - pull out to function - z indexing??
@@ -256,11 +250,11 @@ int entry(int argc, char **argv)
 					consume_key_just_pressed(KEY_TAB);
 					world->uxState = (world->uxState == ux_inventory ? ux_nil : ux_inventory); // change state
 				}
-				world->inventoryAplhaTarget = (world->uxState == ux_inventory ? 1.0 : 0.0);
+				world->inventoryAlphaTarget = (world->uxState == ux_inventory ? 1.0 : 0.0);
 				// animate to target?
-				animateF32ToTarget(&world->inventoryAlpha, world->inventoryAplhaTarget, deltaTime, 15.0f); // no animation yet
+				animateF32ToTarget(&world->inventoryAlpha, world->inventoryAlphaTarget, deltaTime, 15.0f); // no animation yet
 				if (world->inventoryAlpha != 0.0) { }	// render the inv UI
-				bool isInvEnabled = world->inventoryAplhaTarget == 1.0; // is true if IAT is 1?
+				bool isInvEnabled = world->inventoryAlphaTarget == 1.0; // is true if IAT is 1?
 
 				if (world->inventoryAlphaTarget != 0.0) {} // use just InvAlpha for animation, IAT is binary.
 			} // oh I get it, the invAlpha is actually an alpha value 0-1 that fades in and out the inv... 

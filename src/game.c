@@ -42,9 +42,23 @@ void entityClicked(Entity* e, Entity* player) // entity clicked or just screen c
 			break;
 
 		default:
+			// run obj clicked script?
 			// move player to click?
 
 			break;
 	}
 	// some delay set justClicked to false.
+}
+
+void movePlayerToClick(Entity* player, Vector2 mousePos, float playerSpeed, float deltaTime)
+{
+	Vector2 direction = v2_sub(mousePos, player->pos);
+	float distance = v2_length(direction);
+	if (distance > 0)
+	{
+		direction = v2_divf(direction, distance);
+		float movement = playerSpeed * deltaTime;
+		player->pos.x += direction.x * movement;
+		player->pos.y += direction.y * movement;
+	}
 }

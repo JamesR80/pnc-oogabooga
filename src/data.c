@@ -39,12 +39,33 @@ typedef struct Item
 	u64 flags;
 	bool inInventory;
 	string name;
-	Gfx_Image* image; // image size should be consistent (16*16) or smaller
+	Gfx_Image* image; 
 	Vector2 size;
 	Vector2 origin;
 	string lookString;
 	string useString;
 } Item;
+
+typedef enum LayerID
+{
+	l_nil = 0,
+	l_background0,
+	l_background1,
+	l_background2,
+	l_object0,
+	l_character0,
+	l_character1,
+	l_character2,
+	l_object1,
+	l_foreground0,
+	l_foreground1,
+	l_zoom,
+	l_map,
+	l_inventory,
+	l_journal,
+	l_menu,
+	l_MAX,
+} LayerID;
 
 typedef struct Room
 {
@@ -82,7 +103,7 @@ typedef enum EntityType
 	nil = 0,
 	t_player = 1,
 	t_npc = 2,
-	t_room = 3,
+	t_background,
 	t_object = 4,
 	t_item = 5,
 	t_door = 6,
@@ -91,7 +112,44 @@ typedef enum EntityType
 	t_flower = 9,
 } EntityType;
 
-typedef struct Entity // MegaStruct approach
+typedef struct Character
+{
+	bool onScreen;
+	bool isPlayer;
+	string name;
+	u64 stateFlag; 	// PLAYER, NPC, VERB_LOOK, VERB_USE, etc
+	u64 animFlag;	// PLAYING, IDLE, WALK_LEFT, PICK_UP,  etc
+	Vector2 pos;
+	Vector2 origin;
+	SpriteID spriteID;
+	SpriteID portraitID;
+
+	string hoverText;
+	string lookText;
+	string useText;
+
+
+} Character;
+
+
+typedef struct Object
+{
+	bool onScreen;
+	u64 stateFlag;	// CLICKABLE, LOOKABLE, USEABLE, etc
+	u64 animFlag;	// PLAYING, ANIM1, ANIM2 etc
+	Vector2 pos;
+	Vector2 origin;
+	SpriteID spriteID;
+	string hoverText;
+	string lookText;
+	string useText;
+
+	float interactRadius;
+
+} Object;
+
+
+typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Background, Item, Animation Struct? etc
 {
 	bool isValid;
 	EntityType type;
@@ -127,7 +185,7 @@ typedef struct World
 	// Room rooms[r_MAX];
 	UXState uxState;				// this is randy caveman shit. not sure about this approach
 	float inventoryAlpha; 			// this is randy caveman shit. not sure about this approach
-	float inventoryAplhaTarget;		// this is randy caveman shit. not sure about this approach
+	float inventoryAlphaTarget;		// this is randy caveman shit. not sure about this approach
 } World;
 
 World* world = 0;
