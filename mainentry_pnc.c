@@ -1,6 +1,7 @@
 
 #include "src/utils.c"
 #include "src/data.c"
+#include "src/input.c"
 #include "src/game.c"
 
 
@@ -20,23 +21,20 @@
 int entry(int argc, char **argv) 
 {
 	// :init
-	window.title = STR("TopDownPointAndClick");
+	window.title = STR("Point and Click");
 	window.width = 960;
 	window.height = 540;
-	// window.scaled_width = 960; // We need to set the scaled size if we want to handle system scaling (DPI)1
+	// window.scaled_width = 960; // We need to set the scaled size if we want to handle system scaling (DPI)
 	// window.scaled_height = 540; 
 	// ^^^ this makes the window go up to in size for some reason and make the text wonky.
 	window.x = -1020;
 	window.y = 1020;
-	window.clear_color = hex_to_rgba(0x6495EDff);
-
-	// Vector2 tileSize = v2((float)TILE_WIDTH, (float)TILE_WIDTH);
+	window.clear_color = hex_to_rgba(0x6495EDff); // backgroung color
 
 	Gfx_Font *font = load_font_from_disk(STR("assets/fonts/arial.ttf"), get_heap_allocator());
 	assert(font, "Failed loading font");
 	const u32 fontHeight = 32;
 	// render_atlas_if_not_yet_rendered(font, fontHeight, 'A'); // what is this doing?
-
 
 	world = alloc(get_heap_allocator(), sizeof(World));
 	memset(world, 0, sizeof(World));
@@ -101,7 +99,7 @@ int entry(int argc, char **argv)
 		// animateV2ToTarget(&cameraPos, targetPos, deltaTime, 5.0f);  // comment this out for single room view
 		
 		// draw_frame.view = m4_mul(draw_frame.view, m4_make_translation(v3(cameraPos.x, cameraPos.y, 0)));
-		//draw_frame.view = m4_mul(draw_frame.view, m4_make_scale(v3(1.0/3.0, 1.0/3.0, 1.0)));
+		// draw_frame.view = m4_mul(draw_frame.view, m4_make_scale(v3(1.0/3.0, 1.0/3.0, 1.0)));
 
 		Vector2 textScaling = v2(1, 1);
 
@@ -198,19 +196,7 @@ int entry(int argc, char **argv)
 			
 		}
 
-		// :keyboard input stuff
-		{
-		if (is_key_just_released(KEY_ESCAPE)) window.should_close = true;
-		
-		Vector2 input_axis = v2(0, 0);
-		if (is_key_down('A')) input_axis.x -= 1.0;
-		if (is_key_down('D')) input_axis.x += 1.0;
-		if (is_key_down('S')) input_axis.y -= 1.0;
-		if (is_key_down('W')) input_axis.y += 1.0;
-		input_axis = v2_normalize(input_axis);
-
-		player->pos = v2_add(player->pos, v2_mulf(input_axis, (playerSpeed * deltaTime)));
-		}
+		handleInput(player, playerSpeed, deltaTime);
 
 
 		// :render loop over entities - pull out to function - z indexing??
@@ -239,12 +225,11 @@ int entry(int argc, char **argv)
 		}
 
 		// :UI
-		// (draw inventory like Lorelei ie open purse/bag beside player with a nice animation? or just a static bottom of screen like BS1)
 		{
 			// draw_frame.projection = m4_make_orthographic_projection(UIProj.x, UIProj.y, UIProj.z, UIProj.w, -1, 10);
 			// draw_frame.view = m4_scalar(1.0);
 
-			{	// randy UX code - There has gotta be a better way to do this
+			{	// randy UX code - There has gotta be a better way to do this - move to input?
 				if (is_key_just_pressed(KEY_TAB)) // inv open key
 				{
 					consume_key_just_pressed(KEY_TAB);

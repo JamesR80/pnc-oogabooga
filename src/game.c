@@ -52,6 +52,7 @@ void entityClicked(Entity* e, Entity* player) // entity clicked or just screen c
 
 void movePlayerToClick(Entity* player, Vector2 mousePos, float playerSpeed, float deltaTime)
 {
+	// need moving flag to update this each frame
 	Vector2 direction = v2_sub(mousePos, player->pos);
 	float distance = v2_length(direction);
 	if (distance > 0)
