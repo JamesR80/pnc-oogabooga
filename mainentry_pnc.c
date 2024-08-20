@@ -62,7 +62,7 @@ int entry(int argc, char **argv)
 	loadInventoryItem(i_flower_gold, STR("Gold Flower"), STR("assets/flower2.png"), 0);
 
 	// init timers and fps etc
-	float64 prevTime = os_get_current_time_in_seconds();
+	float64 prevTime = os_get_elapsed_seconds();
 	float64 secCounter = 0.0;
 	s32 frameCounter = 0.0;
 
@@ -83,13 +83,13 @@ int entry(int argc, char **argv)
 
 
 		worldFrame = (WorldFrame){0};
-		float64 time = os_get_current_time_in_seconds();
+		float64 time = os_get_elapsed_seconds();
 		float64 now = time;
 		float64 deltaTime = now - prevTime;
 		prevTime = now;
 
 		// :camera - if I am doing a fixed camera I should change this to be like the UI proj maybe
-		draw_frame.view = m4_scalar(1.0);
+		draw_frame.camera_xform = m4_scalar(1.0);
 		draw_frame.projection = m4_make_orthographic_projection(0.0, 960.0, 0.0, 540.0, -1, 10); 
 		// I have no idea what is going on here. ^^^ . Putting this in manually works, but using any window.variable is fugged.
 		// probably just need to go back to SDL

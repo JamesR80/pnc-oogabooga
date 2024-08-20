@@ -82,7 +82,7 @@ Vector2 getMouseCurrentProj()
 
 	//transform to world coords
 	worldPos = m4_transform(m4_inverse(draw_frame.projection), worldPos);
-	worldPos = m4_transform(draw_frame.view, worldPos);
+	worldPos = m4_transform(draw_frame.camera_xform, worldPos);
 
 	return (Vector2){worldPos.x, worldPos.y};
 }
