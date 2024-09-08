@@ -22,7 +22,7 @@
     Broken Sword - Two-Click-Context-Sensitive
 */
 
- void handleInput(Entity* player, float playerSpeed, float64 deltaTime)
+ void handleInput(Entity* player, float64 deltaTime)
  {
 
     if (is_key_just_released(KEY_ESCAPE)) window.should_close = true;
@@ -47,7 +47,7 @@
     if (is_key_down('W')) input_axis.y += 1.0;
     input_axis = v2_normalize(input_axis);
 
-    player->pos = v2_add(player->pos, v2_mulf(input_axis, (playerSpeed * deltaTime)));
+    player->pos = v2_add(player->pos, v2_mulf(input_axis, (player->speed * deltaTime)));
     }
 
  }

@@ -104,7 +104,7 @@ int entry(int argc, char **argv)
 		Vector2 textScaling = v2(1, 1);
 
 		//:input
-		float playerSpeed = 100.0;
+		player->speed = 100.0;
 		Vector2 mousePosWorld = getMouseCurrentProj(); 
 
 		// :update loop over all entities
@@ -162,12 +162,14 @@ int entry(int argc, char **argv)
 			// else { log("Hover False"); }
 
 			if (is_key_just_pressed(MOUSE_BUTTON_LEFT))
-			{
+			{	
+				// Need to know if mouse is in UI or world space.
 				consume_key_just_pressed(MOUSE_BUTTON_LEFT); // because ordering is important (UI v World clicks...)
 				
 				if (eSelected && eSelected->clickable)
 				{	
 					entityClicked(eSelected, player);
+					movePlayerToObject(player, eSelected, deltaTime);
 				}
 				// set moving flag and keep moving until within radius, then change flag.
 				// Move algorithm - 
@@ -177,8 +179,10 @@ int entry(int argc, char **argv)
 				// if x only or y only -> create new point at border of walkbox and walk
 				// if none, create new point to closest walkbox
 				// navigate walkboxes? or polygonal space.
-
-				movePlayerToClick(player, mousePosWorld, playerSpeed, deltaTime);
+				else 
+				{
+					movePlayerToClick(player, mousePosWorld, deltaTime);
+				}
 			}
 			
 			if (is_key_just_pressed(MOUSE_BUTTON_RIGHT))
@@ -196,7 +200,8 @@ int entry(int argc, char **argv)
 			
 		}
 
-		handleInput(player, playerSpeed, deltaTime);
+		handleInput(player, deltaTime);
+		movePlayer(player, deltaTime);
 
 
 		// :render loop over entities - pull out to function - z indexing??

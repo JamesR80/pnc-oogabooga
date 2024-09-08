@@ -50,16 +50,38 @@ void entityClicked(Entity* e, Entity* player) // entity clicked or just screen c
 	// some delay set justClicked to false.
 }
 
-void movePlayerToClick(Entity* player, Vector2 mousePos, float playerSpeed, float deltaTime)
+void movePlayer(Entity* player, float64 deltaTime)
 {
-	// need moving flag to update this each frame
-	Vector2 direction = v2_sub(mousePos, player->pos);
+	Vector2 direction = v2_sub(player->destPos, player->pos);
 	float distance = v2_length(direction);
-	if (distance > 0)
-	{
+
+	if (distance > 1.0f && player->isMoving)
+	{	
 		direction = v2_divf(direction, distance);
-		float movement = playerSpeed * deltaTime;
+		float movement = player->speed * deltaTime;
 		player->pos.x += direction.x * movement;
 		player->pos.y += direction.y * movement;
 	}
+	else if (player->isMoving)
+	{
+		player->isMoving = false;
+		log("Stopped Moving");
+	}
+
+}
+
+void movePlayerToObject(Entity* player, Entity* object, float64 deltaTime)
+{	
+	player->destPos = object->interactPos;
+	player->isMoving = true;
+	movePlayer(player, deltaTime);
+}
+
+
+void movePlayerToClick(Entity* player, Vector2 mousePos, float64 deltaTime)
+{
+	// get valid destination pos from mousPos
+	player->destPos = mousePos;
+	player->isMoving = true;
+	movePlayer(player, deltaTime);	
 }

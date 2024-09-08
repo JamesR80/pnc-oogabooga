@@ -112,41 +112,10 @@ typedef enum EntityType
 	t_flower = 9,
 } EntityType;
 
-typedef struct Character
-{
-	bool onScreen;
-	bool isPlayer;
-	string name;
-	u64 stateFlag; 	// PLAYER, NPC, VERB_LOOK, VERB_USE, etc
-	u64 animFlag;	// PLAYING, IDLE, WALK_LEFT, PICK_UP,  etc
-	Vector2 pos;
-	Vector2 origin;
-	SpriteID spriteID;
-	SpriteID portraitID;
-
-	string hoverText;
-	string lookText;
-	string useText;
 
 
-} Character;
 
 
-typedef struct Object
-{
-	bool onScreen;
-	u64 stateFlag;	// CLICKABLE, LOOKABLE, USEABLE, etc
-	u64 animFlag;	// PLAYING, ANIM1, ANIM2 etc
-	Vector2 pos;
-	Vector2 origin;
-	SpriteID spriteID;
-	string hoverText;
-	string lookText;
-	string useText;
-
-	float interactRadius;
-
-} Object;
 
 
 typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Background, Item, Animation Struct? etc
@@ -156,6 +125,8 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
     u64 flags;
 	Vector2 pos;
 	Vector2 origin;
+	Vector2 interactPos;
+	Vector2 destPos;
 	SpriteID spriteID;
 	ItemID itemID;
 	RoomID roomID;
@@ -166,6 +137,8 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 	VerbState verbState;
 	bool interactable;
 	bool justClicked;
+	bool isMoving;
+	float speed;
 	float interactRadius;
 } Entity;
 
@@ -234,6 +207,9 @@ Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 
 	entityFound->interactable = false;
 	entityFound->justClicked = false;
 	entityFound->interactRadius = 20.0f;
+	entityFound->isMoving = false;
+	entityFound->interactPos = pos;
+	entityFound->destPos = pos;
 	if (hoverText.count != 0) entityFound->hoverText = hoverText;
 	else entityFound->hoverText = STR("");
 	if (entityFound->type == t_player)  entityFound->verbState = v_look;

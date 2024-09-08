@@ -63,15 +63,6 @@ void animateV2ToTarget(Vector2* value, Vector2 target, float deltaTime, float ra
 	animateF32ToTarget(&(value->y), target.y, deltaTime, rate);
 }
 
-Vector2 getTilePos(Vector2 worldPos, Vector2 tileSize) 
-{ 
-	Vector2 tile = v2_div(worldPos, tileSize);
-	return v2(roundf(tile.x), roundf(tile.y));
-}
-Vector2 getWorldPos(Vector2 tilePos, Vector2 tileSize) { return v2_mul(tilePos, tileSize); }
-Vector2 roundPosToTile(Vector2 pos, Vector2 tileSize) { return getWorldPos(getTilePos(pos, tileSize), tileSize); } 
-// Vector2i?
-
 
 Vector2 getMouseCurrentProj()
 {
