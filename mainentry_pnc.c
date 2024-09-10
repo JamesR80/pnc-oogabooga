@@ -1,6 +1,7 @@
 
 #include "src/utils.c"
 #include "src/data.c"
+#include "src/animate.c"
 #include "src/input.c"
 #include "src/game.c"
 
@@ -20,21 +21,23 @@
 
 int entry(int argc, char **argv) 
 {
-	// :init
+	// :init OS stuff
 	window.title = STR("Point and Click");
-	window.width = 960;
-	window.height = 540;
-	// window.scaled_width = 960; // We need to set the scaled size if we want to handle system scaling (DPI)
-	// window.scaled_height = 540; 
-	// ^^^ this makes the window go up to in size for some reason and make the text wonky.
-	window.x = -1020;
-	window.y = 1020;
-	window.clear_color = hex_to_rgba(0x6495EDff); // backgroung color
+	window.allow_resize = false;
 
 	Gfx_Font *font = load_font_from_disk(STR("assets/fonts/arial.ttf"), get_heap_allocator());
 	assert(font, "Failed loading font");
-	const u32 fontHeight = 32;
-	// render_atlas_if_not_yet_rendered(font, fontHeight, 'A'); // what is this doing?
+	const u32 fontHeight = 48;
+	render_atlas_if_not_yet_rendered(font, fontHeight, 'A'); 
+
+	window.point_width = 600;
+	window.point_height = 450; 
+
+	// below is the window offest from bottom left of screen - maybe get screen dimensions and center it.
+	window.point_x = 200;
+	window.point_y = 200;
+	window.clear_color = hex_to_rgba(0x6495EDff); // backgroung color
+
 
 	world = alloc(get_heap_allocator(), sizeof(World));
 	memset(world, 0, sizeof(World));
@@ -43,65 +46,56 @@ int entry(int argc, char **argv)
 	// loadRoom(RoomID roomID);
 	// and store this stuff elsewhere.
 	// need a good way to draw a room and translate the positions of everything to the game.
-	loadSprite(s_rock0, STR("assets/rock0.png"), v2(0.0, 0.0), v2(0.0, 0.0));
-	loadSprite(s_tree0, STR("assets/tree0.png"), v2(41.0, 30.0), v2(20.5, -15.0)); // test to see if can change clickable size
-	loadSprite(s_player, STR("assets/player.png"), v2(0.0, 0.0), v2(0.0, 0.0));
-	loadSprite(s_flower0, STR("assets/flower0.png"), v2(0.0, 0.0), v2(0.0, 0.0));
-	loadSprite(s_flower1, STR("assets/flower1.png"), v2(0.0, 0.0), v2(0.0, 0.0));
-	loadSprite(s_flower2, STR("assets/flower2.png"), v2(0.0, 0.0), v2(0.0, 0.0));
+	loadSprite(s_player, STR("jamAssets/characters/Adaline-Idle-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), 4, 1);
 
-	Entity* rock0 = createEntity(t_rock, s_rock0, i_nil, v2(280, 220), STR("Rock"), false, 0);
-	Entity* tree0 = createEntity(t_tree, s_tree0, i_nil, v2(370, 220), null_string, false, 0);
-	Entity* player = createEntity(t_player, s_player, i_nil, v2(320, 180), null_string, false, 0);
-	Entity* flower0 = createEntity(t_flower, s_flower0, i_flower_pink, v2(290, 150), STR("Pink Flower"), true, 0);
-	Entity* flower1 = createEntity(t_flower, s_flower1, i_flower_blue, v2(270, 150), STR("Blue Flower"), true, 0);
-	Entity* flower2 = createEntity(t_flower, s_flower2, i_flower_gold, v2(310, 150), STR("Gold Flower"), true, 0);
+	// should be load backgroung
+	loadSprite(s_bg_dining, STR("jamAssets/rooms/DiningCarBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), 1, 1);
 
-	loadInventoryItem(i_flower_pink, STR("Pink Flower"), STR("assets/flower0.png"), 0); // load this when needed? How?
-	loadInventoryItem(i_flower_blue, STR("Blue Flower"), STR("assets/flower1.png"), 0);
-	loadInventoryItem(i_flower_gold, STR("Gold Flower"), STR("assets/flower2.png"), 0);
+	Entity* diningBG = createEntity(t_background, s_bg_dining, i_nil, v2(350, 0), null_string, false, 0);
+	Entity* player = createEntity(t_player, s_player, i_nil, v2(80, 115), null_string, false, 0);
+	// Entity* flower0 = createEntity(t_flower, s_flower0, i_flower_pink, v2(290, 150), STR("Pink Flower"), true, 0);
+
+	// loadInventoryItem(i_flower_pink, STR("Pink Flower"), STR("assets/flower0.png"), 0); // load this when needed? How?
+
 
 	// init timers and fps etc
 	float64 prevTime = os_get_elapsed_seconds();
 	float64 secCounter = 0.0;
 	s32 frameCounter = 0.0;
+	int delayCounter = 0; // maybe add a data struct to keep a bunch of timers
 
+	
 	// :camera stuff - this is fugged with text rendering i think
 	// float64 cameraZoom = 4.57; // based on player sprite size 16*24?
-	Vector2 cameraPos = v2(480, 270); // center screen
-	
-	// Vector4 worldProj = v4(window.pixel_width * -0.5, window.pixel_width * 0.5, window.pixel_width * -0.5, window.pixel_height * 0.5);
-	// why does this not work when I plug it into the draw_frame.projection below, does it need to update per frame??^^^ 
+	Vector2 cameraPos = v2(200, 150); // center screen
 
-	// Vector4 UIProj = v4(0.0, 640.0, 0.0, 360.0);
 
-	int delayCounter = 0; // maybe add a data struct to keep a bunch of timers
 
 	while (!window.should_close)
 	{
 		reset_temporary_storage();
 
-
 		worldFrame = (WorldFrame){0};
+
 		float64 time = os_get_elapsed_seconds();
-		float64 now = time;
-		float64 deltaTime = now - prevTime;
-		prevTime = now;
+		float64 nowTime = time;
+		float64 deltaTime = nowTime - prevTime;
+		prevTime = nowTime;
+
+
+		// maybe render background before projection?
 
 		// :camera - if I am doing a fixed camera I should change this to be like the UI proj maybe
-		draw_frame.camera_xform = m4_scalar(1.0);
-		draw_frame.projection = m4_make_orthographic_projection(0.0, 960.0, 0.0, 540.0, -1, 10); 
-		// I have no idea what is going on here. ^^^ . Putting this in manually works, but using any window.variable is fugged.
-		// probably just need to go back to SDL
-		// log("w: %f, h: %f", window.width, window.height);
+		// draw_frame.camera_xform = m4_scalar(1.0);
+		draw_frame.projection = m4_make_orthographic_projection(0.0, 400.0, 0.0, 300.0, -1, 10); 
 
-		// Vector2 targetPos = player->pos;
-		// animateV2ToTarget(&cameraPos, targetPos, deltaTime, 5.0f);  // comment this out for single room view
-		
-		// draw_frame.view = m4_mul(draw_frame.view, m4_make_translation(v3(cameraPos.x, cameraPos.y, 0)));
-		// draw_frame.view = m4_mul(draw_frame.view, m4_make_scale(v3(1.0/3.0, 1.0/3.0, 1.0)));
+		Vector2 targetPos = player->pos;
+		animateV2ToTarget(&cameraPos, targetPos, deltaTime, 5.0f);  // comment this out for single room view
+		// currently not working...
+		// draw_frame.camera_xform = m4_mul(draw_frame.camera_xform, m4_make_translation(v3(cameraPos.x, cameraPos.y, 0)));
+		// draw_frame.camera_xform = m4_mul(draw_frame.camera_xform, m4_make_scale(v3(1.0/3.0, 1.0/3.0, 1.0)));
 
-		Vector2 textScaling = v2(1, 1);
+		Vector2 textScaling = v2(0.5, 0.5);
 
 		//:input
 		player->speed = 100.0;
@@ -129,7 +123,7 @@ int entry(int argc, char **argv)
 					{
 						color.a = 1.0f;
 						// draw_rect(hotspot.min, range2f_size(hotspot), color); // should this be in render?
-						draw_circle(hotspot.min, range2f_size(hotspot), color);
+						// draw_circle(hotspot.min, range2f_size(hotspot), color);
 						worldFrame.activeEntity = e; // can i send this to render?
 					}
 				}
@@ -148,7 +142,7 @@ int entry(int argc, char **argv)
 
 		// :mouse input/hover/click stuff
 		{
-			Entity* eSelected = worldFrame.activeEntity;
+			Entity* eSelected = worldFrame.activeEntity; // worldFrame is reset everyframe
 			if (worldFrame.activeEntity) 
 			{
 				// Gfx_Text_Metrics textMetrics = measure_text(font, eSelected->hoverText, fontHeight, v2(1, 1));
@@ -169,7 +163,7 @@ int entry(int argc, char **argv)
 				if (eSelected && eSelected->clickable)
 				{	
 					entityClicked(eSelected, player);
-					movePlayerToObject(player, eSelected, deltaTime);
+					movePlayerToObject(player, eSelected, nowTime, deltaTime);
 				}
 				// set moving flag and keep moving until within radius, then change flag.
 				// Move algorithm - 
@@ -181,7 +175,7 @@ int entry(int argc, char **argv)
 				// navigate walkboxes? or polygonal space.
 				else 
 				{
-					movePlayerToClick(player, mousePosWorld, deltaTime);
+					movePlayerToClick(player, mousePosWorld, nowTime, deltaTime);
 				}
 			}
 			
@@ -201,7 +195,7 @@ int entry(int argc, char **argv)
 		}
 
 		handleInput(player, deltaTime);
-		movePlayer(player, deltaTime);
+		movePlayer(player, nowTime, deltaTime);
 
 
 		// :render loop over entities - pull out to function - z indexing??
@@ -210,21 +204,24 @@ int entry(int argc, char **argv)
 			Entity* e = &world->entities[i];
 			if (e->isValid)
 			{
+				Sprite* sprite = getSprite(e->spriteID);
+				Matrix4 xform = m4_scalar(1.0);
+				// if (e->clickable) { xform = m4_translate(xform, v3(0, 1.5 * sinBob(time, 3.0), 0)); } // maybe add && hotspots visible and do highlight
+				xform = m4_translate(xform, v3(e->pos.x, e->pos.y, 0));
+				xform = m4_translate(xform, v3(sprite->size.x * -0.5, 0.0, 0));
+				// TOCHECK: why? move half of size.x? leftover from tiles? // to make pos centered?
+				Vector4 color = COLOR_WHITE;
+
 				switch (e->type)
 				{
-				// case t_item:
-				// 	break;
-				
-				default:
-					Sprite* sprite = getSprite(e->spriteID);
-					Matrix4 xform = m4_scalar(1.0);
-					if (e->clickable) { xform = m4_translate(xform, v3(0, 1.5 * sinBob(time, 3.0), 0)); } // maybe add && hotspots visible and do highlight
-					xform = m4_translate(xform, v3(e->pos.x, e->pos.y, 0));
-					xform = m4_translate(xform, v3(sprite->size.x * -0.5, 0.0, 0));
-					// TOCHECK: why? move half of size.x? leftover from tiles? // to make pos centered?
-					Vector4 color = COLOR_WHITE;
-					draw_image_xform(sprite->image, xform, sprite->size, color);
-					break;
+
+					case t_player:
+						animate(e, xform, nowTime, deltaTime);
+						break;
+					
+					default:
+						break;
+
 				}
 			}
 		}
@@ -328,6 +325,13 @@ int entry(int argc, char **argv)
 			}
 
 		} // end :UI
+
+		{
+			// :debug
+			draw_text(font, tprint("Mouse: %v2", v2(input_frame.mouse_x / 3.0, input_frame.mouse_y / 3.0)), fontHeight, v2(20, 20), v2(0.2, 0.2), COLOR_RED);
+
+
+		}
 		
 
 		os_update(); 		

@@ -50,7 +50,7 @@ void entityClicked(Entity* e, Entity* player) // entity clicked or just screen c
 	// some delay set justClicked to false.
 }
 
-void movePlayer(Entity* player, float64 deltaTime)
+void movePlayer(Entity* player, float64 nowTime, float64 deltaTime)
 {
 	Vector2 direction = v2_sub(player->destPos, player->pos);
 	float distance = v2_length(direction);
@@ -61,27 +61,31 @@ void movePlayer(Entity* player, float64 deltaTime)
 		float movement = player->speed * deltaTime;
 		player->pos.x += direction.x * movement;
 		player->pos.y += direction.y * movement;
+		setAnimation(player, a_walk, nowTime);
+		
 	}
 	else if (player->isMoving)
 	{
 		player->isMoving = false;
+		setAnimation(player, a_idle, nowTime);
 		log("Stopped Moving");
 	}
 
+
 }
 
-void movePlayerToObject(Entity* player, Entity* object, float64 deltaTime)
+void movePlayerToObject(Entity* player, Entity* object, float64 nowTime, float64 deltaTime)
 {	
 	player->destPos = object->interactPos;
 	player->isMoving = true;
-	movePlayer(player, deltaTime);
+	movePlayer(player, nowTime, deltaTime);
 }
 
 
-void movePlayerToClick(Entity* player, Vector2 mousePos, float64 deltaTime)
+void movePlayerToClick(Entity* player, Vector2 mousePos, float64 nowTime, float64 deltaTime)
 {
 	// get valid destination pos from mousPos
 	player->destPos = mousePos;
 	player->isMoving = true;
-	movePlayer(player, deltaTime);	
+	movePlayer(player, nowTime, deltaTime);	
 }

@@ -34,10 +34,6 @@
     
     
     
-    
-    
-    
-    
     // :keyboard input stuff
     {
     Vector2 input_axis = v2(0, 0);

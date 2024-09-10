@@ -1,22 +1,41 @@
+
+typedef enum AnimType
+{	
+	a_nil = 0,
+	a_idle,
+	a_walk,
+	//
+	a_MAX,
+} AnimType;
+
 typedef struct Sprite
 {
 	Gfx_Image* image;
 	Vector2 size;
 	Vector2 clickableSize;
 	Vector2 origin;
+	u32 columns;
+	u32 rows;
+	u32 animFPS;
+	AnimType currentAnim;
+	float64 animStartTime;
 } Sprite;
 
 typedef enum SpriteID
 {
 	s_nil = 0,
 	s_player,
-	s_obj0,
+	s_ch_baron,
+	s_ch_conductor,
+	s_ch_detective,
+	s_ch_professor,
+	s_ch_reporter,
+	s_ch_starlet,
+	s_ch_valet,
+	s_bg_lounge,
+	s_bg_hallway,
+	s_bg_dining,
 	s_door0,
-	s_tree0,
-	s_rock0,
-	s_flower0,
-	s_flower1,
-	s_flower2,
 	s_MAX,
 } SpriteID;
 Sprite sprites[s_MAX];
@@ -28,9 +47,6 @@ typedef enum ItemID
 	i_letter,
 	i_wrench,
 	i_rock,
-	i_flower_pink,
-	i_flower_blue,
-	i_flower_gold,
 	i_MAX,
 } ItemID;
 
@@ -103,20 +119,12 @@ typedef enum EntityType
 	nil = 0,
 	t_player = 1,
 	t_npc = 2,
-	t_background,
+	t_background = 3,
 	t_object = 4,
 	t_item = 5,
 	t_door = 6,
-	t_tree = 7,
-	t_rock = 8,
-	t_flower = 9,
+	t_MAX,
 } EntityType;
-
-
-
-
-
-
 
 typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Background, Item, Animation Struct? etc
 {
@@ -138,8 +146,9 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 	bool interactable;
 	bool justClicked;
 	bool isMoving;
-	float speed;
-	float interactRadius;
+	bool isAnimated;
+	float64 speed;
+	float64 interactRadius; // look radius?
 } Entity;
 
 #define MAX_ENTITY_COUNT 1024
@@ -174,7 +183,7 @@ WorldFrame worldFrame;
 
 Sprite* getSprite(SpriteID spriteID)
 {
-	if(spriteID >= 0 && spriteID < s_MAX) return &sprites[spriteID];
+	if (spriteID >= 0 && spriteID < s_MAX) return &sprites[spriteID];
 	else return &sprites[0];
 }
 
@@ -232,7 +241,7 @@ void loadRoom(RoomID roomID)
 
 void loadBackground() {} 	// TODO
 
-void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 origin) // no default values in c -> reason to use c++
+void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 origin, u32 cols, u32 rows) // no default values in c -> reason to use c++
 {
 		Sprite sprite;
 		if (spriteID == 0) path = STR("missingTexture.png");
@@ -246,8 +255,15 @@ void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 o
 		if (clickableSize.y != 0.0)  sprite.clickableSize.y = clickableSize.y;
 		else sprite.clickableSize.y = sprite.size.y;
 
-		if (origin.x) sprite.origin = origin;									// bottom center origin point of the hotspot relative to size
+		if (origin.x) sprite.origin = origin;					// bottom center origin point of the hotspot relative to size
 		else sprite.origin = v2(sprite.size.x * 0.5, 0.0);
+
+		sprite.columns = cols;
+		sprite.rows = rows;
+
+		sprite.animFPS = 10;
+		sprite.currentAnim = a_idle;
+		sprite.animStartTime = 0;
 		
 		sprites[spriteID] = sprite;			// room->sprites[spriteID]?
 
