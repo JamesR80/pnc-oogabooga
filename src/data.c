@@ -16,6 +16,9 @@ typedef struct Sprite
 	Vector2 origin;
 	u32 columns;
 	u32 rows;
+	u32 totalFrames;
+    u32 frameWidth;
+    u32 frameHeight;
 	u32 animFPS;
 	AnimType currentAnim;
 	float64 animStartTime;
@@ -101,7 +104,9 @@ Room rooms[r_MAX];
 typedef enum VerbState
 {
 	v_nil = 0,
+	v_click,
 	v_look,
+	v_grab,
 	v_use,  // --> use, open, pickup, talk, etc interact
 	// etc...
 	v_MAX,
@@ -135,6 +140,7 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 	Vector2 origin;
 	Vector2 interactPos;
 	Vector2 destPos;
+	Vector2 scrollPos;
 	SpriteID spriteID;
 	ItemID itemID;
 	RoomID roomID;
@@ -147,6 +153,7 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 	bool justClicked;
 	bool isMoving;
 	bool isAnimated;
+	bool isScrollable;
 	float64 speed;
 	float64 interactRadius; // look radius?
 } Entity;
@@ -219,6 +226,8 @@ Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 
 	entityFound->isMoving = false;
 	entityFound->interactPos = pos;
 	entityFound->destPos = pos;
+	entityFound->isScrollable = true;
+	entityFound->scrollPos = v2(0.0, 400.0);
 	if (hoverText.count != 0) entityFound->hoverText = hoverText;
 	else entityFound->hoverText = STR("");
 	if (entityFound->type == t_player)  entityFound->verbState = v_look;
@@ -261,6 +270,10 @@ void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 o
 		sprite.columns = cols;
 		sprite.rows = rows;
 
+		sprite.totalFrames = rows * cols;
+    	sprite.frameWidth = image->width / cols;
+    	sprite.frameHeight = image->height / rows;
+
 		sprite.animFPS = 10;
 		sprite.currentAnim = a_idle;
 		sprite.animStartTime = 0;
@@ -286,3 +299,4 @@ void loadInventoryItem(ItemID itemID, string name, string path, u64 flags)
 
 	world->inventory[itemID] = item;
 } 
+

@@ -7,7 +7,7 @@ void setAnimation(Entity* entity, AnimType animType, float64 animStartTime)
 
 }
 
-void animate(Entity* entity, Matrix4 xform, float64 nowTime, float64 deltaTime)
+void animate(Entity* entity, float64 nowTime, float64 deltaTime)
 {
 
     // if (entity.isAnimated) ?
@@ -15,48 +15,44 @@ void animate(Entity* entity, Matrix4 xform, float64 nowTime, float64 deltaTime)
     Sprite* spritesheet = getSprite(entity->spriteID); 
     Gfx_Image* image = spritesheet->image;
 
-    u32 totalFrames = spritesheet->rows * spritesheet->columns;
+    u32 totalFrames = spritesheet->totalFrames;
+    u32 frameWidth = spritesheet->frameWidth;
+    u32 frameHeight = spritesheet->frameHeight;
+    u32 startFrameX;
+    u32 startFrameY;
+    u32 endFrameX;
+    u32 endFrameY;
 
-    u32 frameWidth = image->width / spritesheet->columns;
-    u32 frameHeight = image->height / spritesheet->rows;
-    // log("frame width, %i", frameWidth);
-    // log("frame height, %i", frameHeight);
+    switch (spritesheet->currentAnim)
+    {
 
-    u32 startFrameX = 0;
-    u32 startFrameY = 0;
-    u32 endFrameX = 3;
-    u32 endFrameY = 0;
+        case a_nil:
+            startFrameX = 0;
+            startFrameY = 0;
+            endFrameX = 0;
+            endFrameY = 0;
+            // assert()
+            break;
 
-    // switch (spritesheet->currentAnim)
-    // {
+        case a_idle:
+            startFrameX = 0;
+            startFrameY = 0;
+            endFrameX = 3;
+            endFrameY = 0;            
+            break;
 
-    //     case a_nil:
-    //         u32 startFrameX = 0;
-    //         u32 startFrameY = 0;
-    //         u32 endFrameX = 0;
-    //         u32 endFrameY = 0;
-    //         // assert()
-    //         break;
-
-    //     case a_idle:
-    //         startFrameX = 0;
-    //         startFrameY = 0;
-    //         endFrameX = 3;
-    //         endFrameY = 0;            
-    //         break;
-
-    //     case a_walk:
-    //         startFrameX = 4;
-    //         startFrameY = 0;
-    //         endFrameX = 5;
-    //         endFrameY = 0;           
-    //         break;
+        case a_walk:
+            startFrameX = 0;
+            startFrameY = 0;
+            endFrameX = 1;
+            endFrameY = 0;           
+            break;
 
 
-    //     // Maybe save these on the Character data - or Entity
-    //     default:
-    //         break;
-    // }
+        // Maybe save these on the Character data - or Entity
+        default:
+            break;
+    }
 
     //assert() frames are valid?
 
@@ -92,26 +88,20 @@ void animate(Entity* entity, Matrix4 xform, float64 nowTime, float64 deltaTime)
     u32 spritesheetPosX = animIndexX * frameWidth;
     u32 spritesheetPosY = (spritesheet->rows - animIndexY) * frameHeight; // Remember, Y inverted.
 
+    // get pos to bottom middle of frame
+    Matrix4 xform = m4_scalar(1.0);
+    xform = m4_translate(xform, v3(entity->pos.x, entity->pos.y, 0));
+	xform = m4_translate(xform, v3(frameWidth * -0.5, 0.0, 0));
+
     // Draw the sprite sheet, with the uv box for the current frame.
     // Uv box is a Vector4 of x1, y1, x2, y2 where each value is a percentage value 0.0 to 1.0
     // from left to right / bottom to top in the texture.
-    Draw_Quad *quad = draw_image(image, entity->pos, v2(frameWidth, frameHeight), COLOR_WHITE);
+    Draw_Quad *quad = draw_image_xform(image, xform, v2(frameWidth, frameHeight), COLOR_WHITE);
 
     quad->uv.x1 = (float32)(spritesheetPosX) / (float32)image->width;
     quad->uv.y1 = (float32)(spritesheetPosY) / (float32)image->height;
     quad->uv.x2 = (float32)(spritesheetPosX + frameWidth) / (float32)image->width;
     quad->uv.y2 = (float32)(spritesheetPosY + frameHeight) / (float32)image->height;
-        
-
-
-    // // Visualize sprite sheet animation
-    // Vector2 sheet_pos = v2(-window.width/2+40, -window.height/2+40);
-    // Vector2 sheet_size = v2(anim_sheet->width, anim_sheet->height);
-    // Vector2 frame_pos_in_sheet = v2(anim_sheet_pos_x, anim_sheet_pos_y);
-    // Vector2 frame_size = v2(anim_frame_width, anim_frame_height);
-    // draw_rect(sheet_pos, sheet_size, COLOR_BLACK); // Draw black background
-    // draw_rect(v2_add(sheet_pos, frame_pos_in_sheet), frame_size, COLOR_WHITE); // Draw white rect on current frame
-    // draw_image(anim_sheet, sheet_pos, sheet_size, COLOR_WHITE); // Draw the seet
     
 
 }

@@ -23,7 +23,6 @@ void entityClicked(Entity* e, Entity* player) // entity clicked or just screen c
 		case v_look:
 			log("looking!");
 			e->lookText = STR("I'm looking at this"); // I need to set these at loadRoom via DB i think
-
 			break;
 
 		case v_use:
@@ -32,8 +31,7 @@ void entityClicked(Entity* e, Entity* player) // entity clicked or just screen c
 			// if entity can be picked up && player is within range
 			if (e->interactable)
 			{
-				e->useText = STR("I'll just grab this for now");
-				
+				e->useText = STR("I'll just grab this for now");				
 				world->inventory[e->itemID].inInventory = true;
 				destroyEntity(e);
 			}
@@ -50,7 +48,7 @@ void entityClicked(Entity* e, Entity* player) // entity clicked or just screen c
 	// some delay set justClicked to false.
 }
 
-void movePlayer(Entity* player, float64 nowTime, float64 deltaTime)
+void movePlayer(Entity* player, Entity* background, float64 nowTime, float64 deltaTime)
 {
 	Vector2 direction = v2_sub(player->destPos, player->pos);
 	float distance = v2_length(direction);
@@ -61,6 +59,21 @@ void movePlayer(Entity* player, float64 nowTime, float64 deltaTime)
 		float movement = player->speed * deltaTime;
 		player->pos.x += direction.x * movement;
 		player->pos.y += direction.y * movement;
+
+		// clamp movement to walkbox
+		if (player->pos.x < 90.0) player->pos.x = 90.0;
+		if (player->pos.y < 100.0) player->pos.y = 100.0;
+		if (player->pos.x > 610.0) player->pos.x = 610.0;
+		if (player->pos.y > 150.0) player->pos.y = 150.0;
+
+		// scroll background
+		if (background->isScrollable && player->pos.x >= 200.0 && player->pos.x <= 500.0)
+		{
+			background->scrollPos = v2(player->pos.x - 200.0, player->pos.x + 200.0);
+			draw_frame.projection = m4_make_orthographic_projection(background->scrollPos.x, background->scrollPos.y, 0.0, 300.0, -1, 10);
+			// animateF32ToTarget(&(background->scrollPos.x), player->pos.x +, deltaTime, rate);
+		}
+
 		setAnimation(player, a_walk, nowTime);
 		
 	}
@@ -68,24 +81,25 @@ void movePlayer(Entity* player, float64 nowTime, float64 deltaTime)
 	{
 		player->isMoving = false;
 		setAnimation(player, a_idle, nowTime);
-		log("Stopped Moving");
+		log("Stopped Moving. POS: %v2", player->pos);
 	}
 
 
 }
 
-void movePlayerToObject(Entity* player, Entity* object, float64 nowTime, float64 deltaTime)
+void movePlayerToObject(Entity* player, Entity* object, Entity* background, float64 nowTime, float64 deltaTime)
 {	
 	player->destPos = object->interactPos;
 	player->isMoving = true;
-	movePlayer(player, nowTime, deltaTime);
+	movePlayer(player, background, nowTime, deltaTime);
 }
 
 
-void movePlayerToClick(Entity* player, Vector2 mousePos, float64 nowTime, float64 deltaTime)
+void movePlayerToClick(Entity* player, Entity* background, Vector2 mousePos, float64 nowTime, float64 deltaTime)
 {
 	// get valid destination pos from mousPos
 	player->destPos = mousePos;
 	player->isMoving = true;
-	movePlayer(player, nowTime, deltaTime);	
+	movePlayer(player, background, nowTime, deltaTime);	
 }
+

@@ -38,6 +38,22 @@ int entry(int argc, char **argv)
 	window.point_y = 200;
 	window.clear_color = hex_to_rgba(0x6495EDff); // backgroung color
 
+	// :cursor stuff
+	Custom_Mouse_Pointer clickCursor 
+		= os_make_custom_mouse_pointer_from_file(STR("jamAssets/cursors/select.png"), 24, 24, get_heap_allocator());
+	assert(clickCursor != 0, "Could not load pointer");
+	Custom_Mouse_Pointer lookCursor 
+		= os_make_custom_mouse_pointer_from_file(STR("jamAssets/cursors/inspect.png"), 24, 24, get_heap_allocator());
+	assert(lookCursor != 0, "Could not load pointer");
+	Custom_Mouse_Pointer grabCursor 
+		= os_make_custom_mouse_pointer_from_file(STR("jamAssets/cursors/pickup.png"), 24, 24, get_heap_allocator());
+	assert(grabCursor != 0, "Could not load pointer");
+	Custom_Mouse_Pointer useCursor 
+		= os_make_custom_mouse_pointer_from_file(STR("jamAssets/cursors/activity.png"), 24, 24, get_heap_allocator());
+	assert(useCursor != 0, "Could not load pointer");
+
+	os_set_mouse_pointer_custom(clickCursor);
+
 
 	world = alloc(get_heap_allocator(), sizeof(World));
 	memset(world, 0, sizeof(World));
@@ -48,11 +64,12 @@ int entry(int argc, char **argv)
 	// need a good way to draw a room and translate the positions of everything to the game.
 	loadSprite(s_player, STR("jamAssets/characters/Adaline-Idle-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), 4, 1);
 
-	// should be load backgroung
+	// should be load background?
 	loadSprite(s_bg_dining, STR("jamAssets/rooms/DiningCarBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), 1, 1);
 
-	Entity* diningBG = createEntity(t_background, s_bg_dining, i_nil, v2(350, 0), null_string, false, 0);
-	Entity* player = createEntity(t_player, s_player, i_nil, v2(80, 115), null_string, false, 0);
+	Entity* background = createEntity(t_background, s_bg_dining, i_nil, v2(0, 0), null_string, false, 0);
+
+	Entity* player = createEntity(t_player, s_player, i_nil, v2(175, 110), null_string, false, 0);
 	// Entity* flower0 = createEntity(t_flower, s_flower0, i_flower_pink, v2(290, 150), STR("Pink Flower"), true, 0);
 
 	// loadInventoryItem(i_flower_pink, STR("Pink Flower"), STR("assets/flower0.png"), 0); // load this when needed? How?
@@ -67,8 +84,14 @@ int entry(int argc, char **argv)
 	
 	// :camera stuff - this is fugged with text rendering i think
 	// float64 cameraZoom = 4.57; // based on player sprite size 16*24?
-	Vector2 cameraPos = v2(200, 150); // center screen
 
+	Vector2 cameraPos = player->pos; 
+
+	Vector2 roomMin = v2(0, 0);
+	Vector2 roomMax = v2(700, 300);
+	Vector2 roomSize = v2(ceil(roomMax.x - roomMin.x), ceil(roomMax.y - roomMin.y));
+
+	log("Room Size: %v2", roomSize);
 
 
 	while (!window.should_close)
@@ -82,18 +105,20 @@ int entry(int argc, char **argv)
 		float64 deltaTime = nowTime - prevTime;
 		prevTime = nowTime;
 
-
-		// maybe render background before projection?
-
 		// :camera - if I am doing a fixed camera I should change this to be like the UI proj maybe
-		// draw_frame.camera_xform = m4_scalar(1.0);
-		draw_frame.projection = m4_make_orthographic_projection(0.0, 400.0, 0.0, 300.0, -1, 10); 
+		draw_frame.camera_xform = m4_scalar(1.0);
+		// draw_frame.projection = m4_make_orthographic_projection(-roomSize.x/2, roomSize.x/2, -roomSize.y/2, roomSize.y/2, -1, 10);
 
-		Vector2 targetPos = player->pos;
-		animateV2ToTarget(&cameraPos, targetPos, deltaTime, 5.0f);  // comment this out for single room view
-		// currently not working...
+		draw_frame.projection = m4_make_orthographic_projection(background->scrollPos.x, background->scrollPos.y, 0.0, 300.0, -1, 10); 
+
+		
+		// draw_frame.camera_xform = m4_make_translation(v3(v2_expand(cameraPos), 0.0));
 		// draw_frame.camera_xform = m4_mul(draw_frame.camera_xform, m4_make_translation(v3(cameraPos.x, cameraPos.y, 0)));
-		// draw_frame.camera_xform = m4_mul(draw_frame.camera_xform, m4_make_scale(v3(1.0/3.0, 1.0/3.0, 1.0)));
+
+
+		// draw_frame.camera_xform = m4_make_translation(v3(v2_expand(cameraPos), 0.0));
+		// draw_frame.camera_xform = m4_mul(draw_frame.camera_xform, m4_make_scale(v3(1.0/2.0, 1.0/2.0, 1.0)));
+
 
 		Vector2 textScaling = v2(0.5, 0.5);
 
@@ -163,7 +188,7 @@ int entry(int argc, char **argv)
 				if (eSelected && eSelected->clickable)
 				{	
 					entityClicked(eSelected, player);
-					movePlayerToObject(player, eSelected, nowTime, deltaTime);
+					movePlayerToObject(player, eSelected, background, nowTime, deltaTime);
 				}
 				// set moving flag and keep moving until within radius, then change flag.
 				// Move algorithm - 
@@ -175,7 +200,7 @@ int entry(int argc, char **argv)
 				// navigate walkboxes? or polygonal space.
 				else 
 				{
-					movePlayerToClick(player, mousePosWorld, nowTime, deltaTime);
+					movePlayerToClick(player, background, mousePosWorld, nowTime, deltaTime);
 				}
 			}
 			
@@ -188,6 +213,35 @@ int entry(int argc, char **argv)
 					player->verbState += 1;
 					if (player->verbState == v_MAX) player->verbState = 1;
 				}
+
+				// render cursor update? text tooltip on mouse hover?
+				switch (player->verbState)
+				{
+					case v_nil:
+						// assert error
+						break;
+
+					case v_click:
+						os_set_mouse_pointer_custom(clickCursor);
+
+						break;
+
+					case v_look:
+						os_set_mouse_pointer_custom(lookCursor);
+
+						break;
+					case v_grab:
+						os_set_mouse_pointer_custom(grabCursor);
+						break;
+
+					case v_use:
+						os_set_mouse_pointer_custom(useCursor);
+						break;
+
+					default:
+						os_set_mouse_pointer_custom(clickCursor);
+						break;
+				}
 				// render cursor update? text tooltip on mouse hover?
 				log("%i", player->verbState);
 			}
@@ -195,28 +249,34 @@ int entry(int argc, char **argv)
 		}
 
 		handleInput(player, deltaTime);
-		movePlayer(player, nowTime, deltaTime);
+		movePlayer(player, background, nowTime, deltaTime);
+
 
 
 		// :render loop over entities - pull out to function - z indexing??
+		
+		// maybe render background before projection?
+		Sprite* bgSprite = getSprite(background->spriteID); 
+		draw_image(bgSprite->image, background->pos, bgSprite->size, COLOR_WHITE);
+
 		for (int i = 0; i < MAX_ENTITY_COUNT; i++)
 		{
 			Entity* e = &world->entities[i];
 			if (e->isValid)
 			{
-				Sprite* sprite = getSprite(e->spriteID);
-				Matrix4 xform = m4_scalar(1.0);
+				// Sprite* sprite = getSprite(e->spriteID);
+				// Matrix4 xform = m4_scalar(1.0);
 				// if (e->clickable) { xform = m4_translate(xform, v3(0, 1.5 * sinBob(time, 3.0), 0)); } // maybe add && hotspots visible and do highlight
-				xform = m4_translate(xform, v3(e->pos.x, e->pos.y, 0));
-				xform = m4_translate(xform, v3(sprite->size.x * -0.5, 0.0, 0));
+				// xform = m4_translate(xform, v3(e->pos.x, e->pos.y, 0));
+				// xform = m4_translate(xform, v3(sprite->size.x * -0.5, 0.0, 0));
 				// TOCHECK: why? move half of size.x? leftover from tiles? // to make pos centered?
-				Vector4 color = COLOR_WHITE;
+				// Vector4 color = COLOR_WHITE;
 
 				switch (e->type)
 				{
 
 					case t_player:
-						animate(e, xform, nowTime, deltaTime);
+						animate(e, nowTime, deltaTime);
 						break;
 					
 					default:
@@ -228,7 +288,33 @@ int entry(int argc, char **argv)
 
 		// :UI
 		{
-			// draw_frame.projection = m4_make_orthographic_projection(UIProj.x, UIProj.y, UIProj.z, UIProj.w, -1, 10);
+			// :Dialogue box?
+			// lets try a dialogue box by the player/npc etc
+			Sprite* playerSprite = getSprite(player->spriteID); // this could be in a more general scope maybe
+			Vector2 v2FrameSize = v2(playerSprite->frameWidth, playerSprite->frameHeight);
+			//Vector2 playerPos = getUIPosFromWorldPos(player->pos);
+
+			Vector2 dialogueBoxPos = v2_add(player->pos, v2(0.0, playerSprite->frameHeight)); 
+			// if text then get_measure text box etc, else min size
+			Vector2 dialogueBoxSize = v2(70.0, 30.0);
+			draw_rect(dialogueBoxPos, dialogueBoxSize, v4(1.0, 1.0, 1.0, 0.5));
+			if (worldFrame.activeEntity && worldFrame.activeEntity->justClicked)
+			{
+				// TODO : get appropriate text - need a better data structure
+				draw_text(font, worldFrame.activeEntity->lookText, fontHeight, dialogueBoxPos, textScaling, COLOR_WHITE);\
+				// need to fix delay !!! actually maybe don;t need a delay just on exit hopspot.
+				// need to have an on exit hotSpot. need a callback system.
+				delayCounter += 1;
+				if (delayCounter >= 120) // 120 frames or 2 seconds at 60 fps - need to adjust this to frames.
+				{
+					worldFrame.activeEntity->justClicked = false;
+					delayCounter = 0;
+				}
+				
+			}
+
+
+			draw_frame.projection = m4_make_orthographic_projection(0.0, 400.0, 0.0, 300.0, -1, 10);
 			// draw_frame.view = m4_scalar(1.0);
 
 			{	// randy UX code - There has gotta be a better way to do this - move to input?
@@ -247,12 +333,12 @@ int entry(int argc, char **argv)
 			} // oh I get it, the invAlpha is actually an alpha value 0-1 that fades in and out the inv... 
 
 			
-			float invStartPosX = 30.0; // inv screen position
+			float invStartPosX = 34.0; // inv screen position
 			float invStartPosY = 30.0;
-			float invSlotWidth = 16;
-			float invSlotHeight = 16;
+			float invSlotWidth = 32;
+			float invSlotHeight = 32;
 			float invSlotPadding = 4;
-			float invSlots = 15; // slots along bottom of screen, or 5 by 6 grid?
+			float invSlots = 9; // slots along bottom of screen, or 5 by 6 grid?
 			// Item* invPage0[invRenderSlots]; // Maybe add a resizeable array using the temp alloc?
 
 			float invWidth = invSlots * (invSlotWidth + invSlotPadding) + (invSlotPadding * 2.0);
@@ -301,34 +387,13 @@ int entry(int argc, char **argv)
 				}
 			}
 
-			// :Dialogue box?
-			// lets try a dialogue box by the player/npc etc
-			Sprite* playerSprite = getSprite(player->spriteID); // this could be in a more general scope maybe
-			//Vector2 playerPos = getUIPosFromWorldPos(player->pos);
-			Vector2 dialogueBoxPos = v2_add(player->pos, playerSprite->size); 
-			// if text then get_measure text box etc, else min size
-			Vector2 dialogueBoxSize = v2(70.0, 30.0);
-			draw_rect(dialogueBoxPos, dialogueBoxSize, v4(1.0, 1.0, 1.0, 0.5));
-			if (worldFrame.activeEntity && worldFrame.activeEntity->justClicked)
-			{
-				// TODO : get appropriate text - need a better data structure
-				draw_text(font, worldFrame.activeEntity->lookText, fontHeight, dialogueBoxPos, textScaling, COLOR_WHITE);\
-				// need to fix delay !!! actually maybe don;t need a delay just on exit hopspot.
-				// need to have an on exit hotSpot. need a callback system.
-				delayCounter += 1;
-				if (delayCounter >= 120) // 120 frames or 2 seconds at 60 fps - need to adjust this to frames.
-				{
-					worldFrame.activeEntity->justClicked = false;
-					delayCounter = 0;
-				}
-				
-			}
+
 
 		} // end :UI
 
 		{
 			// :debug
-			draw_text(font, tprint("Mouse: %v2", v2(input_frame.mouse_x / 3.0, input_frame.mouse_y / 3.0)), fontHeight, v2(20, 20), v2(0.2, 0.2), COLOR_RED);
+			// draw_text(font, tprint("Mouse: %v2", v2(input_frame.mouse_x / 3.0, input_frame.mouse_y / 3.0)), fontHeight, v2(10, 10), v2(0.2, 0.2), COLOR_RED);
 
 
 		}
