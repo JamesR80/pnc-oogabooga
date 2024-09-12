@@ -8,7 +8,8 @@
 		"files.associations": {
 			"algorithm": "c",
 			"immintrin.h": "c",
-			"xutility": "c"
+			"xutility": "c",
+			"limits": "c"
 		},
 		"codeium.enableCodeLens": false
 	}

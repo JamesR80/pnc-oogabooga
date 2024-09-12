@@ -39,6 +39,10 @@ typedef enum SpriteID
 	s_bg_hallway,
 	s_bg_dining,
 	s_door0,
+	s_item_key,
+	s_item_coupon,
+	s_item_drink,
+	s_item_headshot,
 	s_MAX,
 } SpriteID;
 Sprite sprites[s_MAX];
@@ -47,9 +51,9 @@ typedef enum ItemID
 {
 	i_nil = 0,
 	i_key,
-	i_letter,
-	i_wrench,
-	i_rock,
+	i_coupon,
+	i_drink,
+	i_headshot,
 	i_MAX,
 } ItemID;
 
@@ -175,16 +179,22 @@ typedef enum CursorID
 	c_look,
 	c_talk,
 	c_grab,
+	c_grab2,
 	c_use,
-	c_door,
+	c_drag,
+	c_left,
+	c_right,
+	c_walk,
 	c_MAX,
 } CursorID;
 
 typedef struct Cursor
 {
 	Gfx_Image* image;
+	Custom_Mouse_Pointer hwCursor;
 	CursorID cursorID;
 	Vector2 size;
+	Vector2 clickSpot;
 
 } Cursor;
 Cursor cursors[c_MAX];
@@ -198,6 +208,8 @@ typedef struct World
 	float inventoryAlpha; 			// this is randy caveman shit. not sure about this approach
 	float inventoryAlphaTarget;		// this is randy caveman shit. not sure about this approach
 	SpriteID currentBG;
+	CursorID currentCursor;
+	bool isHWCursor;
 } World;
 
 World* world = 0;
@@ -212,7 +224,6 @@ typedef struct WorldFrame
 	float64 nowTime;
 	float64 deltaTime;
 	Vector2 mousePosWorld;
-	Cursor* activeCursor;
 
 } WorldFrame;
 
@@ -227,7 +238,7 @@ Sprite* getSprite(SpriteID spriteID)
 
 Cursor* getCursor(CursorID cursorID)
 {
-	if (cursorID >= 0 && cursorID < s_MAX) return &cursors[cursorID];
+	if (cursorID >= 0 && cursorID < c_MAX) return &cursors[cursorID];
 	else return &cursors[0];
 }
 
@@ -288,7 +299,7 @@ void loadRoom(RoomID roomID)
 void loadBackground() {} 	// TODO
 
 // if clickable size is 0 it will be set to image.size
-void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 origin, u32 cols, u32 rows)
+void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 origin, bool isAnimated, u32 cols, u32 rows)
 {
 		Sprite sprite;
 		if (spriteID == 0) path = STR("missingTexture.png");
@@ -296,14 +307,19 @@ void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 o
 		// assert(image, "failed to load image")
 		sprite.image = image;
 
-		sprite.columns = cols;
-		sprite.rows = rows;
-
-		sprite.totalFrames = rows * cols;
-    	sprite.frameWidth = image->width / cols;
-    	sprite.frameHeight = image->height / rows;
-
-		sprite.size = v2(sprite.frameWidth, sprite.frameHeight);
+		if (isAnimated)
+		{
+			sprite.columns = cols;
+			sprite.rows = rows;
+			sprite.totalFrames = rows * cols;
+			sprite.frameWidth = image->width / cols;
+			sprite.frameHeight = image->height / rows;
+			sprite.size = v2(sprite.frameWidth, sprite.frameHeight);
+			sprite.animFPS = 6;
+			sprite.currentAnim = a_idle;
+			sprite.animStartTime = 0;
+		}
+		else sprite.size = v2(image->width, image->height);
 
 		if (clickableSize.x != 0.0)  sprite.clickableSize.x = clickableSize.x;
 		else sprite.clickableSize.x = sprite.size.x;
@@ -313,25 +329,32 @@ void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 o
 		if (origin.x) sprite.origin = origin;					// bottom center origin point of the hotspot relative to size
 		else sprite.origin = v2(sprite.size.x * 0.5, 0.0);
 
-		sprite.animFPS = 6;
-		sprite.currentAnim = a_idle;
-		sprite.animStartTime = 0;
-		
 		sprites[spriteID] = sprite;			// room->sprites[spriteID]?
 
 		// assert?
 }
 
-void loadCursor(CursorID CursorID, string path)
+void loadCursor(CursorID cursorID, string path)
 {
 	Cursor cursor;
-	if (CursorID == 0) path = STR("missingTexture.png");
-	Gfx_Image* image = load_image_from_disk(path, get_heap_allocator());
-	cursor.image = image;
-	cursor.size = v2(image->width, image->height);
+	if (cursorID == 0) path = STR("missingTexture.png");
+	if (world->isHWCursor)
+	{	
+		cursor.hwCursor = os_make_custom_mouse_pointer_from_file(path, 10, 20, get_heap_allocator());
+	}
+	else
+	{
+		Gfx_Image* image = load_image_from_disk(path, get_heap_allocator());
+		cursor.image = image;
+		cursor.size = v2(16.0, 16.0);
+		cursor.clickSpot = v2(5, 10);
+
+	}
+
+	cursors[cursorID] = cursor;	
 
 }
-void loadInventoryItem(ItemID itemID, string name, string path, u64 flags)
+void loadInventoryItem(ItemID itemID, string name, string path, bool inInventory, u64 flags)
 {
 	Item item;
 	// get the rest of this info from a database? so I can load it midgame?
@@ -343,7 +366,7 @@ void loadInventoryItem(ItemID itemID, string name, string path, u64 flags)
 	item.origin = v2(item.size.x * 0.5, 0.0);
 	item.name = name;
 	item.flags = flags;
-	item.inInventory = false;
+	item.inInventory = inInventory;
 
 	world->inventory[itemID] = item;
 } 

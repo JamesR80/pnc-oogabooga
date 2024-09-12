@@ -34,12 +34,12 @@ int entry(int argc, char **argv)
 	window.point_height = 450; 
 
 	// below is the window offest from bottom left of screen - maybe get screen dimensions and center it.
-	window.point_x = 200;
-	window.point_y = 200;
+	window.point_x = 300;
+	window.point_y = 300;
 	window.clear_color = hex_to_rgba(0x6495EDff); // backgroung color
 
 	// disable windows cursor
-	// ShowCursor(false);
+	ShowCursor(false);
 
 	// :Memory
 	world = alloc(get_heap_allocator(), sizeof(World));
@@ -47,22 +47,44 @@ int entry(int argc, char **argv)
 	
 
 	// :load & create the stuff
+	// implement a load room function for all entities and store this stuff elsewhere. loadRoom(RoomID roomID);
 
-	// implement a load room function for all entities and store this stuff elsewhere.
-	// loadRoom(RoomID roomID);
+	// :loadCursors
+	world->isHWCursor = true;
+	loadCursor(c_click, STR("jamAssets/cursors/click.png"));
+	loadCursor(c_grab, STR("jamAssets/cursors/grab.png"));
+	loadCursor(c_look, STR("jamAssets/cursors/look.png"));
+	loadCursor(c_talk, STR("jamAssets/cursors/talk.png"));
+	loadCursor(c_left, STR("jamAssets/cursors/left.png"));
+	loadCursor(c_right, STR("jamAssets/cursors/right.png"));
 
-	loadSprite(s_player, STR("jamAssets/characters/Adaline-Idle-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), 4, 1);
-	loadSprite(s_ch_conductor, STR("jamAssets/characters/Conductor-Idle-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), 4, 1);
+	// :loadCharacters
+	loadSprite(s_player, STR("jamAssets/characters/Adaline-Idle-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), true, 4, 1);
+	loadSprite(s_ch_conductor, STR("jamAssets/characters/Conductor-Idle-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), true, 4, 1);
 
-	// should be load background?
-	loadSprite(s_bg_dining, STR("jamAssets/rooms/DiningCarBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), 1, 1);
+	// :loadItems
+	loadSprite(s_item_coupon, STR("jamAssets/objects/coupon.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_item_drink, STR("jamAssets/objects/drink.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_item_headshot, STR("jamAssets/objects/headshot.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_item_key, STR("jamAssets/objects/key.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
 
+	// :loadBackgrounds
+	loadSprite(s_bg_dining, STR("jamAssets/rooms/DiningCarBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+
+	// :createEntities and Objects
 	Entity* background = createEntity(t_background, s_bg_dining, i_nil, v2(0, 0), null_string, false, 0);
 	Entity* player = createEntity(t_player, s_player, i_nil, v2(175, 110), null_string, false, 0);
 	Entity* conductor = createEntity(t_npc, s_ch_conductor, i_nil, v2(500, 110), STR("Conductor"), true, 0);
 
-	// Entity* flower0 = createEntity(t_flower, s_flower0, i_flower_pink, v2(290, 150), STR("Pink Flower"), true, 0);
-	// loadInventoryItem(i_flower_pink, STR("Pink Flower"), STR("assets/flower0.png"), 0); // load this when needed? How?
+	// :createItems
+	Entity* coupon = createEntity(t_item, s_item_coupon, i_coupon, v2(300, 110), STR("VIP Coupon"), true, 0);
+	Entity* drink = createEntity(t_item, s_item_drink, i_drink, v2(-100, 0), STR("Fancy Cocktail"), true, 0);
+	Entity* headshot = createEntity(t_item, s_item_headshot, i_headshot, v2(-100, 0), STR("Headshot of Starlet"), true, 0);
+	Entity* key = createEntity(t_item, s_item_key, i_key, v2(-100, 0), STR("Brass Key"), true, 0);
+
+	// :createInventoryItems
+	loadInventoryItem(i_coupon, STR("VIP Drink Coupon"), STR("jamAssets/objects/coupon.png"), false, 0); // load this when needed? How?
+	loadInventoryItem(i_key, STR("Brass Key"), STR("jamAssets/objects/key.png"), true, 0);
 
 	// :init timers and fps etc
 	float64 prevTime = os_get_elapsed_seconds();
@@ -73,6 +95,7 @@ int entry(int argc, char **argv)
 	// :init game misc
 	player->speed = 100.0;
 	Vector2 textScaling = v2(0.2, 0.2);
+	world->currentCursor = c_click;
 
 	while (!window.should_close)
 	{
@@ -85,7 +108,6 @@ int entry(int argc, char **argv)
 		worldFrame.deltaTime = worldFrame.nowTime - prevTime;
 		prevTime = worldFrame.nowTime;
 
-		worldFrame.activeCursor = getCursor(c_click);
 		worldFrame.bg = background; // = world.current bg or something...
 
 		// :camera - if I am doing a fixed camera I should change this to be like the UI proj maybe
@@ -150,9 +172,14 @@ int entry(int argc, char **argv)
 			if (e->isValid) // && onscreen?
 			{
 
-				if (e->type == t_object || t_door)
-				{
-					// render entity
+				if (e->type == t_object || e->type == t_door || e->type == t_item) // take items out, they are objects until they are items.
+				{	
+					Sprite* itemSprite = getSprite(e->spriteID);
+					Matrix4 xform = m4_scalar(1.0);
+					xform = m4_translate(xform, v3(e->pos.x, e->pos.y, 0));
+					xform = m4_translate(xform, v3(itemSprite->image->width * -0.5, 0.0, 0));
+					// xform = m4_scale(xform, v3(0.5, 0.5, 1.0));
+					draw_image_xform(itemSprite->image, xform, itemSprite->size, COLOR_WHITE);
 				}
 			}
 		}
@@ -187,7 +214,7 @@ int entry(int argc, char **argv)
 					Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
 					hotspot = range2f_shift(hotspot, eSelected->pos);
 					// color.a = 1.0f;
-					draw_rect(hotspot.min, range2f_size(hotspot), color); // should this be in render?
+					// draw_rect(hotspot.min, range2f_size(hotspot), color); // should this be in render?
 					draw_circle(hotspot.min, range2f_size(hotspot), color);
 				}
 			}
@@ -268,7 +295,8 @@ int entry(int argc, char **argv)
 					Matrix4 xform = m4_scalar(1.0);
 					xform = m4_translate(xform, v3(invStartPosX + invSlotPadding, invStartPosY + invSlotPadding, 0.0));
 					draw_rect_xform(xform, v2(invSlotWidth, invSlotHeight), v4(1.0, 1.0, 1.0, 0.25));
-					xform = m4_scale(xform, v3(2.0, 2.0, 1.0)); // this is just a hack, inv items should be in the right dimensions
+					// xform = m4_scale(xform, v3(2.0, 2.0, 1.0)); // this is just a hack, inv items should be in the right dimensions
+					draw_image_xform(item->image, xform, item->size, COLOR_WHITE);
 
 					{ // check mouse in item box - pull out to function
 						Vector2 mousePosUI = getMouseCurrentProj(); // get Mouse in UI Coords
@@ -279,15 +307,15 @@ int entry(int argc, char **argv)
 						if (range2f_contains(hotspot, mousePosUI)) 
 						{
 							draw_rect(hotspot.min, range2f_size(hotspot), color); // highlight box
-							// float adjustScale = 0.5 * sinBob(time, 5.0); // maybe make an animation instead of sinBob
-							xform = m4_scale(xform, v3(1.5, 1.5, 1.5));
+							float adjustScale = 0.5 * sinBob(time, 5.0); // maybe make an animation instead of sinBob
+							// xform = m4_scale(xform, v3(1.5, 1.5, 1.5));
 							worldFrame.activeItem = item;
-							draw_text(font, item->name, fontHeight, mousePosUI, textScaling, COLOR_BLACK);
+
+							xform = m4_translate(xform, v3(1.0, invStartPosY + (invSlotPadding * 2.0), 0.0)); // need this measured and centered
+							draw_text_xform(font, item->name, fontHeight, xform, textScaling, COLOR_BLUE);
 							// draw_text(font, STR("HoverTest"), fontHeight, mousePosUI, textScaling, COLOR_BLACK);
 						}
 					}
-					draw_image_xform(item->image, xform, item->size, COLOR_WHITE);
-
 					invStartPosX += invSlotWidth + invSlotPadding;
 
 					// TODO: items are not added in pickup order for some reason
@@ -296,12 +324,25 @@ int entry(int argc, char **argv)
 
 			// :cursor
 			{	
-				Vector2 mousePosUI = getMouseCurrentProj();
-				Matrix4 xform = m4_scalar(1.0);
-				xform = m4_translate(xform, v3(mousePosUI.x, mousePosUI.y, 0.0));
-				// draw_frame.projection = m4_make_orthographic_projection(0.0, window.width, 0.0, window.height, -1, 10);			
-				Cursor* cursor =worldFrame.activeCursor;
-				draw_image_xform(cursor->image, xform, cursor->size, COLOR_WHITE);
+				if (world->isHWCursor)
+				{
+					// :hwCursor
+					ShowCursor(true);
+					Cursor* c = getCursor(world->currentCursor);
+					os_set_mouse_pointer_custom(c->hwCursor);
+				}
+				else
+				{
+					ShowCursor(false);
+					// :swCursor - not finished.
+					// Vector2 mousePosUI = getMouseCurrentProj();
+					// Matrix4 xform = m4_scalar(1.0);
+					// xform = m4_translate(xform, v3(mousePosUI.x, mousePosUI.y, 0.0));
+					// // draw_frame.projection = m4_make_orthographic_projection(0.0, window.width, 0.0, window.height, -1, 10);			
+					// draw_image(cursor->image, mousePosUI, cursor->size, COLOR_RED);
+					// //draw_rect(mousePosUI, v2(10, 10), COLOR_RED);
+				}
+
 			}
 
 		} // end :UI
@@ -328,7 +369,7 @@ int entry(int argc, char **argv)
 			frameCounter = 0;
 		}
 
-	}
+	} // game loop
 
 	return 0;
 }
