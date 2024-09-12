@@ -116,6 +116,34 @@ typedef enum VerbState
 	v_MAX,
 } VerbState;
 
+typedef enum CursorID
+{
+	c_nil = 0,
+	c_windows,
+	c_click,
+	c_look,
+	c_talk,
+	c_grab,
+	c_grab2,
+	c_use,
+	c_drag,
+	c_left,
+	c_right,
+	c_walk,
+	c_MAX,
+} CursorID;
+
+typedef struct Cursor
+{
+	Gfx_Image* image;
+	Custom_Mouse_Pointer hwCursor;
+	CursorID cursorID;
+	Vector2 size;
+	Vector2 clickSpot;
+
+} Cursor;
+Cursor cursors[c_MAX];
+
 typedef enum EntityFlags
 {
     ACTIVE = 1 << 0,
@@ -160,6 +188,7 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 	bool isScrollable;
 	float64 speed;
 	float64 interactRadius; // look radius?
+	CursorID hoverCursor;
 } Entity;
 
 #define MAX_ENTITY_COUNT 1024
@@ -171,33 +200,7 @@ typedef enum UXStateID 	// this is randy caveman shit. not sure about this appro
 	ux_menu,
 } UXStateID;
 
-typedef enum CursorID
-{
-	c_nil = 0,
-	c_windows,
-	c_click,
-	c_look,
-	c_talk,
-	c_grab,
-	c_grab2,
-	c_use,
-	c_drag,
-	c_left,
-	c_right,
-	c_walk,
-	c_MAX,
-} CursorID;
 
-typedef struct Cursor
-{
-	Gfx_Image* image;
-	Custom_Mouse_Pointer hwCursor;
-	CursorID cursorID;
-	Vector2 size;
-	Vector2 clickSpot;
-
-} Cursor;
-Cursor cursors[c_MAX];
 
 typedef struct World
 {
@@ -208,8 +211,10 @@ typedef struct World
 	float inventoryAlpha; 			// this is randy caveman shit. not sure about this approach
 	float inventoryAlphaTarget;		// this is randy caveman shit. not sure about this approach
 	SpriteID currentBG;
+	Entity* activeEntity;
 	CursorID currentCursor;
 	bool isHWCursor;
+	bool mouseActive;
 } World;
 
 World* world = 0;
@@ -261,6 +266,7 @@ Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 
 		}
 	}
 	assert(entityFound, "No more free entities");
+
 	entityFound->isValid = true;
 	entityFound->type = type;
 	entityFound->flags = flags;
@@ -278,11 +284,37 @@ Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 
 	entityFound->scrollPos = v2(0.0, 400.0);
 	if (hoverText.count != 0) entityFound->hoverText = hoverText;
 	else entityFound->hoverText = STR("");
-	if (entityFound->type == t_player)  entityFound->verbState = v_look;
-	else entityFound->verbState = v_nil;
 	entityFound->lookText = STR("");
 	entityFound->useText = STR("");
 
+	switch (entityFound->type)
+	{
+		case t_background:
+			entityFound->hoverCursor = c_click; 
+			break;
+
+		case t_door:
+			entityFound->hoverCursor = c_left; 
+			break;
+
+		case t_npc:
+			entityFound->hoverCursor = c_talk; 
+			break;
+
+		case t_object:
+			entityFound->hoverCursor = c_grab;
+			break;
+
+		case t_item:
+			entityFound->hoverCursor = c_grab; 
+
+		case t_player:
+			entityFound->verbState = v_look;  ///
+
+		default:
+			entityFound->hoverCursor = c_click;
+
+	}
 	return entityFound;
 }
 

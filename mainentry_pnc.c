@@ -25,7 +25,7 @@ int entry(int argc, char **argv)
 	window.title = STR("Point and Click");
 	window.allow_resize = false;
 
-	Gfx_Font *font = load_font_from_disk(STR("jamAssets/fonts/arial.ttf"), get_heap_allocator());
+	Gfx_Font *font = load_font_from_disk(STR("jamAssets/fonts/NotJamOldStyle11.ttf"), get_heap_allocator());
 	assert(font, "Failed loading font");
 	const u32 fontHeight = 48;
 	render_atlas_if_not_yet_rendered(font, fontHeight, 'A'); 
@@ -77,7 +77,7 @@ int entry(int argc, char **argv)
 	Entity* conductor = createEntity(t_npc, s_ch_conductor, i_nil, v2(500, 110), STR("Conductor"), true, 0);
 
 	// :createItems
-	Entity* coupon = createEntity(t_item, s_item_coupon, i_coupon, v2(300, 110), STR("VIP Coupon"), true, 0);
+	Entity* coupon = createEntity(t_object, s_item_coupon, i_coupon, v2(300, 110), STR("VIP Coupon"), true, 0);
 	Entity* drink = createEntity(t_item, s_item_drink, i_drink, v2(-100, 0), STR("Fancy Cocktail"), true, 0);
 	Entity* headshot = createEntity(t_item, s_item_headshot, i_headshot, v2(-100, 0), STR("Headshot of Starlet"), true, 0);
 	Entity* key = createEntity(t_item, s_item_key, i_key, v2(-100, 0), STR("Brass Key"), true, 0);
@@ -133,20 +133,31 @@ int entry(int argc, char **argv)
 		for (int i = 0; i < MAX_ENTITY_COUNT; i++)
 		{
 			Entity* e = &world->entities[i];
+
+			// :mouseOver
 			if (e->isValid)
 			{
+
 				Sprite* sprite = getSprite(e->spriteID);
 				Item* item = getItem(e->itemID);
 				
-				{ // check mouse in entity box - pull out to function
-					Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
-					hotspot = range2f_shift(hotspot, e->pos);
-					if (range2f_contains(hotspot, worldFrame.mousePosWorld))
-					{
-						worldFrame.activeEntity = e; // can i send this to render?
-						worldFrame.onEntity = true;
-					}
+				// check mouse in entity box - pull out to function
+				Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
+				hotspot = range2f_shift(hotspot, e->pos);
+				if (range2f_contains(hotspot, worldFrame.mousePosWorld))
+				{
+					world->activeEntity = e;
+					world->mouseActive = true;
 				}
+				else
+				{
+					world->mouseActive = false;
+				}
+
+				if (range2f_contains(hotspot, worldFrame.mousePosWorld)) {}
+				
+					
+				
 			}	
 		}
 
@@ -155,7 +166,7 @@ int entry(int argc, char **argv)
 		// :mouse input/hover/click stuff ( func inside the above?)
 		// need to redo this to enter/exit hotspot I think, although it works for inventory for some reason.
 
-		handleInput(player, worldFrame.activeEntity, worldFrame.deltaTime);
+		handleInput(player, world->activeEntity, worldFrame.deltaTime);
 		movePlayer(player, background, worldFrame.nowTime, worldFrame.deltaTime);
 
 
@@ -172,7 +183,7 @@ int entry(int argc, char **argv)
 			if (e->isValid) // && onscreen?
 			{
 
-				if (e->type == t_object || e->type == t_door || e->type == t_item) // take items out, they are objects until they are items.
+				if (e->type == t_object) 
 				{	
 					Sprite* itemSprite = getSprite(e->spriteID);
 					Matrix4 xform = m4_scalar(1.0);
@@ -181,6 +192,7 @@ int entry(int argc, char **argv)
 					// xform = m4_scale(xform, v3(0.5, 0.5, 1.0));
 					draw_image_xform(itemSprite->image, xform, itemSprite->size, COLOR_WHITE);
 				}
+				// do doors, items?
 			}
 		}
 		// :renderCharacters
@@ -199,26 +211,30 @@ int entry(int argc, char **argv)
 		// :renderPlayer
 		animate(player, worldFrame.nowTime, worldFrame.deltaTime);
 
+
 		// :renderActiveEntity stuff
-		if (worldFrame.onEntity == true)
-		{ 
-			Entity* eSelected = worldFrame.activeEntity;  
-			if (eSelected->type != t_background) 
-			{
-				Sprite* sprite = getSprite(worldFrame.activeEntity->spriteID);
-				// Item* item = getItem(worldFrame.activeItem->itemID);
-				
-				{ 
-					Vector4 color = v4(1, 1, 1, 0.2f);
-					// make rect around sprite and highlight on mouse over
-					Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
-					hotspot = range2f_shift(hotspot, eSelected->pos);
-					// color.a = 1.0f;
-					// draw_rect(hotspot.min, range2f_size(hotspot), color); // should this be in render?
-					draw_circle(hotspot.min, range2f_size(hotspot), color);
-				}
+		Entity* e = world->activeEntity; 
+		if (world->mouseActive && e->type != t_background) 
+		{
+			Sprite* sprite = getSprite(e->spriteID);
+			// Item* item = getItem(worldFrame.activeItem->itemID);
+			
+			{ 
+				Vector4 color = v4(1, 1, 1, 0.2f);
+				// make rect around sprite and highlight on mouse over
+				Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
+				hotspot = range2f_shift(hotspot, e->pos);
+				// draw_rect(hotspot.min, range2f_size(hotspot), color); // should this be in render?
+				draw_circle(hotspot.min, range2f_size(hotspot), color);
+				world->currentCursor = e->hoverCursor;
+
+				// draw hover text
+				// do measure text and center
+				Vector2 hoverTextPos = v2(hotspot.min.x, hotspot.max.y);
+				draw_text(font, e->hoverText, fontHeight, hoverTextPos, textScaling, COLOR_GREEN);
 			}
 		}
+
 		// :renderUI
 
 
@@ -245,19 +261,13 @@ int entry(int argc, char **argv)
 			Vector2 dialogueBoxSize = v2(70.0, 30.0);
 			draw_rect(dialogueBoxPos, dialogueBoxSize, v4(1.0, 1.0, 1.0, 0.5));
 
-			if (worldFrame.activeEntity && worldFrame.activeEntity->justClicked)
+			if (world->activeEntity && world->activeEntity->justClicked)
 			{
 				// TODO : get appropriate text - need a better data structure
-				draw_text(font, worldFrame.activeEntity->lookText, fontHeight, dialogueBoxPos, textScaling, COLOR_WHITE);
+				draw_text(font, world->activeEntity->lookText, fontHeight, dialogueBoxPos, textScaling, COLOR_WHITE);
 				// need to fix delay !!! actually maybe don;t need a delay just on exit hopspot.
 				// need to have an on exit hotSpot. need a callback system.
 				// also the dialogue box text could be displayed based on measure text length
-				delayCounter += 1;
-				if (delayCounter >= 120) // 120 frames or 2 seconds at 60 fps - need to adjust this to frames.
-				{
-					worldFrame.activeEntity->justClicked = false;
-					delayCounter = 0;
-				}
 				
 			}
 
@@ -351,7 +361,9 @@ int entry(int argc, char **argv)
 			// :debug
 			Vector2 mouseProjPos = getMouseCurrentProj();
 			// draw_text(font, tprint("Mouse: %v2", v2(input_frame.mouse_x / 3.0, input_frame.mouse_y / 3.0)), fontHeight, v2(10, 10), v2(0.2, 0.2), COLOR_RED);
-			draw_text(font, tprint("Mouse: %v2", v2(mouseProjPos.x, mouseProjPos.y)), fontHeight, v2(10, 10), v2(0.2, 0.2), COLOR_RED);
+			draw_text(font, tprint("ScreenPos: [ %i, %i ]", (int)mouseProjPos.x, (int)mouseProjPos.y), fontHeight, v2(10, 10), v2(0.1, 0.1), COLOR_RED);
+			draw_text(font, tprint("WorldPos: [ %i, %i ]", (int)worldFrame.mousePosWorld.x, (int)worldFrame.mousePosWorld.y), fontHeight, v2(100, 10), v2(0.1, 0.1), COLOR_RED);
+			
 
 
 		}
