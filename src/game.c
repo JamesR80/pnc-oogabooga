@@ -48,6 +48,15 @@ void entityClicked(Entity* e, Entity* player) // entity clicked or just screen c
 	// some delay set justClicked to false.
 }
 
+// set moving flag and keep moving until within radius, then change flag.
+// Move algorithm - 
+// If clicking on Obj, get look/use interact Pos
+// if in world, Check x and or y in a walkbox
+// if both xy in walkbox move to xy
+// if x only or y only -> create new point at border of walkbox and walk
+// if none, create new point to closest walkbox
+// navigate walkboxes? or polygonal space.
+
 void movePlayer(Entity* player, Entity* background, float64 nowTime, float64 deltaTime)
 {
 	Vector2 direction = v2_sub(player->destPos, player->pos);
@@ -87,19 +96,19 @@ void movePlayer(Entity* player, Entity* background, float64 nowTime, float64 del
 
 }
 
-void movePlayerToObject(Entity* player, Entity* object, Entity* background, float64 nowTime, float64 deltaTime)
+void movePlayerToObject(Entity* player, Entity* object, WorldFrame worldF)
 {	
 	player->destPos = object->interactPos;
 	player->isMoving = true;
-	movePlayer(player, background, nowTime, deltaTime);
+	movePlayer(player, worldF.bg, worldF.nowTime, worldF.deltaTime);
 }
 
 
-void movePlayerToClick(Entity* player, Entity* background, Vector2 mousePos, float64 nowTime, float64 deltaTime)
+void movePlayerToClick(Entity* player, WorldFrame worldF)
 {
 	// get valid destination pos from mousPos
-	player->destPos = mousePos;
+	player->destPos = worldF.mousePosWorld;
 	player->isMoving = true;
-	movePlayer(player, background, nowTime, deltaTime);	
+	movePlayer(player, worldF.bg, worldF.nowTime, worldF.deltaTime);	
 }
 

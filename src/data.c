@@ -160,21 +160,44 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 
 #define MAX_ENTITY_COUNT 1024
 
-typedef enum UXState 	// this is randy caveman shit. not sure about this approach
+typedef enum UXStateID 	// this is randy caveman shit. not sure about this approach
 {
 	ux_nil = 0,
 	ux_inventory,
 	ux_menu,
-} UXState;
+} UXStateID;
+
+typedef enum CursorID
+{
+	c_nil = 0,
+	c_windows,
+	c_click,
+	c_look,
+	c_talk,
+	c_grab,
+	c_use,
+	c_door,
+	c_MAX,
+} CursorID;
+
+typedef struct Cursor
+{
+	Gfx_Image* image;
+	CursorID cursorID;
+	Vector2 size;
+
+} Cursor;
+Cursor cursors[c_MAX];
 
 typedef struct World
 {
 	Entity entities[MAX_ENTITY_COUNT];
 	Item inventory[i_MAX];
 	// Room rooms[r_MAX];
-	UXState uxState;				// this is randy caveman shit. not sure about this approach
+	UXStateID uxStateID;				// this is randy caveman shit. not sure about this approach
 	float inventoryAlpha; 			// this is randy caveman shit. not sure about this approach
 	float inventoryAlphaTarget;		// this is randy caveman shit. not sure about this approach
+	SpriteID currentBG;
 } World;
 
 World* world = 0;
@@ -182,7 +205,15 @@ World* world = 0;
 typedef struct WorldFrame
 {
 	Entity* activeEntity;
+	Entity* bg;
 	Item* activeItem; // or inventoryFrame?
+	bool onEntity;
+	bool onItem;
+	float64 nowTime;
+	float64 deltaTime;
+	Vector2 mousePosWorld;
+	Cursor* activeCursor;
+
 } WorldFrame;
 
 WorldFrame worldFrame;
@@ -192,6 +223,12 @@ Sprite* getSprite(SpriteID spriteID)
 {
 	if (spriteID >= 0 && spriteID < s_MAX) return &sprites[spriteID];
 	else return &sprites[0];
+}
+
+Cursor* getCursor(CursorID cursorID)
+{
+	if (cursorID >= 0 && cursorID < s_MAX) return &cursors[cursorID];
+	else return &cursors[0];
 }
 
 Item* getItem(ItemID itemID)
@@ -250,14 +287,23 @@ void loadRoom(RoomID roomID)
 
 void loadBackground() {} 	// TODO
 
-void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 origin, u32 cols, u32 rows) // no default values in c -> reason to use c++
+// if clickable size is 0 it will be set to image.size
+void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 origin, u32 cols, u32 rows)
 {
 		Sprite sprite;
 		if (spriteID == 0) path = STR("missingTexture.png");
 		Gfx_Image* image = load_image_from_disk(path, get_heap_allocator());
 		// assert(image, "failed to load image")
 		sprite.image = image;
-		sprite.size = v2(sprite.image->width, sprite.image->height);
+
+		sprite.columns = cols;
+		sprite.rows = rows;
+
+		sprite.totalFrames = rows * cols;
+    	sprite.frameWidth = image->width / cols;
+    	sprite.frameHeight = image->height / rows;
+
+		sprite.size = v2(sprite.frameWidth, sprite.frameHeight);
 
 		if (clickableSize.x != 0.0)  sprite.clickableSize.x = clickableSize.x;
 		else sprite.clickableSize.x = sprite.size.x;
@@ -267,14 +313,7 @@ void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 o
 		if (origin.x) sprite.origin = origin;					// bottom center origin point of the hotspot relative to size
 		else sprite.origin = v2(sprite.size.x * 0.5, 0.0);
 
-		sprite.columns = cols;
-		sprite.rows = rows;
-
-		sprite.totalFrames = rows * cols;
-    	sprite.frameWidth = image->width / cols;
-    	sprite.frameHeight = image->height / rows;
-
-		sprite.animFPS = 10;
+		sprite.animFPS = 6;
 		sprite.currentAnim = a_idle;
 		sprite.animStartTime = 0;
 		
@@ -283,6 +322,15 @@ void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 o
 		// assert?
 }
 
+void loadCursor(CursorID CursorID, string path)
+{
+	Cursor cursor;
+	if (CursorID == 0) path = STR("missingTexture.png");
+	Gfx_Image* image = load_image_from_disk(path, get_heap_allocator());
+	cursor.image = image;
+	cursor.size = v2(image->width, image->height);
+
+}
 void loadInventoryItem(ItemID itemID, string name, string path, u64 flags)
 {
 	Item item;
