@@ -148,15 +148,7 @@ int entry(int argc, char **argv)
 				{
 					world->activeEntity = e;
 					world->mouseActive = true;
-				}
-				else
-				{
-					world->mouseActive = false;
-				}
-
-				if (range2f_contains(hotspot, worldFrame.mousePosWorld)) {}
-				
-					
+				}	
 				
 			}	
 		}
