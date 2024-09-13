@@ -60,9 +60,14 @@ int entry(int argc, char **argv)
 	loadCursor(c_right, STR("jamAssets/cursors/right.png"));
 
 	// :loadCharacters
-	loadSprite(s_player, STR("jamAssets/characters/Adaline-Idle-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), true, 4, 1);
+	loadSprite(s_player, STR("jamAssets/characters/Adaline-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), true, 8, 5);
 	loadSprite(s_ch_conductor, STR("jamAssets/characters/Conductor-Idle-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), true, 4, 1);
 	loadSprite(s_ch_reporter, STR("jamAssets/characters/Reporter-Idle-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), true, 4, 1);
+
+	// :loadPortraits
+	loadSprite(s_po_player, STR("jamAssets/portraits/MCPortrait.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
+	loadSprite(s_po_baron, STR("jamAssets/portraits/BaronPortrait.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
+	loadSprite(s_po_reporter, STR("jamAssets/portraits/ReporterPortrait.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
 
 
 	// :loadItems
@@ -78,7 +83,7 @@ int entry(int argc, char **argv)
 	Entity* background = createEntity(t_background, s_bg_dining, i_nil, v2(0, 0), null_string, false, 0);
 	Entity* player = createEntity(t_player, s_player, i_nil, v2(175, 110), null_string, false, 0);
 	Entity* conductor = createEntity(t_npc, s_ch_conductor, i_nil, v2(110, 110), STR("Conductor"), true, 0);
-	Entity* reporter = createEntity(t_npc, s_ch_reporter, i_nil, v2(500, 110), STR("Mysterious Reporter"), true, 0);
+	Entity* reporter = createEntity(t_npc, s_ch_reporter, i_nil, v2(500, 110), STR("Reporter"), true, 0);
 
 	// add this to createEntity() 
 	conductor->interactPos.x = conductor->pos.x + 30.0; // + if facing right, - if facing left
@@ -86,13 +91,13 @@ int entry(int argc, char **argv)
 
 
 	// :createItems
-	Entity* coupon = createEntity(t_object, s_item_coupon, i_coupon, v2(300, 110), STR("VIP Coupon"), true, 0);
+	Entity* coupon = createEntity(t_object, s_item_coupon, i_coupon, v2(300, 110), STR("Coupon"), true, 0);
 	Entity* drink = createEntity(t_item, s_item_drink, i_drink, v2(-100, 0), STR("Fancy Cocktail"), true, 0);
 	Entity* headshot = createEntity(t_item, s_item_headshot, i_headshot, v2(-100, 0), STR("Headshot of Starlet"), true, 0);
 	Entity* key = createEntity(t_item, s_item_key, i_key, v2(-100, 0), STR("Brass Key"), true, 0);
 
 	// :createInventoryItems
-	loadInventoryItem(i_coupon, STR("VIP Drink Coupon"), STR("jamAssets/objects/coupon.png"), false, 0); // load this when needed? How?
+	loadInventoryItem(i_coupon, STR("Drink Coupon"), STR("jamAssets/objects/coupon.png"), false, 0); // load this when needed? How?
 	loadInventoryItem(i_key, STR("Brass Key"), STR("jamAssets/objects/key.png"), true, 0);
 
 	// :init timers and fps etc
@@ -109,6 +114,7 @@ int entry(int argc, char **argv)
 	Matrix4 camera_xform = m4_scalar(1.0);
 	Vector2 camera_pos = v2(200, 110);
 	float zoom = 3.0;
+	world->uxStateID = ux_inventory;
 
 	while (!window.should_close)
 	{
@@ -123,6 +129,7 @@ int entry(int argc, char **argv)
 		prevTime = worldFrame.nowTime;
 
 		worldFrame.bg = background; // = world.current bg or something...
+		worldFrame.player = player; 
 
 		// :camera - 
 		// draw_frame.projection = m4_make_orthographic_projection(worldFrame.bg->scrollPos.x, worldFrame.bg->scrollPos.y, 0.0, 300.0, -1, 10);
@@ -304,62 +311,90 @@ int entry(int argc, char **argv)
 			set_screen_space();
 			draw_frame.camera_xform = m4_scalar(1.0);
 
-			// :UI inventory
-			float invStartPosX = 34.0; // inv screen position
-			float invStartPosY = 30.0;
-			float invSlotWidth = 32;
-			float invSlotHeight = 32;
-			float invSlotPadding = 4;
-			float invSlots = 9; // slots along bottom of screen, or 5 by 6 grid?
-			// Item* invPage0[invRenderSlots]; // Maybe add a resizeable array using the temp alloc?
-
-			float invWidth = invSlots * (invSlotWidth + invSlotPadding) + (invSlotPadding * 2.0);
-			float invHeight = invSlotHeight + (invSlotPadding * 2.0);
-
+			if (world->uxStateID == ux_inventory)
 			{
-				Matrix4 xform = m4_scalar(1.0); // m4_make_scale(v3(1,1,1))?
-				xform = m4_translate(xform, v3(invStartPosX, invStartPosY, 0.0));
-				draw_rect_xform(xform, v2(invWidth, invHeight), v4(1.0, 1.0, 1.0, 0.15));
-			}
-			// :render UI loop over inv
-			// if inventory currently visible?
-			int invItemCount = 0;
-			for (int i = 0; i < i_MAX; i++)
-			{
-				Item* item = &world->inventory[i];
-				if (item->inInventory)
+				// :UI inventory
+				float invStartPosX = 34.0; // inv screen position
+				float invStartPosY = 30.0;
+				float invSlotWidth = 32;
+				float invSlotHeight = 32;
+				float invSlotPadding = 4;
+				float invSlots = 9; // slots along bottom of screen, or 5 by 6 grid?
+				// Item* invPage0[invRenderSlots]; // Maybe add a resizeable array using the temp alloc?
+
+				float invWidth = invSlots * (invSlotWidth + invSlotPadding) + (invSlotPadding * 2.0);
+				float invHeight = invSlotHeight + (invSlotPadding * 2.0);
+
 				{
-					// invPage0[invItemCount] = item; // if in inv put in new array for rendering?
-					invItemCount += 1;
-					Matrix4 xform = m4_scalar(1.0);
-					xform = m4_translate(xform, v3(invStartPosX + invSlotPadding, invStartPosY + invSlotPadding, 0.0));
-					draw_rect_xform(xform, v2(invSlotWidth, invSlotHeight), v4(1.0, 1.0, 1.0, 0.25));
-					// xform = m4_scale(xform, v3(2.0, 2.0, 1.0)); // this is just a hack, inv items should be in the right dimensions
-					draw_image_xform(item->image, xform, item->size, COLOR_WHITE);
-
-					{ // check mouse in item box - pull out to function
-						Vector2 mousePosUI = getMouseCurrentProj(); // get Mouse in UI Coords
-						Vector4 color = v4(1, 1, 1, 0.35f);
-						// make rect around sprite and highlight on mouse over
-						Range2f hotspot = getHotSpot(v2(invSlotWidth, invSlotHeight), v2(-invSlotPadding, -invSlotPadding));
-						hotspot = range2f_shift(hotspot, v2(invStartPosX, invStartPosY));
-						if (range2f_contains(hotspot, mousePosUI)) 
-						{
-							draw_rect(hotspot.min, range2f_size(hotspot), color); // highlight box
-							float adjustScale = 0.5 * sinBob(time, 5.0); // maybe make an animation instead of sinBob
-							// xform = m4_scale(xform, v3(1.5, 1.5, 1.5));
-							worldFrame.activeItem = item;
-
-							xform = m4_translate(xform, v3(1.0, invStartPosY + (invSlotPadding * 2.0), 0.0)); // need this measured and centered
-							draw_text_xform(font, item->name, fontHeight, xform, textScaling, COLOR_BLUE);
-							// draw_text(font, STR("HoverTest"), fontHeight, mousePosUI, textScaling, COLOR_BLACK);
-						}
-					}
-					invStartPosX += invSlotWidth + invSlotPadding;
-
-					// TODO: items are not added in pickup order for some reason
+					Matrix4 xform = m4_scalar(1.0); // m4_make_scale(v3(1,1,1))?
+					xform = m4_translate(xform, v3(invStartPosX, invStartPosY, 0.0));
+					draw_rect_xform(xform, v2(invWidth, invHeight), v4(1.0, 1.0, 1.0, 0.15));
 				}
+				// :render UI loop over inv
+				// if inventory currently visible?
+				int invItemCount = 0;
+				for (int i = 0; i < i_MAX; i++)
+				{
+					Item* item = &world->inventory[i];
+					if (item->inInventory)
+					{
+						// invPage0[invItemCount] = item; // if in inv put in new array for rendering?
+						invItemCount += 1;
+						Matrix4 xform = m4_scalar(1.0);
+						xform = m4_translate(xform, v3(invStartPosX + invSlotPadding, invStartPosY + invSlotPadding, 0.0));
+						draw_rect_xform(xform, v2(invSlotWidth, invSlotHeight), v4(1.0, 1.0, 1.0, 0.25));
+						// xform = m4_scale(xform, v3(2.0, 2.0, 1.0)); // this is just a hack, inv items should be in the right dimensions
+						draw_image_xform(item->image, xform, item->size, COLOR_WHITE);
+
+						{ // check mouse in item box - pull out to function
+							Vector2 mousePosUI = getMouseCurrentProj(); // get Mouse in UI Coords
+							Vector4 color = v4(1, 1, 1, 0.35f);
+							// make rect around sprite and highlight on mouse over
+							Range2f hotspot = getHotSpot(v2(invSlotWidth, invSlotHeight), v2(-invSlotPadding, -invSlotPadding));
+							hotspot = range2f_shift(hotspot, v2(invStartPosX, invStartPosY));
+							if (range2f_contains(hotspot, mousePosUI)) 
+							{
+								draw_rect(hotspot.min, range2f_size(hotspot), color); // highlight box
+								float adjustScale = 0.5 * sinBob(time, 5.0); // maybe make an animation instead of sinBob
+								// xform = m4_scale(xform, v3(1.5, 1.5, 1.5));
+								worldFrame.activeItem = item;
+
+								xform = m4_translate(xform, v3(1.0, invStartPosY + (invSlotPadding * 2.0), 0.0)); // need this measured and centered
+								draw_text_xform(font, item->name, fontHeight, xform, textScaling, COLOR_BLUE);
+								// draw_text(font, STR("HoverTest"), fontHeight, mousePosUI, textScaling, COLOR_BLACK);
+							}
+						}
+						invStartPosX += invSlotWidth + invSlotPadding;
+
+						// TODO: items are not added in pickup order for some reason
+					}
+				}
+
 			}
+			else if (world->uxStateID == ux_dialog)
+			{	
+				Sprite* actorLSprite = getSprite(s_po_player);
+				Sprite* actorRSprite = getSprite(s_po_baron);
+
+				Vector2 dlgBoxPos = v2(35.0, 15.0);
+				Vector2 dlgBoxSize = v2(330.0, 65.0);
+				Vector2 textBoxPos = v2(100.0, 20.0);
+				Vector2 textBoxSize = v2(200.0, 55.0);
+				draw_rect(dlgBoxPos, dlgBoxSize, v4(1.0, 1.0, 1.0, 0.15));
+				draw_rect(textBoxPos, textBoxSize, v4(1.0, 1.0, 1.0, 0.30));
+
+				draw_image(actorLSprite->image, dlgBoxPos, actorLSprite->size, COLOR_WHITE);
+				draw_image(actorRSprite->image, v2(dlgBoxPos.x + 266.0, dlgBoxPos.y), actorRSprite->size, COLOR_WHITE);
+				string text = STR("Lorem ipsum dolor sit amet");
+				string long_text = STR("Jaunty jackrabbits juggle \nquaint quilts and quirky \nquinces, quickly queuing up \nfor a jubilant, jazzy jamboree \nin the jungle. PRESS TAB");
+
+				draw_text(font, long_text, fontHeight, v2(textBoxPos.x, textBoxPos.y + 45), textScaling, COLOR_WHITE);
+								
+
+			}
+			else if (world->uxStateID == ux_menu)
+			{}
+
 
 			// :cursor
 			{	

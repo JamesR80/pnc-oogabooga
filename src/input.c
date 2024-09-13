@@ -27,7 +27,15 @@
 
     if (is_key_just_released(KEY_ESCAPE)) window.should_close = true;
 
-
+    if (is_key_just_released(KEY_TAB)) 
+    {
+        log("pressed tab.");
+        if (world->uxStateID == ux_dialog) 
+        {
+            world->uxStateID = ux_inventory;
+        }
+        if (world->uxStateID == ux_inventory) world->uxStateID = ux_dialog;
+    }
     // Need *player, *room??
     // Maybe just start with mouse PnC!
 

@@ -61,6 +61,7 @@ void movePlayer(Entity* player, Entity* background, float64 nowTime, float64 del
 {
 	Vector2 direction = v2_sub(player->destPos, player->pos);
 	float distance = v2_length(direction);
+	AnimType anim; // = getSprite(player->spriteID)->currentAnim;
 
 	if (distance > 1.0f && player->isMoving)
 	{	
@@ -68,6 +69,10 @@ void movePlayer(Entity* player, Entity* background, float64 nowTime, float64 del
 		float movement = player->speed * deltaTime;
 		player->pos.x += direction.x * movement;
 		player->pos.y += direction.y * movement;
+
+		if (direction.x < 0) { anim = a_walk_left; }
+		if (direction.x > 0) { anim = a_walk_right; }
+		setAnimation(player, anim, nowTime);
 
 		// clamp movement to walkbox
 		if (player->pos.x < 90.0) player->pos.x = 90.0;
@@ -84,8 +89,6 @@ void movePlayer(Entity* player, Entity* background, float64 nowTime, float64 del
 		// 	// animateF32ToTarget(&(background->scrollPos.x), player->pos.x +, deltaTime, rate);
 		// }
 
-		setAnimation(player, a_walk, nowTime);
-		
 	}
 	else if (player->isMoving)
 	{

@@ -3,7 +3,10 @@ typedef enum AnimType
 {	
 	a_nil = 0,
 	a_idle,
-	a_walk,
+	a_walk_left,
+	a_walk_right,
+	a_walk_down,
+	a_walk_up,
 	//
 	a_MAX,
 } AnimType;
@@ -43,6 +46,14 @@ typedef enum SpriteID
 	s_item_coupon,
 	s_item_drink,
 	s_item_headshot,
+	s_po_player,
+	s_po_baron,
+	s_po_conductor,
+	s_po_detective,
+	s_po_professor,
+	s_po_reporter,
+	s_po_starlet,
+	s_po_valet,
 	s_MAX,
 } SpriteID;
 Sprite sprites[s_MAX];
@@ -197,9 +208,9 @@ typedef enum UXStateID 	// this is randy caveman shit. not sure about this appro
 {
 	ux_nil = 0,
 	ux_inventory,
+	ux_dialog,
 	ux_menu,
 } UXStateID;
-
 
 
 typedef struct World
@@ -366,7 +377,7 @@ void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 o
 			sprite.frameWidth = image->width / cols;
 			sprite.frameHeight = image->height / rows;
 			sprite.size = v2(sprite.frameWidth, sprite.frameHeight);
-			sprite.animFPS = 6;
+			sprite.animFPS = 10;
 			sprite.currentAnim = a_idle;
 			sprite.animStartTime = 0;
 		}
