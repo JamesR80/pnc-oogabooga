@@ -4,6 +4,13 @@ This is the repo for a Point and Click Adventure game made for the 108 Adventure
 
 The game is a turn of the century murder mystery set on a moving train.
 
+Controls are simple:
+Left click to move and interact with Characters and Objects in the world and your inventory
+Right click to examine Characters and Objects in the world and your inventory
+Press ESC to quit the game.
+Press ? to show/hide Debug Menu
+Don't use WASD to move.
+
 The game is coded in C and uses the OogaBooga framework to open the game window and a bunch of other usefull standard features. 
 
  
