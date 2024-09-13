@@ -33,3 +33,14 @@
 	// Vector2 roomMax = v2(700, 300);
 	// Vector2 roomSize = v2(ceil(roomMax.x - roomMin.x), ceil(roomMax.y - roomMin.y));
 	// log("Room Size: %v2", roomSize);
+
+
+
+			// // scroll background
+		// float32 bgScrollLimit = getSprite(background->spriteID)->image->width - 200;
+		// if (background->isScrollable && player->pos.x >= 200.0 && player->pos.x <= bgScrollLimit)
+		// {
+		// 	background->scrollPos = v2(player->pos.x - 200.0, player->pos.x + 200.0);
+		// 	// draw_frame.projection = m4_make_orthographic_projection(background->scrollPos.x, background->scrollPos.y, 0.0, 300.0, -1, 10);
+		// 	// animateF32ToTarget(&(background->scrollPos.x), player->pos.x +, deltaTime, rate);
+		// }

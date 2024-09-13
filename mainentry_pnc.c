@@ -4,6 +4,7 @@
 #include "src/animate.c"
 #include "src/game.c"
 #include "src/input.c"
+#include "src/init.c"
 
 
 // TODO:
@@ -61,6 +62,8 @@ int entry(int argc, char **argv)
 	// :loadCharacters
 	loadSprite(s_player, STR("jamAssets/characters/Adaline-Idle-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), true, 4, 1);
 	loadSprite(s_ch_conductor, STR("jamAssets/characters/Conductor-Idle-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), true, 4, 1);
+	loadSprite(s_ch_reporter, STR("jamAssets/characters/Reporter-Idle-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), true, 4, 1);
+
 
 	// :loadItems
 	loadSprite(s_item_coupon, STR("jamAssets/objects/coupon.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
@@ -74,7 +77,13 @@ int entry(int argc, char **argv)
 	// :createEntities and Objects
 	Entity* background = createEntity(t_background, s_bg_dining, i_nil, v2(0, 0), null_string, false, 0);
 	Entity* player = createEntity(t_player, s_player, i_nil, v2(175, 110), null_string, false, 0);
-	Entity* conductor = createEntity(t_npc, s_ch_conductor, i_nil, v2(500, 110), STR("Conductor"), true, 0);
+	Entity* conductor = createEntity(t_npc, s_ch_conductor, i_nil, v2(110, 110), STR("Conductor"), true, 0);
+	Entity* reporter = createEntity(t_npc, s_ch_reporter, i_nil, v2(500, 110), STR("Mysterious Reporter"), true, 0);
+
+	// add this to createEntity() 
+	conductor->interactPos.x = conductor->pos.x + 30.0; // + if facing right, - if facing left
+	reporter->interactPos.x = reporter->pos.x - 30.0;
+
 
 	// :createItems
 	Entity* coupon = createEntity(t_object, s_item_coupon, i_coupon, v2(300, 110), STR("VIP Coupon"), true, 0);
@@ -96,6 +105,10 @@ int entry(int argc, char **argv)
 	player->speed = 100.0;
 	Vector2 textScaling = v2(0.2, 0.2);
 	world->currentCursor = c_click;
+	world->mouseActive = false;
+	Matrix4 camera_xform = m4_scalar(1.0);
+	Vector2 camera_pos = v2(200, 110);
+	float zoom = 3.0;
 
 	while (!window.should_close)
 	{
@@ -105,14 +118,28 @@ int entry(int argc, char **argv)
 
 		float64 time = os_get_elapsed_seconds();
 		worldFrame.nowTime = time;
-		worldFrame.deltaTime = worldFrame.nowTime - prevTime;
+		float64 deltaTime = worldFrame.nowTime - prevTime;
+		worldFrame.deltaTime = deltaTime;
 		prevTime = worldFrame.nowTime;
 
 		worldFrame.bg = background; // = world.current bg or something...
 
-		// :camera - if I am doing a fixed camera I should change this to be like the UI proj maybe
-		draw_frame.camera_xform = m4_scalar(1.0);
-		draw_frame.projection = m4_make_orthographic_projection(worldFrame.bg->scrollPos.x, worldFrame.bg->scrollPos.y, 0.0, 300.0, -1, 10); 
+		// :camera - 
+		// draw_frame.projection = m4_make_orthographic_projection(worldFrame.bg->scrollPos.x, worldFrame.bg->scrollPos.y, 0.0, 300.0, -1, 10);
+		// worldFrame.world_proj = m4_make_orthographic_projection(0.0, screenWidth, 0.0, screenHeight, -1, 10);
+
+		worldFrame.world_proj = m4_make_orthographic_projection(window.width * -0.5, window.width * 0.5, window.height * -0.5, window.height * 0.5, -1, 10);
+		Vector2 target_pos = player->pos;
+		smoothCam(&camera_pos, target_pos, deltaTime, 15.0f);
+
+		worldFrame.world_view = m4_identity;
+		// translate into position
+		worldFrame.world_view = m4_translate(worldFrame.world_view, v3(camera_pos.x, 150.0, 0));
+
+		// scale the zoom
+		worldFrame.world_view = m4_scale(worldFrame.world_view, v3(1.0/zoom, 1.0/zoom, 1.0));
+		
+		set_world_space();
 
 		// :world stuff
 		worldFrame.mousePosWorld = getMouseCurrentProj();
@@ -144,12 +171,19 @@ int entry(int argc, char **argv)
 				// check mouse in entity box - pull out to function
 				Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
 				hotspot = range2f_shift(hotspot, e->pos);
+
 				if (range2f_contains(hotspot, worldFrame.mousePosWorld))
 				{
 					world->activeEntity = e;
 					world->mouseActive = true;
-				}	
-				
+					world->currentCursor = e->hoverCursor;
+				}
+				if (e == background) 
+				{
+					world->activeEntity = 0;
+					world->mouseActive = false;
+					world->currentCursor = e->hoverCursor;
+				}
 			}	
 		}
 
@@ -218,7 +252,7 @@ int entry(int argc, char **argv)
 				hotspot = range2f_shift(hotspot, e->pos);
 				// draw_rect(hotspot.min, range2f_size(hotspot), color); // should this be in render?
 				draw_circle(hotspot.min, range2f_size(hotspot), color);
-				world->currentCursor = e->hoverCursor;
+				// maybe draw the interact rad or something else that is causing the issue?
 
 				// draw hover text
 				// do measure text and center
@@ -226,6 +260,8 @@ int entry(int argc, char **argv)
 				draw_text(font, e->hoverText, fontHeight, hoverTextPos, textScaling, COLOR_GREEN);
 			}
 		}
+		else if (world->mouseActive) world->currentCursor = background->hoverCursor;
+
 
 		// :renderUI
 
@@ -264,8 +300,9 @@ int entry(int argc, char **argv)
 			}
 
 
-			draw_frame.projection = m4_make_orthographic_projection(0.0, 400.0, 0.0, 300.0, -1, 10);
-			// draw_frame.view = m4_scalar(1.0);
+			// draw_frame.projection = m4_make_orthographic_projection(0.0, 400.0, 0.0, 300.0, -1, 10);
+			set_screen_space();
+			draw_frame.camera_xform = m4_scalar(1.0);
 
 			// :UI inventory
 			float invStartPosX = 34.0; // inv screen position
@@ -355,6 +392,8 @@ int entry(int argc, char **argv)
 			// draw_text(font, tprint("Mouse: %v2", v2(input_frame.mouse_x / 3.0, input_frame.mouse_y / 3.0)), fontHeight, v2(10, 10), v2(0.2, 0.2), COLOR_RED);
 			draw_text(font, tprint("ScreenPos: [ %i, %i ]", (int)mouseProjPos.x, (int)mouseProjPos.y), fontHeight, v2(10, 10), v2(0.1, 0.1), COLOR_RED);
 			draw_text(font, tprint("WorldPos: [ %i, %i ]", (int)worldFrame.mousePosWorld.x, (int)worldFrame.mousePosWorld.y), fontHeight, v2(100, 10), v2(0.1, 0.1), COLOR_RED);
+			draw_text(font, tprint("InputPos: [ %i, %i ]", (int)input_frame.mouse_x, (int)input_frame.mouse_y), fontHeight, v2(200, 10), v2(0.1, 0.1), COLOR_RED);
+			draw_text(font, tprint("CameraPos: [ %i, %i ]", (int)camera_pos.x, (int)camera_pos.y), fontHeight, v2(300, 10), v2(0.1, 0.1), COLOR_RED);
 			
 
 

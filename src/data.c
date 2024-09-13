@@ -229,10 +229,29 @@ typedef struct WorldFrame
 	float64 nowTime;
 	float64 deltaTime;
 	Vector2 mousePosWorld;
+	Matrix4 world_proj;
+	Matrix4 world_view;
+	bool hover_consumed;
+	bool show_inventory;
+	Entity* player;
 
 } WorldFrame;
 
 WorldFrame worldFrame;
+
+float screenWidth = 400.0;
+float screenHeight = 300.0;
+
+void set_screen_space() 
+{
+	draw_frame.camera_xform = m4_scalar(1.0);
+	draw_frame.projection = m4_make_orthographic_projection(0.0, screenWidth, 0.0, screenHeight, -1, 10);
+}
+void set_world_space() 
+{
+	draw_frame.projection = worldFrame.world_proj;
+	draw_frame.camera_xform = worldFrame.world_view;
+}
 
 
 Sprite* getSprite(SpriteID spriteID)
@@ -276,7 +295,7 @@ Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 
 	entityFound->clickable = clickable;
 	entityFound->interactable = false;
 	entityFound->justClicked = false;
-	entityFound->interactRadius = 20.0f;
+	entityFound->interactRadius = 30.0f;
 	entityFound->isMoving = false;
 	entityFound->interactPos = pos;
 	entityFound->destPos = pos;

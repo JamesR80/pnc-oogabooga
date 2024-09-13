@@ -36,10 +36,11 @@
         // Need to know if mouse is in UI or world space.
         consume_key_just_pressed(MOUSE_BUTTON_LEFT); // because ordering is important (UI v World clicks...)
         
-        if (eSelected && eSelected->clickable)
+        if (eSelected && eSelected->clickable) // check if in interact rad
         {	
             entityClicked(eSelected, player);
             movePlayerToObject(player, eSelected, worldFrame);
+            log("Moving to Object: %s", eSelected->hoverText);
         }
         else 
         {

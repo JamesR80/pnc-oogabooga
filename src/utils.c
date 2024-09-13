@@ -1,3 +1,5 @@
+#define m4_identity m4_make_scale(v3(1, 1, 1))
+
 bool almostEquals(float a, float b, float epsillon) 
 {
 	return fabs(a-b) <- epsillon;
@@ -96,6 +98,7 @@ Vector2 getCenterRange2f(Range2f r)
 	return (Vector2) { ((r.max.x - r.min.x) * 0.5 + r.min.x), ((r.max.y - r.min.y) * 0.5 + r.min.y)};
 }
 
+// not using
 Vector2 getUIPosFromWorldPos(Vector2 pos)
 {
 	Vector4 worldProj = v4(window.pixel_width * -0.5, window.pixel_width * 0.5, window.pixel_height * -0.5, window.pixel_height * 0.5);
@@ -108,3 +111,4 @@ Vector2 getUIPosFromWorldPos(Vector2 pos)
 	pos.y = (pos.y + worldProj.w) / factorY;
 	return pos;
 }
+

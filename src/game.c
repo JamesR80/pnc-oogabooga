@@ -22,7 +22,7 @@ void entityClicked(Entity* e, Entity* player) // entity clicked or just screen c
 
 		case v_look:
 			log("looking!");
-			e->lookText = STR("I'm looking at this"); // I need to set these at loadRoom via DB i think
+			e->lookText = STR("ALPHA: I'm looking at this"); // I need to set these at loadRoom via DB i think
 			break;
 
 		case v_use:
@@ -75,13 +75,14 @@ void movePlayer(Entity* player, Entity* background, float64 nowTime, float64 del
 		if (player->pos.x > 610.0) player->pos.x = 610.0;
 		if (player->pos.y > 150.0) player->pos.y = 150.0;
 
-		// scroll background
-		if (background->isScrollable && player->pos.x >= 200.0 && player->pos.x <= 500.0)
-		{
-			background->scrollPos = v2(player->pos.x - 200.0, player->pos.x + 200.0);
-			draw_frame.projection = m4_make_orthographic_projection(background->scrollPos.x, background->scrollPos.y, 0.0, 300.0, -1, 10);
-			// animateF32ToTarget(&(background->scrollPos.x), player->pos.x +, deltaTime, rate);
-		}
+		// // scroll background
+		// float32 bgScrollLimit = getSprite(background->spriteID)->image->width - 200;
+		// if (background->isScrollable && player->pos.x >= 200.0 && player->pos.x <= bgScrollLimit)
+		// {
+		// 	background->scrollPos = v2(player->pos.x - 200.0, player->pos.x + 200.0);
+		// 	// draw_frame.projection = m4_make_orthographic_projection(background->scrollPos.x, background->scrollPos.y, 0.0, 300.0, -1, 10);
+		// 	// animateF32ToTarget(&(background->scrollPos.x), player->pos.x +, deltaTime, rate);
+		// }
 
 		setAnimation(player, a_walk, nowTime);
 		
@@ -93,12 +94,11 @@ void movePlayer(Entity* player, Entity* background, float64 nowTime, float64 del
 		log("Stopped Moving. POS: %v2", player->pos);
 	}
 
-
 }
 
 void movePlayerToObject(Entity* player, Entity* object, WorldFrame worldF)
 {	
-	player->destPos = object->interactPos;
+	player->destPos = object->interactPos; // THIS FUNC IS THE PROBLEM!!!
 	player->isMoving = true;
 	movePlayer(player, worldF.bg, worldF.nowTime, worldF.deltaTime);
 }
@@ -106,7 +106,7 @@ void movePlayerToObject(Entity* player, Entity* object, WorldFrame worldF)
 
 void movePlayerToClick(Entity* player, WorldFrame worldF)
 {
-	// get valid destination pos from mousPos
+	// get valid destination pos from mousPos or from proj?
 	player->destPos = worldF.mousePosWorld;
 	player->isMoving = true;
 	movePlayer(player, worldF.bg, worldF.nowTime, worldF.deltaTime);	
