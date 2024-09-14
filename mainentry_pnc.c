@@ -117,6 +117,7 @@ int entry(int argc, char **argv)
 	world->uxStateID = ux_inventory;
 	world->playerText = STR("");
 	world->dialogueBox = range2f_make(v2(30.0, 15.0), v2(370.0, 75.0));
+	world->debugOn = true;
 
 	while (!window.should_close)
 	{
@@ -148,9 +149,11 @@ int entry(int argc, char **argv)
 		// scale the zoom
 		worldFrame.world_view = m4_scale(worldFrame.world_view, v3(1.0/zoom, 1.0/zoom, 1.0));
 		
-		set_world_space();
-
+		set_screen_space();
+		worldFrame.mousePosScreen = getMouseCurrentProj();
+		
 		// :world stuff
+		set_world_space();
 		worldFrame.mousePosWorld = getMouseCurrentProj();
 		Vector2 mousePosInput = v2(input_frame.mouse_x, input_frame.mouse_y);
 
@@ -267,7 +270,7 @@ int entry(int argc, char **argv)
 					Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
 					hotspot = range2f_shift(hotspot, e->pos);
 					// draw_rect(hotspot.min, range2f_size(hotspot), color); // should this be in render?
-					draw_circle(hotspot.min, range2f_size(hotspot), color);
+					if (world->debugOn) { draw_circle(hotspot.min, range2f_size(hotspot), color); }
 					// maybe draw the interact rad or something else that is causing the issue?
 
 					// draw hover text
@@ -340,7 +343,7 @@ int entry(int argc, char **argv)
 				for (int i = 0; i < i_MAX; i++)
 				{
 					Item* item = &world->inventory[i];
-					if (item->inInventory)
+					if (item->inInventory) // && if dragged add alpha, and if successfully dropped delete
 					{
 						// invPage0[invItemCount] = item; // if in inv put in new array for rendering?
 						invItemCount += 1;
@@ -357,19 +360,22 @@ int entry(int argc, char **argv)
 							hotspot = range2f_shift(hotspot, v2(invStartPosX, invStartPosY));
 							if (range2f_contains(hotspot, mousePosUI)) 
 							{
-								draw_rect(hotspot.min, range2f_size(hotspot), color); // highlight box
+								if (world->debugOn) { draw_rect(hotspot.min, range2f_size(hotspot), color); } // highlight box
 								float adjustScale = 0.5 * sinBob(time, 5.0); // maybe make an animation instead of sinBob
 								// xform = m4_scale(xform, v3(1.5, 1.5, 1.5));
 								worldFrame.activeItem = item;
 
 								xform = m4_translate(xform, v3(1.0, invStartPosY + (invSlotPadding * 2.0), 0.0)); // need this measured and centered
 								draw_text_xform(font, item->name, fontHeight, xform, textScaling, COLOR_BLUE);
-								// draw_text(font, STR("HoverTest"), fontHeight, mousePosUI, textScaling, COLOR_BLACK);
+
+								// invItemClicked(item, entity? )
+
+								
 							}
 						}
 						invStartPosX += invSlotWidth + invSlotPadding;
 
-						// TODO: items are not added in pickup order for some reason
+						// TODO: items are not added in pickup order for some reason  - NB its because it is in the inv struct order. how to fix this?
 					}
 				}
 
@@ -428,12 +434,17 @@ int entry(int argc, char **argv)
 
 		{
 			// :debug
-			Vector2 mouseProjPos = getMouseCurrentProj();
-			// draw_text(font, tprint("Mouse: %v2", v2(input_frame.mouse_x / 3.0, input_frame.mouse_y / 3.0)), fontHeight, v2(10, 10), v2(0.2, 0.2), COLOR_RED);
-			draw_text(font, tprint("ScreenPos: [ %i, %i ]", (int)mouseProjPos.x, (int)mouseProjPos.y), fontHeight, v2(10, 10), v2(0.1, 0.1), COLOR_RED);
-			draw_text(font, tprint("WorldPos: [ %i, %i ]", (int)worldFrame.mousePosWorld.x, (int)worldFrame.mousePosWorld.y), fontHeight, v2(100, 10), v2(0.1, 0.1), COLOR_RED);
-			draw_text(font, tprint("InputPos: [ %i, %i ]", (int)input_frame.mouse_x, (int)input_frame.mouse_y), fontHeight, v2(200, 10), v2(0.1, 0.1), COLOR_RED);
-			draw_text(font, tprint("CameraPos: [ %i, %i ]", (int)camera_pos.x, (int)camera_pos.y), fontHeight, v2(300, 10), v2(0.1, 0.1), COLOR_RED);
+			if (world->debugOn)
+			{
+				Vector2 mouseProjPos = getMouseCurrentProj();
+				// draw_text(font, tprint("Mouse: %v2", v2(input_frame.mouse_x / 3.0, input_frame.mouse_y / 3.0)), fontHeight, v2(10, 10), v2(0.2, 0.2), COLOR_RED);
+				draw_text(font, tprint("ScreenPos: [ %i, %i ]", (int)mouseProjPos.x, (int)mouseProjPos.y), fontHeight, v2(10, 10), v2(0.1, 0.1), COLOR_RED);
+				draw_text(font, tprint("WorldPos: [ %i, %i ]", (int)worldFrame.mousePosWorld.x, (int)worldFrame.mousePosWorld.y), fontHeight, v2(100, 10), v2(0.1, 0.1), COLOR_RED);
+				draw_text(font, tprint("InputPos: [ %i, %i ]", (int)input_frame.mouse_x, (int)input_frame.mouse_y), fontHeight, v2(200, 10), v2(0.1, 0.1), COLOR_RED);
+				draw_text(font, tprint("CameraPos: [ %i, %i ]", (int)camera_pos.x, (int)camera_pos.y), fontHeight, v2(300, 10), v2(0.1, 0.1), COLOR_RED);
+
+			}
+
 			
 
 

@@ -1,4 +1,11 @@
 
+void invItemClicked(Item* item)
+{
+
+	// add to cursor mousePosUI with an arrow and hide hwcursor
+	// switch hwCursor to cursor version of item?
+	// fuck maybe I just scale cursors up from 32 x 3?
+}
 
 void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity clicked or just screen clicked?
 {
@@ -29,6 +36,7 @@ void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity c
 		switch (entity->type)
 		{
 			case t_npc:
+				log("dialog?");
 				world->playerText = entity->useText;
 				world->uxStateID = ux_dialog;
 				break;

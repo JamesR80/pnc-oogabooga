@@ -29,10 +29,7 @@
 
     if (is_key_just_released(KEY_TAB)) 
     {
-        
-        draw_rect(v2(0, 0), v2(400, 70), COLOR_BLACK);
-        if (world->uxStateID == ux_dialog) { world->uxStateID = ux_inventory; }
-        else if (world->uxStateID == ux_inventory) { world->uxStateID = ux_dialog; }
+        world->debugOn = !world->debugOn;
     }
     // Need *player, *room??
     // Maybe just start with mouse PnC!
@@ -43,9 +40,9 @@
         consume_key_just_pressed(MOUSE_BUTTON_LEFT); // because ordering is important (UI v World clicks...)
         if (world->uxStateID == ux_dialog)
         {
-            if (range2f_contains(world->dialogueBox, worldFrame.mousePosWorld))
+            if (range2f_contains(world->dialogueBox, worldFrame.mousePosScreen))
             {
-                draw_rect(world->dialogueBox.min, world->dialogueBox.max, COLOR_RED);
+                // draw_rect(world->dialogueBox.min, world->dialogueBox.max, COLOR_RED);
                 // skip to next dialog
                 world->uxStateID = ux_inventory;
             }

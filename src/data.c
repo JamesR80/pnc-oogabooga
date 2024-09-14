@@ -230,6 +230,7 @@ typedef struct World
 	string playerText;
 	float64 textBoxTime;
 	Range2f dialogueBox;
+	bool debugOn;
 } World;
 
 World* world = 0;
@@ -243,9 +244,10 @@ typedef struct WorldFrame
 	bool onItem;
 	float64 nowTime;
 	float64 deltaTime;
-	Vector2 mousePosWorld;
 	Matrix4 world_proj;
 	Matrix4 world_view;
+	Vector2 mousePosWorld;
+	Vector2 mousePosScreen;
 	Entity* player;
 
 } WorldFrame;
@@ -308,7 +310,7 @@ Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 
 	entityFound->clickable = clickable;
 	entityFound->isInRangeToInteract = false;
 	entityFound->justClicked = false;
-	entityFound->interactRadius = 30.0f;
+	entityFound->interactRadius = 35.0f;
 	entityFound->isMoving = false;
 	entityFound->interactPos = pos;
 	entityFound->destPos = pos;
