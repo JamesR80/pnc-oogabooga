@@ -14,7 +14,7 @@ Be sure to click on the dialogue box to advance the text
 
 Press ESC to quit the game.
 
-Press ? to show/hide Debug Menu
+Press TAB to show/hide Debug Menu
 
 PS: Don't move the window to a second screen!
 
