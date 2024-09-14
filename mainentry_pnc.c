@@ -116,6 +116,7 @@ int entry(int argc, char **argv)
 	float zoom = 3.0;
 	world->uxStateID = ux_inventory;
 	world->playerText = STR("");
+	world->dialogueBox = range2f_make(v2(30.0, 15.0), v2(370.0, 75.0));
 
 	while (!window.should_close)
 	{
@@ -375,6 +376,8 @@ int entry(int argc, char **argv)
 			}
 			else if (world->uxStateID == ux_dialog)
 			{	
+				// Stop player from clicking on anything but text
+
 				Sprite* actorLSprite = getSprite(s_po_player);
 				Sprite* actorRSprite = getSprite(s_po_baron);
 
@@ -388,7 +391,7 @@ int entry(int argc, char **argv)
 				draw_image(actorLSprite->image, dlgBoxPos, actorLSprite->size, COLOR_WHITE);
 				draw_image(actorRSprite->image, v2(dlgBoxPos.x + 266.0, dlgBoxPos.y), actorRSprite->size, COLOR_WHITE);
 				string text = STR("Lorem ipsum dolor sit amet");
-				string long_text = STR("Jaunty jackrabbits juggle \nquaint quilts and quirky \nquinces, quickly queuing up \nfor a jubilant, jazzy jamboree \nin the jungle. PRESS TAB");
+				string long_text = STR("Jaunty jackrabbits juggle \nquaint quilts and quirky \nquinces, quickly queuing up \nfor a jubilant, jazzy jamboree \nin the jungle. CLICK ME");
 
 				draw_text(font, long_text, fontHeight, v2(textBoxPos.x, textBoxPos.y + 45), textScaling, COLOR_WHITE);
 								

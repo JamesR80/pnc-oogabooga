@@ -193,7 +193,7 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 	string lookText;
 	string useText;
 	VerbState verbState;
-	bool interactable;
+	bool isInRangeToInteract;
 	bool justClicked;
 	bool isMoving;
 	bool isAnimated;
@@ -229,6 +229,7 @@ typedef struct World
 	bool mouseActive;
 	string playerText;
 	float64 textBoxTime;
+	Range2f dialogueBox;
 } World;
 
 World* world = 0;
@@ -245,8 +246,6 @@ typedef struct WorldFrame
 	Vector2 mousePosWorld;
 	Matrix4 world_proj;
 	Matrix4 world_view;
-	bool hover_consumed;
-	bool show_inventory;
 	Entity* player;
 
 } WorldFrame;
@@ -307,7 +306,7 @@ Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 
 	entityFound->spriteID = spriteID;
 	entityFound->itemID = itemID;
 	entityFound->clickable = clickable;
-	entityFound->interactable = false;
+	entityFound->isInRangeToInteract = false;
 	entityFound->justClicked = false;
 	entityFound->interactRadius = 30.0f;
 	entityFound->isMoving = false;
@@ -380,7 +379,7 @@ void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 o
 			sprite.frameWidth = image->width / cols;
 			sprite.frameHeight = image->height / rows;
 			sprite.size = v2(sprite.frameWidth, sprite.frameHeight);
-			sprite.animFPS = 10;
+			sprite.animFPS = 6;
 			sprite.currentAnim = a_idle;
 			sprite.animStartTime = 0;
 		}

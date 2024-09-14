@@ -10,11 +10,11 @@ void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity c
 			log("left click!");
 			if (fabsf(v2_dist(entity->pos, player->pos)) < entity->interactRadius) 
 			{
-				entity->interactable = true;
+				entity->isInRangeToInteract = true;
 			}
 			else
 			{
-				entity->interactable = false;
+				entity->isInRangeToInteract = false;
 				// move to entity...
 			} 
 			break;
@@ -24,7 +24,7 @@ void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity c
 			log("right click!");
 			break;
 	}
-	if (entity->interactable)
+	if (entity->isInRangeToInteract)
 	{	
 		switch (entity->type)
 		{
@@ -34,6 +34,7 @@ void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity c
 				break;
 			case t_object:
 				world->playerText = entity->useText;
+				world->textBoxTime = worldFrame.nowTime;
 				world->inventory[entity->itemID].inInventory = true;
 				destroyEntity(entity);
 				break;
