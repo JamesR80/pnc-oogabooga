@@ -10,11 +10,13 @@ Left click to move and interact with Characters and Objects in the world and you
 
 Right click to examine Characters and Objects in the world and your inventory
 
+Be sure to click on the dialogue box to advance the text
+
 Press ESC to quit the game.
 
-Press ? to show/hide Debug Menu
+Press TAB to show/hide Debug Menu
 
-Don't use WASD to move.
+PS: Don't move the window to a second screen!
 
 The game is coded in C and uses the OogaBooga framework to open the game window and a bunch of other usefull standard features. 
 
