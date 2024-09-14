@@ -16,7 +16,7 @@ Press ESC to quit the game.
 
 Press ? to show/hide Debug Menu
 
-Don't use WASD to move.
+PS: Don't move the window to a second screen!
 
 The game is coded in C and uses the OogaBooga framework to open the game window and a bunch of other usefull standard features. 
 
