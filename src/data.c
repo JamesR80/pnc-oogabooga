@@ -122,7 +122,8 @@ typedef enum VerbState
 	v_click,
 	v_look,
 	v_grab,
-	v_use,  // --> use, open, pickup, talk, etc interact
+	v_talk,
+	v_use,  // --> use, open, pickup, etc interact
 	// etc...
 	v_MAX,
 } VerbState;
@@ -226,6 +227,8 @@ typedef struct World
 	CursorID currentCursor;
 	bool isHWCursor;
 	bool mouseActive;
+	string playerText;
+	float64 textBoxTime;
 } World;
 
 World* world = 0;
@@ -314,8 +317,8 @@ Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 
 	entityFound->scrollPos = v2(0.0, 400.0);
 	if (hoverText.count != 0) entityFound->hoverText = hoverText;
 	else entityFound->hoverText = STR("");
-	entityFound->lookText = STR("");
-	entityFound->useText = STR("");
+	entityFound->lookText = STR("I'm looking at this");
+	entityFound->useText = STR("I am interacting with this");
 
 	switch (entityFound->type)
 	{

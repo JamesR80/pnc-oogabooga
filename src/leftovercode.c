@@ -44,3 +44,20 @@
 		// 	// draw_frame.projection = m4_make_orthographic_projection(background->scrollPos.x, background->scrollPos.y, 0.0, 300.0, -1, 10);
 		// 	// animateF32ToTarget(&(background->scrollPos.x), player->pos.x +, deltaTime, rate);
 		// }
+
+
+
+
+
+		// :renderUI
+
+
+				// Sprite* sprite = getSprite(e->spriteID);
+				// Matrix4 xform = m4_scalar(1.0);
+				// if (e->clickable) { xform = m4_translate(xform, v3(0, 1.5 * sinBob(time, 3.0), 0)); } // maybe add && hotspots visible and do highlight
+				// xform = m4_translate(xform, v3(e->pos.x, e->pos.y, 0));
+				// xform = m4_translate(xform, v3(sprite->size.x * -0.5, 0.0, 0));
+				// TOCHECK: why? move half of size.x? leftover from tiles? // to make pos centered?
+				// Vector4 color = COLOR_WHITE;
+
+

@@ -1,50 +1,54 @@
 
 
-void entityClicked(Entity* e, Entity* player) // entity clicked or just screen clicked?
+void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity clicked or just screen clicked?
 {
-	e->justClicked = true;
-	log("click!");
-	if (fabsf(v2_dist(e->pos, player->pos)) < e->interactRadius) 
-	{
-		e->interactable = true;
-	}
-	else
-	{
-		e->interactable = false;
-		// move to entity...
-	} 
- 
-	switch (player->verbState)
-	{
-		case v_nil:
-			log("nothing!");
-			break;
 
-		case v_look:
-			log("looking!");
-			e->lookText = STR("ALPHA: I'm looking at this"); // I need to set these at loadRoom via DB i think
-			break;
-
-		case v_use:
-			log("using!");
-			
-			// if entity can be picked up && player is within range
-			if (e->interactable)
+	switch (isLeftClick)
+	{
+		case true: 
+			entity->justClicked = true;
+			log("left click!");
+			if (fabsf(v2_dist(entity->pos, player->pos)) < entity->interactRadius) 
 			{
-				e->useText = STR("I'll just grab this for now");				
-				world->inventory[e->itemID].inInventory = true;
-				destroyEntity(e);
+				entity->interactable = true;
 			}
-			else e->useText = STR("I can't use it from here");
-			// and set text flag...
+			else
+			{
+				entity->interactable = false;
+				// move to entity...
+			} 
 			break;
 
-		default:
-			// run obj clicked script?
-			// move player to click?
-
+		case false:
+			entity->justClicked = true;
+			log("right click!");
 			break;
 	}
+	if (entity->interactable)
+	{	
+		switch (entity->type)
+		{
+			case t_npc:
+				world->playerText = entity->useText;
+				world->uxStateID = ux_dialog;
+				break;
+			case t_object:
+				world->playerText = entity->useText;
+				world->inventory[entity->itemID].inInventory = true;
+				destroyEntity(entity);
+				break;
+			case t_door:
+				// do transition
+				break;
+			default:
+				break;
+
+		}
+		
+		// else e->useText = STR("I can't use it from here");
+		// and set text flag...
+	}
+
 	// some delay set justClicked to false.
 }
 
@@ -101,7 +105,8 @@ void movePlayer(Entity* player, Entity* background, float64 nowTime, float64 del
 
 void movePlayerToObject(Entity* player, Entity* object, WorldFrame worldF)
 {	
-	player->destPos = object->interactPos; // THIS FUNC IS THE PROBLEM!!!
+	// get best available interact Pos based on npc dir.
+	player->destPos = object->interactPos; 
 	player->isMoving = true;
 	movePlayer(player, worldF.bg, worldF.nowTime, worldF.deltaTime);
 }
@@ -111,6 +116,7 @@ void movePlayerToClick(Entity* player, WorldFrame worldF)
 {
 	// get valid destination pos from mousPos or from proj?
 	player->destPos = worldF.mousePosWorld;
+	// convert destPos to valid location in walkbox
 	player->isMoving = true;
 	movePlayer(player, worldF.bg, worldF.nowTime, worldF.deltaTime);	
 }

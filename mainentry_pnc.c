@@ -115,6 +115,7 @@ int entry(int argc, char **argv)
 	Vector2 camera_pos = v2(200, 110);
 	float zoom = 3.0;
 	world->uxStateID = ux_inventory;
+	world->playerText = STR("");
 
 	while (!window.should_close)
 	{
@@ -185,11 +186,18 @@ int entry(int argc, char **argv)
 					world->mouseActive = true;
 					world->currentCursor = e->hoverCursor;
 				}
-				if (e == background) 
+				if (e == background ) 
 				{
+
 					world->activeEntity = 0;
 					world->mouseActive = false;
 					world->currentCursor = e->hoverCursor;
+				}
+				if (world->activeEntity && (world->textBoxTime - worldFrame.nowTime < -3))
+				{
+					world->activeEntity->justClicked = false; // this is happening too quickly
+					world->playerText = STR("");
+
 				}
 			}	
 		}
@@ -244,75 +252,70 @@ int entry(int argc, char **argv)
 		// :renderPlayer
 		animate(player, worldFrame.nowTime, worldFrame.deltaTime);
 
-
-		// :renderActiveEntity stuff
-		Entity* e = world->activeEntity; 
-		if (world->mouseActive && e->type != t_background) 
 		{
-			Sprite* sprite = getSprite(e->spriteID);
-			// Item* item = getItem(worldFrame.activeItem->itemID);
-			
-			{ 
-				Vector4 color = v4(1, 1, 1, 0.2f);
-				// make rect around sprite and highlight on mouse over
-				Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
-				hotspot = range2f_shift(hotspot, e->pos);
-				// draw_rect(hotspot.min, range2f_size(hotspot), color); // should this be in render?
-				draw_circle(hotspot.min, range2f_size(hotspot), color);
-				// maybe draw the interact rad or something else that is causing the issue?
+			// :renderActiveEntity stuff
+			Entity* e = world->activeEntity; 
+			if (world->mouseActive && e->type != t_background) 
+			{
+				Sprite* sprite = getSprite(e->spriteID);
+				// Item* item = getItem(worldFrame.activeItem->itemID);
+				
+				{ 
+					Vector4 color = v4(1, 1, 1, 0.2f);
+					// make rect around sprite and highlight on mouse over
+					Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
+					hotspot = range2f_shift(hotspot, e->pos);
+					// draw_rect(hotspot.min, range2f_size(hotspot), color); // should this be in render?
+					draw_circle(hotspot.min, range2f_size(hotspot), color);
+					// maybe draw the interact rad or something else that is causing the issue?
 
-				// draw hover text
-				// do measure text and center
-				Vector2 hoverTextPos = v2(hotspot.min.x, hotspot.max.y);
-				draw_text(font, e->hoverText, fontHeight, hoverTextPos, textScaling, COLOR_GREEN);
+					// draw hover text
+					// do measure text and center
+					Vector2 hoverTextPos = v2(hotspot.min.x, hotspot.max.y);
+					draw_text(font, e->hoverText, fontHeight, hoverTextPos, textScaling, COLOR_GREEN);
+				}
+				if (world->activeEntity->justClicked)
+				{
+					// lets try a dialogue box by the player/npc etc
+					Sprite* playerSprite = getSprite(player->spriteID); // this could be in a more general scope maybe
+					Vector2 v2FrameSize = v2(playerSprite->frameWidth, playerSprite->frameHeight);
+					//Vector2 playerPos = getUIPosFromWorldPos(player->pos);
+
+					Vector2 dialogueBoxPos = v2_add(player->pos, v2(0.0, playerSprite->frameHeight)); 
+					// if text then get_measure text box etc, else min size
+					Vector2 dialogueBoxSize = v2(70.0, 30.0);
+					// draw_rect(dialogueBoxPos, dialogueBoxSize, v4(1.0, 1.0, 1.0, 0.5));
+					draw_text(font, world->playerText, fontHeight, dialogueBoxPos, textScaling, COLOR_BLACK);
+				}
 			}
-		}
-		else if (world->mouseActive) world->currentCursor = background->hoverCursor;
+			else if (world->mouseActive) world->currentCursor = background->hoverCursor;
 
 
-		// :renderUI
-
-
-				// Sprite* sprite = getSprite(e->spriteID);
-				// Matrix4 xform = m4_scalar(1.0);
-				// if (e->clickable) { xform = m4_translate(xform, v3(0, 1.5 * sinBob(time, 3.0), 0)); } // maybe add && hotspots visible and do highlight
-				// xform = m4_translate(xform, v3(e->pos.x, e->pos.y, 0));
-				// xform = m4_translate(xform, v3(sprite->size.x * -0.5, 0.0, 0));
-				// TOCHECK: why? move half of size.x? leftover from tiles? // to make pos centered?
-				// Vector4 color = COLOR_WHITE;
-
-
-
-		// :UI
-		{
 			// :Dialogue box?
-			// lets try a dialogue box by the player/npc etc
-			Sprite* playerSprite = getSprite(player->spriteID); // this could be in a more general scope maybe
-			Vector2 v2FrameSize = v2(playerSprite->frameWidth, playerSprite->frameHeight);
-			//Vector2 playerPos = getUIPosFromWorldPos(player->pos);
 
-			Vector2 dialogueBoxPos = v2_add(player->pos, v2(0.0, playerSprite->frameHeight)); 
-			// if text then get_measure text box etc, else min size
-			Vector2 dialogueBoxSize = v2(70.0, 30.0);
-			draw_rect(dialogueBoxPos, dialogueBoxSize, v4(1.0, 1.0, 1.0, 0.5));
 
-			if (world->activeEntity && world->activeEntity->justClicked)
+			
 			{
 				// TODO : get appropriate text - need a better data structure
-				draw_text(font, world->activeEntity->lookText, fontHeight, dialogueBoxPos, textScaling, COLOR_WHITE);
-				// need to fix delay !!! actually maybe don;t need a delay just on exit hopspot.
-				// need to have an on exit hotSpot. need a callback system.
-				// also the dialogue box text could be displayed based on measure text length
+
+				// get state from entity,
+				// draw relative state text
+				
 				
 			}
-
-
+		}
+		// :UI
+		{
 			// draw_frame.projection = m4_make_orthographic_projection(0.0, 400.0, 0.0, 300.0, -1, 10);
 			set_screen_space();
 			draw_frame.camera_xform = m4_scalar(1.0);
 
+			 // maybe use backbuffer?
+
 			if (world->uxStateID == ux_inventory)
-			{
+			{	
+				
+
 				// :UI inventory
 				float invStartPosX = 34.0; // inv screen position
 				float invStartPosY = 30.0;
@@ -343,7 +346,6 @@ int entry(int argc, char **argv)
 						Matrix4 xform = m4_scalar(1.0);
 						xform = m4_translate(xform, v3(invStartPosX + invSlotPadding, invStartPosY + invSlotPadding, 0.0));
 						draw_rect_xform(xform, v2(invSlotWidth, invSlotHeight), v4(1.0, 1.0, 1.0, 0.25));
-						// xform = m4_scale(xform, v3(2.0, 2.0, 1.0)); // this is just a hack, inv items should be in the right dimensions
 						draw_image_xform(item->image, xform, item->size, COLOR_WHITE);
 
 						{ // check mouse in item box - pull out to function

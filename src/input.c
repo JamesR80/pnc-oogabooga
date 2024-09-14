@@ -29,12 +29,10 @@
 
     if (is_key_just_released(KEY_TAB)) 
     {
-        log("pressed tab.");
-        if (world->uxStateID == ux_dialog) 
-        {
-            world->uxStateID = ux_inventory;
-        }
-        if (world->uxStateID == ux_inventory) world->uxStateID = ux_dialog;
+        
+        draw_rect(v2(0, 0), v2(400, 70), COLOR_BLACK);
+        if (world->uxStateID == ux_dialog) { world->uxStateID = ux_inventory; }
+        else if (world->uxStateID == ux_inventory) { world->uxStateID = ux_dialog; }
     }
     // Need *player, *room??
     // Maybe just start with mouse PnC!
@@ -46,7 +44,7 @@
         
         if (eSelected && eSelected->clickable) // check if in interact rad
         {	
-            entityClicked(eSelected, player);
+            entityClicked(eSelected, player, true);
             movePlayerToObject(player, eSelected, worldFrame);
             log("Moving to Object: %s", eSelected->hoverText);
         }
@@ -60,38 +58,46 @@
     {
         consume_key_just_pressed(MOUSE_BUTTON_RIGHT);
         
-        if (player->verbState > 0)
-        {	
-            player->verbState += 1;
-            if (player->verbState == v_MAX) player->verbState = 1;
-        }
-
-        // render cursor update? text tooltip on mouse hover?
-        switch (player->verbState)
-        {
-            case v_nil:
-                // assert error
-                break;
-
-            case v_click:
-
-                break;
-
-            case v_look:
-
-                break;
-            case v_grab:
-                break;
-
-            case v_use:
-                break;
-
-            default:
-                break;
-        }
-        // render cursor update? text tooltip on mouse hover?
-        log("%i", player->verbState);
+        // :examine
+        world->playerText = eSelected->lookText;
+        world->textBoxTime = worldFrame.nowTime;
+        entityClicked(eSelected, player, false);
+        
     }
+
+
+
+        // if (player->verbState > 0)
+        // {	
+        //     player->verbState += 1;
+        //     if (player->verbState == v_MAX) player->verbState = 1;
+        // }
+
+        // // render cursor update? text tooltip on mouse hover?
+        // switch (player->verbState)
+        // {
+        //     case v_nil:
+        //         // assert error
+        //         break;
+
+        //     case v_click:
+
+        //         break;
+
+        //     case v_look:
+
+        //         break;
+        //     case v_grab:
+        //         break;
+
+        //     case v_use:
+        //         break;
+
+        //     default:
+        //         break;
+        // }
+        // // render cursor update? text tooltip on mouse hover?
+        // log("%i", player->verbState);
     
     // :keyboard input stuff
     {
