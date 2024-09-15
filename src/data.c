@@ -56,7 +56,7 @@ typedef enum SpriteID
 	s_po_valet,
 	s_MAX,
 } SpriteID;
-Sprite sprites[s_MAX];
+
 
 typedef enum ItemID
 {
@@ -72,12 +72,15 @@ typedef struct Item
 {
 	u64 flags;
 	bool inInventory;
+	bool onCursor;
 	string name;
 	Gfx_Image* image; 
 	Vector2 size;
 	Vector2 origin;
-	string lookString;
-	string useString;
+	string lookText;
+	string useText;
+	bool justClicked;
+	Vector2 pos;
 } Item;
 
 typedef enum LayerID
@@ -101,20 +104,23 @@ typedef enum LayerID
 	l_MAX,
 } LayerID;
 
+typedef enum RoomID
+{
+	r_nil = 0,
+	r_cargo,
+	r_dining,
+	r_hallway,
+	r_lounge,
+	r_luggage,
+	r_sleeper,
+	//..
+	r_MAX,
+} RoomID;
+
 typedef struct Room
 {
 	// .. map of sprites w pos, background, walkbox, etc
 } Room;
-
-typedef enum RoomID
-{
-	r_nil = 0,
-	r_foyer,
-	r_library,
-	//..
-	r_MAX,
-} RoomID;
-Room rooms[r_MAX];
 
 typedef enum VerbState
 {
@@ -127,6 +133,32 @@ typedef enum VerbState
 	// etc...
 	v_MAX,
 } VerbState;
+
+typedef enum WalkboxID
+{
+	w_nil = 0,
+	w_dining_1,
+	w_dining_2,
+	w_dining_3,
+	w_dining_4,
+	//
+	w_MAX,
+} WalkboxID;
+
+typedef struct BoxSides
+{
+	bool left;
+	bool right;
+	bool top;
+	bool bottom;
+} BoxSides;
+
+
+typedef struct Walkbox
+{
+	Range2f box;
+	BoxSides isSideOpen;
+} Walkbox;
 
 typedef enum CursorID
 {
@@ -154,7 +186,6 @@ typedef struct Cursor
 	Vector2 clickSpot;
 
 } Cursor;
-Cursor cursors[c_MAX];
 
 typedef enum EntityFlags
 {
@@ -205,7 +236,7 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 
 #define MAX_ENTITY_COUNT 1024
 
-typedef enum UXStateID 	// this is randy caveman shit. not sure about this approach
+typedef enum UXStateID 
 {
 	ux_nil = 0,
 	ux_inventory,
@@ -218,18 +249,23 @@ typedef struct World
 {
 	Entity entities[MAX_ENTITY_COUNT];
 	Item inventory[i_MAX];
+	Cursor cursors[c_MAX];
+	Walkbox walkboxes[w_MAX];
+	Sprite sprites[s_MAX];
 	// Room rooms[r_MAX];
-	UXStateID uxStateID;				// this is randy caveman shit. not sure about this approach
+	UXStateID uxStateID;				
 	float inventoryAlpha; 			// this is randy caveman shit. not sure about this approach
 	float inventoryAlphaTarget;		// this is randy caveman shit. not sure about this approach
 	SpriteID currentBG;
 	Entity* activeEntity;
+	Item* activeItem;
 	CursorID currentCursor;
 	bool isHWCursor;
 	bool mouseActive;
 	string playerText;
 	float64 textBoxTime;
 	Range2f dialogueBox;
+	Range2f gameBox;
 	bool debugOn;
 } World;
 
@@ -249,6 +285,7 @@ typedef struct WorldFrame
 	Vector2 mousePosWorld;
 	Vector2 mousePosScreen;
 	Entity* player;
+	Walkbox* activeWalkbox;
 
 } WorldFrame;
 
@@ -271,20 +308,26 @@ void set_world_space()
 
 Sprite* getSprite(SpriteID spriteID)
 {
-	if (spriteID >= 0 && spriteID < s_MAX) return &sprites[spriteID];
-	else return &sprites[0];
+	if (spriteID >= 0 && spriteID < s_MAX) return &world->sprites[spriteID];
+	else return &world->sprites[0];
 }
 
 Cursor* getCursor(CursorID cursorID)
 {
-	if (cursorID >= 0 && cursorID < c_MAX) return &cursors[cursorID];
-	else return &cursors[0];
+	if (cursorID >= 0 && cursorID < c_MAX) return &world->cursors[cursorID];
+	else return &world->cursors[0];
 }
 
 Item* getItem(ItemID itemID)
 {
 	if (itemID >= 0 && itemID < i_MAX) return &world->inventory[itemID];
 	else return &world->inventory[0];
+}
+
+Walkbox* getWalkbox(WalkboxID walkboxID)
+{
+	if (walkboxID >= 0 && walkboxID < i_MAX) return &world->walkboxes[walkboxID];
+	else return &world->walkboxes[0];
 }
 
 Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 pos, string hoverText, bool clickable, u64 flags) // flags - clickable, active, render etc..
@@ -395,7 +438,7 @@ void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 o
 		if (origin.x) sprite.origin = origin;					// bottom center origin point of the hotspot relative to size
 		else sprite.origin = v2(sprite.size.x * 0.5, 0.0);
 
-		sprites[spriteID] = sprite;			// room->sprites[spriteID]?
+		world->sprites[spriteID] = sprite;			// room->sprites[spriteID]?
 
 		// assert?
 }
@@ -406,7 +449,7 @@ void loadCursor(CursorID cursorID, string path)
 	if (cursorID == 0) path = STR("missingTexture.png");
 	if (world->isHWCursor)
 	{	
-		cursor.hwCursor = os_make_custom_mouse_pointer_from_file(path, 10, 20, get_heap_allocator());
+		cursor.hwCursor = os_make_custom_mouse_pointer_from_file(path, 7, 31, get_heap_allocator());
 	}
 	else
 	{
@@ -417,7 +460,7 @@ void loadCursor(CursorID cursorID, string path)
 
 	}
 
-	cursors[cursorID] = cursor;	
+	world->cursors[cursorID] = cursor;	
 
 }
 void loadInventoryItem(ItemID itemID, string name, string path, bool inInventory, u64 flags)
@@ -433,7 +476,28 @@ void loadInventoryItem(ItemID itemID, string name, string path, bool inInventory
 	item.name = name;
 	item.flags = flags;
 	item.inInventory = inInventory;
+	item.onCursor = false;
+	item.lookText = STR("I'm looking at this item");
+	item.useText = STR("I'm trying to use this item");
+	item.pos = v2(0.0, 0.0);
+	item.justClicked = false;
+
 
 	world->inventory[itemID] = item;
 } 
 
+Walkbox boxMake(Vector2 min, Vector2 max, bool left, bool right, bool top, bool bottom)
+{
+	Walkbox walkbox;
+	walkbox.box = range2f_make(min, max);
+	walkbox.isSideOpen.left = left;
+	walkbox.isSideOpen.right = right;
+	walkbox.isSideOpen.top = top;
+	walkbox.isSideOpen.bottom = bottom;
+	return walkbox;
+}
+
+void loadWalkbox(WalkboxID walkboxID, Walkbox walkbox)
+{	
+	world->walkboxes[walkboxID] = walkbox;
+}

@@ -22,7 +22,7 @@
     Broken Sword - Two-Click-Context-Sensitive
 */
 
- void handleInput(Entity* player, Entity* eSelected, float64 deltaTime)
+ void handleInput(Entity* player, Entity* activeEntity, Item* activeItem, float64 deltaTime)
  {
 
     if (is_key_just_released(KEY_ESCAPE)) window.should_close = true;
@@ -49,16 +49,28 @@
         }
         else if (world->uxStateID == ux_inventory)
         {
-            if (eSelected && eSelected->clickable) // check if in interact rad
-            {	
-                entityClicked(eSelected, player, true);
-                movePlayerToObject(player, eSelected, worldFrame);
-                log("Moving to Object: %s", eSelected->hoverText);
-            }
-            else 
+            if (range2f_contains(world->gameBox, worldFrame.mousePosScreen))
             {
-                movePlayerToClick(player, worldFrame);
+                if (activeEntity && activeEntity->clickable) // check if in interact rad
+                {	
+                    entityClicked(activeEntity, player, true);
+                    movePlayerToObject(player, activeEntity, worldFrame);
+                    log("Moving to Object: %s", activeEntity->hoverText);
+                }
+                else
+                {
+                    movePlayerToClick(player, worldFrame);
+                }
             }
+            if (range2f_contains(world->dialogueBox, worldFrame.mousePosScreen))
+            {
+                if (activeItem)
+                {
+                    itemClicked(activeItem, true);
+                    // add to cursor
+                }
+            }
+
         }
         else if (world->uxStateID == ux_menu || world->uxStateID == ux_nil)
         { }
@@ -69,56 +81,30 @@
         consume_key_just_pressed(MOUSE_BUTTON_RIGHT);
         
         // :examine
-        world->playerText = eSelected->lookText;
+        if (activeEntity)
+        {
+            world->playerText = activeEntity->lookText;
+            entityClicked(activeEntity, player, false);
+        }
+        else if (activeItem)
+        {
+            // world->playerText = activeItem->lookText;
+            itemClicked(activeItem, false);
+        }
         world->textBoxTime = worldFrame.nowTime;
-        entityClicked(eSelected, player, false);
         
     }
-
-
-
-        // if (player->verbState > 0)
-        // {	
-        //     player->verbState += 1;
-        //     if (player->verbState == v_MAX) player->verbState = 1;
-        // }
-
-        // // render cursor update? text tooltip on mouse hover?
-        // switch (player->verbState)
-        // {
-        //     case v_nil:
-        //         // assert error
-        //         break;
-
-        //     case v_click:
-
-        //         break;
-
-        //     case v_look:
-
-        //         break;
-        //     case v_grab:
-        //         break;
-
-        //     case v_use:
-        //         break;
-
-        //     default:
-        //         break;
-        // }
-        // // render cursor update? text tooltip on mouse hover?
-        // log("%i", player->verbState);
     
     // :keyboard input stuff
-    {
-    Vector2 input_axis = v2(0, 0);
-    if (is_key_down('A')) input_axis.x -= 1.0;
-    if (is_key_down('D')) input_axis.x += 1.0;
-    if (is_key_down('S')) input_axis.y -= 1.0;
-    if (is_key_down('W')) input_axis.y += 1.0;
-    input_axis = v2_normalize(input_axis);
+    // {
+    // Vector2 input_axis = v2(0, 0);
+    // if (is_key_down('A')) input_axis.x -= 1.0;
+    // if (is_key_down('D')) input_axis.x += 1.0;
+    // if (is_key_down('S')) input_axis.y -= 1.0;
+    // if (is_key_down('W')) input_axis.y += 1.0;
+    // input_axis = v2_normalize(input_axis);
 
-    player->pos = v2_add(player->pos, v2_mulf(input_axis, (player->speed * deltaTime)));
-    }
+    // player->pos = v2_add(player->pos, v2_mulf(input_axis, (player->speed * deltaTime)));
+    // }
 
  }

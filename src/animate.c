@@ -34,7 +34,7 @@ void animate(Entity* entity, float64 nowTime, float64 deltaTime)
         case a_nil:
             startFrameX = 0;
             startFrameY = 0;
-            endFrameX = 0;
+            endFrameX = 3;
             endFrameY = 0;
             // assert()
             break;
@@ -77,7 +77,7 @@ void animate(Entity* entity, float64 nowTime, float64 deltaTime)
 
     // log("cols: %i", spritesheet->columns);
     // Sanity check configuration
-	assert(animEndIndex > animStartIndex, "The last frame must come before the first frame"); // 
+	assert(animEndIndex > animStartIndex, "The last frame must come before the first frame"); // check this
 	assert(startFrameX < columns, "anim_start_frame_x is out of bounds");
 	assert(startFrameY < rows, "anim_start_frame_y is out of bounds");
 	assert(endFrameX < columns, "anim_end_frame_x is out of bounds");

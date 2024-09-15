@@ -61,3 +61,15 @@
 				// Vector4 color = COLOR_WHITE;
 
 
+
+
+
+					// // lets try a dialogue box by the player/npc etc
+					// Sprite* playerSprite = getSprite(player->spriteID); // this could be in a more general scope maybe
+					// Vector2 v2FrameSize = v2(playerSprite->frameWidth, playerSprite->frameHeight);
+					// //Vector2 playerPos = getUIPosFromWorldPos(player->pos);
+
+					// Vector2 dialogueBoxPos = v2_add(player->pos, v2(0.0, playerSprite->frameHeight)); 
+					// // if text then get_measure text box etc, else min size
+					// Vector2 dialogueBoxSize = v2(70.0, 30.0);
+					// // draw_rect(dialogueBoxPos, dialogueBoxSize, v4(1.0, 1.0, 1.0, 0.5));

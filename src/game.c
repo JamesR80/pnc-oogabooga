@@ -1,10 +1,29 @@
 
-void invItemClicked(Item* item)
+void itemClicked(Item* item, bool isLeftClick)
 {
-
 	// add to cursor mousePosUI with an arrow and hide hwcursor
 	// switch hwCursor to cursor version of item?
 	// fuck maybe I just scale cursors up from 32 x 3?
+
+	switch (isLeftClick)
+	{
+		case true: 
+			item->justClicked = true;
+			log("item left click!");
+			item->onCursor = true;
+			item->inInventory = false;
+			break;
+
+		case false:
+			item->justClicked = true;
+			log("item right click!");
+			if (item->onCursor)
+			{
+				item->onCursor = false;
+				item->inInventory = true;
+			}
+			break;
+	}
 }
 
 void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity clicked or just screen clicked?
@@ -72,43 +91,52 @@ void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity c
 
 void movePlayer(Entity* player, Entity* background, float64 nowTime, float64 deltaTime)
 {
+	// Maybe just don't have path finding?
 	Vector2 direction = v2_sub(player->destPos, player->pos);
 	float distance = v2_length(direction);
 	AnimType anim; // = getSprite(player->spriteID)->currentAnim;
 
-	if (distance > 1.0f && player->isMoving)
-	{	
-		direction = v2_divf(direction, distance);
-		float movement = player->speed * deltaTime;
-		player->pos.x += direction.x * movement;
-		player->pos.y += direction.y * movement;
+	// if (range2f_contains(worldFrame.activeWalkbox->box, player->destPos))
+	// {
+		if (distance > 1.0f && player->isMoving)
+		{	
+			direction = v2_divf(direction, distance);
+			float movement = player->speed * deltaTime;
+			player->pos.x += direction.x * movement;
+			player->pos.y += direction.y * movement;
 
-		if (direction.x < 0) { anim = a_walk_left; }
-		if (direction.x > 0) { anim = a_walk_right; }
-		setAnimation(player, anim, nowTime);
+			if (direction.x < 0) { anim = a_walk_left; }
+			if (direction.x > 0) { anim = a_walk_right; }
+			setAnimation(player, anim, nowTime);
 
-		// clamp movement to walkbox
-		if (player->pos.x < 90.0) player->pos.x = 90.0;
-		if (player->pos.y < 100.0) player->pos.y = 100.0;
-		if (player->pos.x > 610.0) player->pos.x = 610.0;
-		if (player->pos.y > 150.0) player->pos.y = 150.0;
-
-		// // scroll background
-		// float32 bgScrollLimit = getSprite(background->spriteID)->image->width - 200;
-		// if (background->isScrollable && player->pos.x >= 200.0 && player->pos.x <= bgScrollLimit)
-		// {
-		// 	background->scrollPos = v2(player->pos.x - 200.0, player->pos.x + 200.0);
-		// 	// draw_frame.projection = m4_make_orthographic_projection(background->scrollPos.x, background->scrollPos.y, 0.0, 300.0, -1, 10);
-		// 	// animateF32ToTarget(&(background->scrollPos.x), player->pos.x +, deltaTime, rate);
-		// }
-
-	}
-	else if (player->isMoving)
-	{
-		player->isMoving = false;
-		setAnimation(player, a_idle, nowTime);
-		log("Stopped Moving. POS: %v2", player->pos);
-	}
+			// clamp movement to current walkbox unless side open
+			if (!worldFrame.activeWalkbox->isSideOpen.left && player->pos.x < worldFrame.activeWalkbox->box.min.x)
+			{
+				player->pos.x = worldFrame.activeWalkbox->box.min.x;
+				player->destPos = player->pos;
+			}
+			if (!worldFrame.activeWalkbox->isSideOpen.bottom && player->pos.y < worldFrame.activeWalkbox->box.min.y)
+			{
+				player->pos.y = worldFrame.activeWalkbox->box.min.y;
+				player->destPos = player->pos;
+			}
+			if (!worldFrame.activeWalkbox->isSideOpen.right && player->pos.x > worldFrame.activeWalkbox->box.max.x)
+			{
+				player->pos.x = worldFrame.activeWalkbox->box.max.x;
+				player->destPos = player->pos;
+			}
+			if (!worldFrame.activeWalkbox->isSideOpen.top && player->pos.y > worldFrame.activeWalkbox->box.max.y)
+			{
+				player->pos.y = worldFrame.activeWalkbox->box.max.y;
+				player->destPos = player->pos;
+			}
+		}
+		else if (player->isMoving)
+		{
+			player->isMoving = false;
+			setAnimation(player, a_idle, nowTime);
+			log("Stopped Moving. POS: %v2", player->pos);
+		}
 
 }
 

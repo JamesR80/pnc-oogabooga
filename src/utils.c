@@ -112,3 +112,11 @@ Vector2 getUIPosFromWorldPos(Vector2 pos)
 	return pos;
 }
 
+Vector2 centerTextToPos(string text, Gfx_Font* font, u32 fontHeight, Vector2 textScaling, Vector2 pos)
+{
+	Gfx_Text_Metrics metrics = measure_text(font, text, fontHeight, textScaling);
+	Vector2 justified = v2_sub(pos, metrics.functional_pos_min);
+	justified = v2_sub(justified, v2_divf(metrics.functional_size, 2.0));
+	return justified;
+}
+

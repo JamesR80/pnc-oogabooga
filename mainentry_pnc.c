@@ -46,10 +46,13 @@ int entry(int argc, char **argv)
 	world = alloc(get_heap_allocator(), sizeof(World));
 	memset(world, 0, sizeof(World));
 	
+	// :loadWalkboxes
+	loadWalkbox(w_dining_1, boxMake(v2(70.0, 97.0), v2(340.0, 123.0), false, true, false, false));
+	loadWalkbox(w_dining_2, boxMake(v2(340.0, 97.0), v2(400.0, 123.0),true, true, true, false));
+	loadWalkbox(w_dining_3, boxMake(v2(340.0, 123.0), v2(400.0, 150.0), false, false, false, true));
+	loadWalkbox(w_dining_4, boxMake(v2(400.0, 97.0), v2(535.0, 123.0), true, false, false, false));
 
-	// :load & create the stuff
-	// implement a load room function for all entities and store this stuff elsewhere. loadRoom(RoomID roomID);
-
+	
 	// :loadCursors
 	world->isHWCursor = true;
 	loadCursor(c_click, STR("jamAssets/cursors/click.png"));
@@ -58,6 +61,7 @@ int entry(int argc, char **argv)
 	loadCursor(c_talk, STR("jamAssets/cursors/talk.png"));
 	loadCursor(c_left, STR("jamAssets/cursors/left.png"));
 	loadCursor(c_right, STR("jamAssets/cursors/right.png"));
+	loadCursor(c_drag, STR("jamAssets/cursors/drag.png"));
 
 	// :loadCharacters
 	loadSprite(s_player, STR("jamAssets/characters/Adaline-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), true, 8, 5);
@@ -117,7 +121,8 @@ int entry(int argc, char **argv)
 	world->uxStateID = ux_inventory;
 	world->playerText = STR("");
 	world->dialogueBox = range2f_make(v2(30.0, 15.0), v2(370.0, 75.0));
-	world->debugOn = true;
+	world->gameBox = range2f_make(v2(20.0, 76.0), v2(380.0, 300.0));
+	world->debugOn = false;
 
 	while (!window.should_close)
 	{
@@ -140,7 +145,7 @@ int entry(int argc, char **argv)
 
 		worldFrame.world_proj = m4_make_orthographic_projection(window.width * -0.5, window.width * 0.5, window.height * -0.5, window.height * 0.5, -1, 10);
 		Vector2 target_pos = player->pos;
-		smoothCam(&camera_pos, target_pos, deltaTime, 15.0f);
+		smoothCam(&camera_pos, target_pos, deltaTime, 5.0f);
 
 		worldFrame.world_view = m4_identity;
 		// translate into position
@@ -159,14 +164,12 @@ int entry(int argc, char **argv)
 
 
 		// :update loop over inventory
-		// for (int i = 0; i < i_MAX; i++)
-		// {
-		// 	Item* item = &world->inventory[i];
-		// 	if (item->inInventory)
-		// 	{
-
-		// 	}
-		// }
+		for (int i = 0; i < w_MAX; i++)
+		{
+			Walkbox* box = &world->walkboxes[i];
+			if (range2f_contains(box->box, player->pos)) worldFrame.activeWalkbox = box;
+		}
+			
 
 		// :update loop over all entities
 		for (int i = 0; i < MAX_ENTITY_COUNT; i++)
@@ -178,7 +181,6 @@ int entry(int argc, char **argv)
 			{
 
 				Sprite* sprite = getSprite(e->spriteID);
-				Item* item = getItem(e->itemID);
 				
 				// check mouse in entity box - pull out to function
 				Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
@@ -188,14 +190,13 @@ int entry(int argc, char **argv)
 				{
 					world->activeEntity = e;
 					world->mouseActive = true;
-					world->currentCursor = e->hoverCursor;
+					if (world->currentCursor != c_drag) world->currentCursor = e->hoverCursor;
 				}
 				if (e == background ) 
 				{
-
 					world->activeEntity = 0;
 					world->mouseActive = false;
-					world->currentCursor = e->hoverCursor;
+					if (world->currentCursor != c_drag) world->currentCursor = e->hoverCursor;
 				}
 				if (world->activeEntity && (world->textBoxTime - worldFrame.nowTime < -3))
 				{
@@ -205,13 +206,24 @@ int entry(int argc, char **argv)
 				}
 			}	
 		}
+		// :update loop over inventory
+		for (int i = 0; i < i_MAX; i++)
+		{
+			Item* item = &world->inventory[i];
+			if (item->inInventory)
+			{	
+				Range2f hotspot = getHotSpot(item->size, item->origin);
+				
+
+			}
+		}
 
 
 
 		// :mouse input/hover/click stuff ( func inside the above?)
 		// need to redo this to enter/exit hotspot I think, although it works for inventory for some reason.
 
-		handleInput(player, world->activeEntity, worldFrame.deltaTime);
+		handleInput(player, world->activeEntity, world->activeItem, worldFrame.deltaTime);
 		movePlayer(player, background, worldFrame.nowTime, worldFrame.deltaTime);
 
 
@@ -262,34 +274,28 @@ int entry(int argc, char **argv)
 			if (world->mouseActive && e->type != t_background) 
 			{
 				Sprite* sprite = getSprite(e->spriteID);
-				// Item* item = getItem(worldFrame.activeItem->itemID);
+				// Item* item = getItem(world.activeItem);
 				
 				{ 
 					Vector4 color = v4(1, 1, 1, 0.2f);
 					// make rect around sprite and highlight on mouse over
 					Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
 					hotspot = range2f_shift(hotspot, e->pos);
-					// draw_rect(hotspot.min, range2f_size(hotspot), color); // should this be in render?
 					if (world->debugOn) { draw_circle(hotspot.min, range2f_size(hotspot), color); }
 					// maybe draw the interact rad or something else that is causing the issue?
 
-					// draw hover text
-					// do measure text and center
-					Vector2 hoverTextPos = v2(hotspot.min.x, hotspot.max.y);
+					// draw hover text -  TODO: do measure text and center
+					Vector2 hoverTextPos = v2(e->pos.x, hotspot.max.y + 5.0);
+					hoverTextPos = centerTextToPos(e->hoverText, font, fontHeight, textScaling, hoverTextPos);
 					draw_text(font, e->hoverText, fontHeight, hoverTextPos, textScaling, COLOR_GREEN);
 				}
 				if (world->activeEntity->justClicked)
 				{
-					// lets try a dialogue box by the player/npc etc
-					Sprite* playerSprite = getSprite(player->spriteID); // this could be in a more general scope maybe
-					Vector2 v2FrameSize = v2(playerSprite->frameWidth, playerSprite->frameHeight);
-					//Vector2 playerPos = getUIPosFromWorldPos(player->pos);
 
-					Vector2 dialogueBoxPos = v2_add(player->pos, v2(0.0, playerSprite->frameHeight)); 
-					// if text then get_measure text box etc, else min size
-					Vector2 dialogueBoxSize = v2(70.0, 30.0);
-					// draw_rect(dialogueBoxPos, dialogueBoxSize, v4(1.0, 1.0, 1.0, 0.5));
-					draw_text(font, world->playerText, fontHeight, dialogueBoxPos, textScaling, COLOR_BLACK);
+					set_screen_space();
+					Vector2 dialogueBoxPos = centerTextToPos(world->playerText, font, fontHeight, textScaling, v2(200.0, 75.0));
+					draw_text(font, world->playerText, fontHeight, dialogueBoxPos, textScaling, COLOR_WHITE);
+					set_world_space();
 				}
 			}
 			else if (world->mouseActive) world->currentCursor = background->hoverCursor;
@@ -318,11 +324,9 @@ int entry(int argc, char **argv)
 
 			if (world->uxStateID == ux_inventory)
 			{	
-				
-
 				// :UI inventory
 				float invStartPosX = 34.0; // inv screen position
-				float invStartPosY = 30.0;
+				float invStartPosY = 20.0;
 				float invSlotWidth = 32;
 				float invSlotHeight = 32;
 				float invSlotPadding = 4;
@@ -349,28 +353,26 @@ int entry(int argc, char **argv)
 						invItemCount += 1;
 						Matrix4 xform = m4_scalar(1.0);
 						xform = m4_translate(xform, v3(invStartPosX + invSlotPadding, invStartPosY + invSlotPadding, 0.0));
-						draw_rect_xform(xform, v2(invSlotWidth, invSlotHeight), v4(1.0, 1.0, 1.0, 0.25));
+						// draw_rect_xform(xform, v2(invSlotWidth, invSlotHeight), v4(1.0, 1.0, 1.0, 0.25));
 						draw_image_xform(item->image, xform, item->size, COLOR_WHITE);
 
 						{ // check mouse in item box - pull out to function
 							Vector2 mousePosUI = getMouseCurrentProj(); // get Mouse in UI Coords
-							Vector4 color = v4(1, 1, 1, 0.35f);
+							Vector4 color = v4(1, 1, 1, 0.15f);
 							// make rect around sprite and highlight on mouse over
 							Range2f hotspot = getHotSpot(v2(invSlotWidth, invSlotHeight), v2(-invSlotPadding, -invSlotPadding));
 							hotspot = range2f_shift(hotspot, v2(invStartPosX, invStartPosY));
 							if (range2f_contains(hotspot, mousePosUI)) 
 							{
-								if (world->debugOn) { draw_rect(hotspot.min, range2f_size(hotspot), color); } // highlight box
+								draw_rect(hotspot.min, range2f_size(hotspot), color);// highlight box
 								float adjustScale = 0.5 * sinBob(time, 5.0); // maybe make an animation instead of sinBob
-								// xform = m4_scale(xform, v3(1.5, 1.5, 1.5));
-								worldFrame.activeItem = item;
+								xform = m4_scale(xform, v3(1.0, adjustScale, 1.0));
+								world->activeItem = item;
 
-								xform = m4_translate(xform, v3(1.0, invStartPosY + (invSlotPadding * 2.0), 0.0)); // need this measured and centered
-								draw_text_xform(font, item->name, fontHeight, xform, textScaling, COLOR_BLUE);
+								Vector2 pos = centerTextToPos(item->name, font, fontHeight, textScaling, v2(hotspot.min.x + (invSlotWidth / 2.0), hotspot.min.y - 10.0));
+								draw_text(font, item->name, fontHeight, pos, textScaling, COLOR_BLUE);
 
 								// invItemClicked(item, entity? )
-
-								
 							}
 						}
 						invStartPosX += invSlotWidth + invSlotPadding;
@@ -415,6 +417,17 @@ int entry(int argc, char **argv)
 					ShowCursor(true);
 					Cursor* c = getCursor(world->currentCursor);
 					os_set_mouse_pointer_custom(c->hwCursor);
+
+					if (world->activeItem && world->activeItem->onCursor)
+					{
+						ShowCursor(false);
+						Vector2 mouseOffset = v2(worldFrame.mousePosScreen.x + 5.0, worldFrame.mousePosScreen.y - 19.0);
+						draw_image(world->activeItem->image, mouseOffset, v2_mulf(world->activeItem->size, 0.5), COLOR_WHITE);
+						world->activeItem->inInventory = false;
+						world->currentCursor = c_drag;
+					}
+					else if (world->mouseActive == false) world->currentCursor = background->hoverCursor;
+
 				}
 				else
 				{
@@ -440,8 +453,8 @@ int entry(int argc, char **argv)
 				// draw_text(font, tprint("Mouse: %v2", v2(input_frame.mouse_x / 3.0, input_frame.mouse_y / 3.0)), fontHeight, v2(10, 10), v2(0.2, 0.2), COLOR_RED);
 				draw_text(font, tprint("ScreenPos: [ %i, %i ]", (int)mouseProjPos.x, (int)mouseProjPos.y), fontHeight, v2(10, 10), v2(0.1, 0.1), COLOR_RED);
 				draw_text(font, tprint("WorldPos: [ %i, %i ]", (int)worldFrame.mousePosWorld.x, (int)worldFrame.mousePosWorld.y), fontHeight, v2(100, 10), v2(0.1, 0.1), COLOR_RED);
-				draw_text(font, tprint("InputPos: [ %i, %i ]", (int)input_frame.mouse_x, (int)input_frame.mouse_y), fontHeight, v2(200, 10), v2(0.1, 0.1), COLOR_RED);
-				draw_text(font, tprint("CameraPos: [ %i, %i ]", (int)camera_pos.x, (int)camera_pos.y), fontHeight, v2(300, 10), v2(0.1, 0.1), COLOR_RED);
+				// draw_text(font, tprint("InputPos: [ %i, %i ]", (int)input_frame.mouse_x, (int)input_frame.mouse_y), fontHeight, v2(200, 10), v2(0.1, 0.1), COLOR_RED);
+				// draw_text(font, tprint("CameraPos: [ %i, %i ]", (int)camera_pos.x, (int)camera_pos.y), fontHeight, v2(300, 10), v2(0.1, 0.1), COLOR_RED);
 
 			}
 
