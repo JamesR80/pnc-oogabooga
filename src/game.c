@@ -34,16 +34,6 @@ void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity c
 		case true: 
 			entity->justClicked = true;
 			log("left click!");
-			if (fabsf(v2_dist(entity->pos, player->pos)) < entity->interactRadius) 
-			{
-				entity->isInRangeToInteract = true;
-			}
-			else
-			{
-				entity->isInRangeToInteract = false;
-				// move to entity...
-			} 
-			break;
 
 		case false:
 			entity->justClicked = true;
@@ -56,7 +46,6 @@ void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity c
 		{
 			case t_npc:
 				log("dialog?");
-				world->playerText = entity->useText;
 				world->uxStateID = ux_dialog;
 				break;
 			case t_object:

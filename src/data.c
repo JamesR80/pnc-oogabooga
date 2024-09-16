@@ -501,3 +501,12 @@ void loadWalkbox(WalkboxID walkboxID, Walkbox walkbox)
 {	
 	world->walkboxes[walkboxID] = walkbox;
 }
+
+void drawBoxFromRange2f(Walkbox* box, float lineWidth, Vector4 color)
+{
+	draw_line(box->box.min, v2(box->box.max.x, box->box.min.y) , lineWidth, color); // bottom of box
+	draw_line(v2(box->box.max.x, box->box.min.y), box->box.max, lineWidth, color); // ridght side of box
+	draw_line(box->box.max, v2(box->box.min.x, box->box.max.y), lineWidth, color); // top of box
+	draw_line(v2(box->box.min.x, box->box.max.y), box->box.min, lineWidth, color); // left side of box
+
+}

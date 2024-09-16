@@ -64,9 +64,9 @@ int entry(int argc, char **argv)
 	loadCursor(c_drag, STR("jamAssets/cursors/drag.png"));
 
 	// :loadCharacters
-	loadSprite(s_player, STR("jamAssets/characters/Adaline-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), true, 8, 5);
-	loadSprite(s_ch_conductor, STR("jamAssets/characters/Conductor-Idle-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), true, 4, 1);
-	loadSprite(s_ch_reporter, STR("jamAssets/characters/Reporter-Idle-Sheet.png"), v2(0.0, 0.0), v2(0.0, 0.0), true, 4, 1);
+	loadSprite(s_player, STR("jamAssets/characters/Adaline-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 8, 5);
+	loadSprite(s_ch_conductor, STR("jamAssets/characters/Conductor-Idle-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 4, 1);
+	loadSprite(s_ch_reporter, STR("jamAssets/characters/Reporter-Idle-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 4, 1);
 
 	// :loadPortraits
 	loadSprite(s_po_player, STR("jamAssets/portraits/MCPortrait.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
@@ -163,7 +163,7 @@ int entry(int argc, char **argv)
 		Vector2 mousePosInput = v2(input_frame.mouse_x, input_frame.mouse_y);
 
 
-		// :update loop over inventory
+		// :update loop over walkboxes
 		for (int i = 0; i < w_MAX; i++)
 		{
 			Walkbox* box = &world->walkboxes[i];
@@ -174,36 +174,42 @@ int entry(int argc, char **argv)
 		// :update loop over all entities
 		for (int i = 0; i < MAX_ENTITY_COUNT; i++)
 		{
-			Entity* e = &world->entities[i];
+			Entity* entity = &world->entities[i];
 
 			// :mouseOver
-			if (e->isValid)
+			if (entity->isValid)
 			{
 
-				Sprite* sprite = getSprite(e->spriteID);
+				Sprite* sprite = getSprite(entity->spriteID);
 				
 				// check mouse in entity box - pull out to function
+				// Range2f hotspot = range2f_make(v2_add(entity->pos, sprite->origin), v2_add(entity->pos, sprite->clickableSize));
 				Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
-				hotspot = range2f_shift(hotspot, e->pos);
+				hotspot = range2f_shift(hotspot, entity->pos);
+				if (entity != player)
+				{
+					if (fabsf(v2_dist(entity->pos, player->pos)) < entity->interactRadius) entity->isInRangeToInteract = true;
+					else entity->isInRangeToInteract = false;
 
-				if (range2f_contains(hotspot, worldFrame.mousePosWorld))
-				{
-					world->activeEntity = e;
-					world->mouseActive = true;
-					if (world->currentCursor != c_drag) world->currentCursor = e->hoverCursor;
+					if (range2f_contains(hotspot, worldFrame.mousePosWorld))
+					{
+						world->activeEntity = entity;
+						world->mouseActive = true;
+						if (world->currentCursor != c_drag && entity->isInRangeToInteract) world->currentCursor = entity->hoverCursor;
+					}
+					if (entity == background ) 
+					{
+						world->activeEntity = 0;
+						world->mouseActive = false;
+						if (world->currentCursor != c_drag) world->currentCursor = entity->hoverCursor;
+					}
+					if (world->activeEntity && (world->textBoxTime - worldFrame.nowTime < -3))
+					{
+						world->activeEntity->justClicked = false; 
+						world->playerText = STR("");
+					}
 				}
-				if (e == background ) 
-				{
-					world->activeEntity = 0;
-					world->mouseActive = false;
-					if (world->currentCursor != c_drag) world->currentCursor = e->hoverCursor;
-				}
-				if (world->activeEntity && (world->textBoxTime - worldFrame.nowTime < -3))
-				{
-					world->activeEntity->justClicked = false; // this is happening too quickly
-					world->playerText = STR("");
 
-				}
 			}	
 		}
 		// :update loop over inventory
@@ -455,6 +461,15 @@ int entry(int argc, char **argv)
 				draw_text(font, tprint("WorldPos: [ %i, %i ]", (int)worldFrame.mousePosWorld.x, (int)worldFrame.mousePosWorld.y), fontHeight, v2(100, 10), v2(0.1, 0.1), COLOR_RED);
 				// draw_text(font, tprint("InputPos: [ %i, %i ]", (int)input_frame.mouse_x, (int)input_frame.mouse_y), fontHeight, v2(200, 10), v2(0.1, 0.1), COLOR_RED);
 				// draw_text(font, tprint("CameraPos: [ %i, %i ]", (int)camera_pos.x, (int)camera_pos.y), fontHeight, v2(300, 10), v2(0.1, 0.1), COLOR_RED);
+
+				// draw walkboxes
+				set_world_space();
+				for (int i = 0; i < w_MAX; i++)
+				{
+					Walkbox* box = &world->walkboxes[i];
+					drawBoxFromRange2f(box, 1.0, COLOR_RED);
+				}
+				set_screen_space();
 
 			}
 

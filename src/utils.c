@@ -120,3 +120,4 @@ Vector2 centerTextToPos(string text, Gfx_Font* font, u32 fontHeight, Vector2 tex
 	return justified;
 }
 
+
