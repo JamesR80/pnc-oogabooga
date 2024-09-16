@@ -120,4 +120,37 @@ Vector2 centerTextToPos(string text, Gfx_Font* font, u32 fontHeight, Vector2 tex
 	return justified;
 }
 
+void drawBoxFromRange2f(Range2f box, float lineWidth, Vector4 color)
+{
+	draw_line(box.min, v2(box.max.x, box.min.y) , lineWidth, color); // bottom of box
+	draw_line(v2(box.max.x, box.min.y), box.max, lineWidth, color); // ridght side of box
+	draw_line(box.max, v2(box.min.x, box.max.y), lineWidth, color); // top of box
+	draw_line(v2(box.min.x, box.max.y), box.min, lineWidth, color); // left side of box
 
+}
+
+bool doLinesIntersect(Vector2 line1Start, Vector2 line1End, Vector2 line2Start, Vector2 line2End)
+{
+    float epsilon = 0.1;
+    float tolerance = 0.1;
+
+    // Calculate the denominator of the intersection formula
+    float denominator = (line1Start.x - line1End.x) * (line2Start.y - line2End.y) -
+                        (line1Start.y - line1End.y) * (line2Start.x - line2End.x);
+
+    // If the denominator is close to zero, the lines are parallel and do not intersect
+    if (fabsf(denominator) < epsilon) return false;
+
+    // Calculate the intersection point
+    float t = ((line1Start.x - line2Start.x) * (line2Start.y - line2End.y) -
+               (line1Start.y - line2Start.y) * (line2Start.x - line2End.x)) / denominator;
+    float u = -((line1Start.x - line1End.x) * (line1Start.y - line2Start.y) -
+                (line1Start.y - line1End.y) * (line1Start.x - line2Start.x)) / denominator;
+
+    // Check if the intersection point is within the line segments, with a tolerance
+    bool line1Intersection = t >= -tolerance && t <= 1 + tolerance;
+    bool line2Intersection = u >= -tolerance && u <= 1 + tolerance;
+
+    // If the intersection point is within both line segments, return true
+    return line1Intersection && line2Intersection;
+}

@@ -129,12 +129,12 @@ void animate(Entity* entity, float64 nowTime, float64 deltaTime)
 
 }
 
-void smoothCam(Vector2* value, Vector2 target, float deltaTime, float rate)
+void smoothCam(Vector2* cameraPos, Vector2 targetPos, float deltaTime, float rate)
 {
 
 	float32 bgScrollLimit = getSprite(worldFrame.bg->spriteID)->image->width - 200;
-	if (worldFrame.bg->isScrollable && target.x >= 200.0 && target.x <= bgScrollLimit)
+	if (worldFrame.bg->isScrollable && targetPos.x >= 200.0 && targetPos.x <= bgScrollLimit)
 	{
-		animateF32ToTarget(&(value->x), target.x, deltaTime, rate);
+		animateF32ToTarget(&(cameraPos->x), targetPos.x, deltaTime, rate);
 	}
 }

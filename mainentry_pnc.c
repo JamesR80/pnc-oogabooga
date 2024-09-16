@@ -37,7 +37,7 @@ int entry(int argc, char **argv)
 	// below is the window offest from bottom left of screen - maybe get screen dimensions and center it.
 	window.point_x = 300;
 	window.point_y = 300;
-	window.clear_color = hex_to_rgba(0x6495EDff); // backgroung color
+	window.clear_color = hex_to_rgba(0x6495EDff); // background color
 
 	// disable windows cursor
 	ShowCursor(false);
@@ -50,7 +50,15 @@ int entry(int argc, char **argv)
 	loadWalkbox(w_dining_1, boxMake(v2(70.0, 97.0), v2(340.0, 123.0), false, true, false, false));
 	loadWalkbox(w_dining_2, boxMake(v2(340.0, 97.0), v2(400.0, 123.0),true, true, true, false));
 	loadWalkbox(w_dining_3, boxMake(v2(340.0, 123.0), v2(400.0, 150.0), false, false, false, true));
-	loadWalkbox(w_dining_4, boxMake(v2(400.0, 97.0), v2(535.0, 123.0), true, false, false, false));
+	loadWalkbox(w_dining_4, boxMake(v2(400.0, 97.0), v2(530.0, 123.0), true, false, false, false));
+
+	// quad test - bartender
+	Quad test = {0};
+	test.q1 = v2(440.0, 170.0);
+	test.q2 = v2(470.0, 170.0);
+	test.q3 = v2(470.0, 213.0);
+	test.q4 = v2(440.0, 213.0);
+	test.quadType = q_object;
 
 	
 	// :loadCursors
@@ -82,23 +90,41 @@ int entry(int argc, char **argv)
 
 	// :loadBackgrounds
 	loadSprite(s_bg_dining, STR("jamAssets/rooms/DiningCarBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_bg_hallway, STR("jamAssets/rooms/HallwayBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_bg_lounge, STR("jamAssets/rooms/LoungeCarBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_bg_luggage, STR("jamAssets/rooms/LuggageClosetBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_bg_cargo, STR("jamAssets/rooms/CargoBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_bg_sleeper, STR("jamAssets/rooms/MCSleeperCarBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+
+	// :createBackgrounds - these don't need to be entities in final hopefully
+	Entity* bgDining = createEntity(t_background, s_bg_dining, i_nil, v2(0, 0), null_string, false, 0);
+	Entity* bgHallway = createEntity(t_background, s_bg_hallway, i_nil, v2(600.0, 0), null_string, false, 0);
+	Entity* bgLounge = createEntity(t_background, s_bg_lounge, i_nil, v2(1200.0, 0), null_string, false, 0);
+	Entity* bgLuggage = createEntity(t_background, s_bg_luggage, i_nil, v2(1800, 0), null_string, false, 0);
+	Entity* bgCargo = createEntity(t_background, s_bg_cargo, i_nil, v2(-400, 0), null_string, false, 0);
+	Entity* bgSleeper = createEntity(t_background, s_bg_sleeper, i_nil, v2(-800, 0), null_string, false, 0);
 
 	// :createEntities and Objects
-	Entity* background = createEntity(t_background, s_bg_dining, i_nil, v2(0, 0), null_string, false, 0);
 	Entity* player = createEntity(t_player, s_player, i_nil, v2(175, 110), null_string, false, 0);
 	Entity* conductor = createEntity(t_npc, s_ch_conductor, i_nil, v2(110, 110), STR("Conductor"), true, 0);
 	Entity* reporter = createEntity(t_npc, s_ch_reporter, i_nil, v2(500, 110), STR("Reporter"), true, 0);
-
-	// add this to createEntity() 
-	conductor->interactPos.x = conductor->pos.x + 30.0; // + if facing right, - if facing left
-	reporter->interactPos.x = reporter->pos.x - 30.0;
-
 
 	// :createItems
 	Entity* coupon = createEntity(t_object, s_item_coupon, i_coupon, v2(300, 110), STR("Coupon"), true, 0);
 	Entity* drink = createEntity(t_item, s_item_drink, i_drink, v2(-100, 0), STR("Fancy Cocktail"), true, 0);
 	Entity* headshot = createEntity(t_item, s_item_headshot, i_headshot, v2(-100, 0), STR("Headshot of Starlet"), true, 0);
 	Entity* key = createEntity(t_item, s_item_key, i_key, v2(-100, 0), STR("Brass Key"), true, 0);
+
+	// :createDoors - do these need to be a struct?
+	Range2f doorL_Dining = range2f_make(v2(40.0,95.0), v2(70.0, 195.0));
+	Range2f doorR_Dining = range2f_make(v2(530.0, 95.0), v2(560.0, 195.0));
+
+	// add this to createEntity() 
+	conductor->interactPos.x = conductor->pos.x + 30.0; // + if facing right, - if facing left
+	reporter->interactPos.x = reporter->pos.x - 30.0;
+
+
+
 
 	// :createInventoryItems
 	loadInventoryItem(i_coupon, STR("Drink Coupon"), STR("jamAssets/objects/coupon.png"), false, 0); // load this when needed? How?
@@ -136,7 +162,7 @@ int entry(int argc, char **argv)
 		worldFrame.deltaTime = deltaTime;
 		prevTime = worldFrame.nowTime;
 
-		worldFrame.bg = background; // = world.current bg or something...
+		worldFrame.bg = bgDining; // = world.current bg or something...
 		worldFrame.player = player; 
 
 		// :camera - 
@@ -197,7 +223,7 @@ int entry(int argc, char **argv)
 						world->mouseActive = true;
 						if (world->currentCursor != c_drag && entity->isInRangeToInteract) world->currentCursor = entity->hoverCursor;
 					}
-					if (entity == background ) 
+					if (entity == worldFrame.bg) 
 					{
 						world->activeEntity = 0;
 						world->mouseActive = false;
@@ -230,14 +256,14 @@ int entry(int argc, char **argv)
 		// need to redo this to enter/exit hotspot I think, although it works for inventory for some reason.
 
 		handleInput(player, world->activeEntity, world->activeItem, worldFrame.deltaTime);
-		movePlayer(player, background, worldFrame.nowTime, worldFrame.deltaTime);
+		movePlayer(player, worldFrame.bg, worldFrame.nowTime, worldFrame.deltaTime);
 
 
 		// :render loop over entities - pull out to function - z indexing??
 		
 		// :renderBackground
-		Sprite* bgSprite = getSprite(background->spriteID); 
-		draw_image(bgSprite->image, background->pos, bgSprite->size, COLOR_WHITE);
+		Sprite* bgSprite = getSprite(worldFrame.bg->spriteID); 
+		draw_image(bgSprite->image, worldFrame.bg->pos, bgSprite->size, COLOR_WHITE);
 
 		// :renderObjects
 		for (int i = 0; i < MAX_ENTITY_COUNT; i++)
@@ -304,7 +330,7 @@ int entry(int argc, char **argv)
 					set_world_space();
 				}
 			}
-			else if (world->mouseActive) world->currentCursor = background->hoverCursor;
+			else if (world->mouseActive) world->currentCursor = worldFrame.bg->hoverCursor;
 
 
 			// :Dialogue box?
@@ -432,7 +458,7 @@ int entry(int argc, char **argv)
 						world->activeItem->inInventory = false;
 						world->currentCursor = c_drag;
 					}
-					else if (world->mouseActive == false) world->currentCursor = background->hoverCursor;
+					else if (world->mouseActive == false) world->currentCursor = worldFrame.bg->hoverCursor;
 
 				}
 				else
@@ -464,21 +490,29 @@ int entry(int argc, char **argv)
 
 				// draw walkboxes
 				set_world_space();
+				drawBoxFromRange2f(doorL_Dining, 1.0, COLOR_BLUE);
+				drawBoxFromRange2f(doorR_Dining, 1.0, COLOR_BLUE);
+				drawQuadLines(test, 1.0, COLOR_GREEN);
+				if (isPointInConvexQuad(test, worldFrame.mousePosWorld)) 
+				{
+					drawQuadLines(test, 1.0, COLOR_BLUE);
+				}
+
 				for (int i = 0; i < w_MAX; i++)
 				{
 					Walkbox* box = &world->walkboxes[i];
-					drawBoxFromRange2f(box, 1.0, COLOR_RED);
+					drawBoxFromRange2f(box->box, 1.0, COLOR_RED);
 				}
+
+				// test line intersection
+
+
+
 				set_screen_space();
 
 			}
-
-			
-
-
 		}
 		
-
 		os_update(); 		
 		gfx_update();
 

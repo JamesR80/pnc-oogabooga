@@ -94,6 +94,12 @@ void movePlayer(Entity* player, Entity* background, float64 nowTime, float64 del
 			player->pos.x += direction.x * movement;
 			player->pos.y += direction.y * movement;
 
+			if (doLinesIntersect(player->pos, player->destPos, worldFrame.activeWalkbox->box.max, 
+								v2(worldFrame.activeWalkbox->box.max.x, worldFrame.activeWalkbox->box.min.y)))
+								{
+									// log("true");
+								}
+
 			if (direction.x < 0) { anim = a_walk_left; }
 			if (direction.x > 0) { anim = a_walk_right; }
 			setAnimation(player, anim, nowTime);

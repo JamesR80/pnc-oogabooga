@@ -41,6 +41,9 @@ typedef enum SpriteID
 	s_bg_lounge,
 	s_bg_hallway,
 	s_bg_dining,
+	s_bg_cargo,
+	s_bg_luggage,
+	s_bg_sleeper,
 	s_door0,
 	s_item_key,
 	s_item_coupon,
@@ -153,6 +156,25 @@ typedef struct BoxSides
 	bool bottom;
 } BoxSides;
 
+typedef enum QuadType
+{
+	q_nil = 0,
+	q_walkbox,
+	q_door,
+	q_object,
+	//
+	q_MAX,
+} QuadType;
+
+typedef struct Quad
+{
+	Vector2 q1; // bottom left
+	Vector2 q2; // bottom right
+	Vector2 q3; // top right
+	Vector2 q4; // top left
+	BoxSides isSideOpen;
+	QuadType quadType;
+} Quad;
 
 typedef struct Walkbox
 {
@@ -413,7 +435,7 @@ void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 o
 		Sprite sprite;
 		if (spriteID == 0) path = STR("missingTexture.png");
 		Gfx_Image* image = load_image_from_disk(path, get_heap_allocator());
-		// assert(image, "failed to load image")
+		assert(image, "failed to load image")
 		sprite.image = image;
 
 		if (isAnimated)
@@ -502,11 +524,37 @@ void loadWalkbox(WalkboxID walkboxID, Walkbox walkbox)
 	world->walkboxes[walkboxID] = walkbox;
 }
 
-void drawBoxFromRange2f(Walkbox* box, float lineWidth, Vector4 color)
+void drawQuadLines(Quad quad, float lineWidth, Vector4 color)
 {
-	draw_line(box->box.min, v2(box->box.max.x, box->box.min.y) , lineWidth, color); // bottom of box
-	draw_line(v2(box->box.max.x, box->box.min.y), box->box.max, lineWidth, color); // ridght side of box
-	draw_line(box->box.max, v2(box->box.min.x, box->box.max.y), lineWidth, color); // top of box
-	draw_line(v2(box->box.min.x, box->box.max.y), box->box.min, lineWidth, color); // left side of box
+	draw_line(quad.q1, quad.q2, lineWidth, color);
+	draw_line(quad.q2, quad.q3, lineWidth, color);
+	draw_line(quad.q3, quad.q4, lineWidth, color);
+	draw_line(quad.q4, quad.q1, lineWidth, color);
+}
 
+float getAreaOfTriangle(Vector2 p1, Vector2 p2, Vector2 p3) 
+{
+    return (p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y)) / 2.0f;
+}
+
+bool isPointInConvexQuad(Quad quad, Vector2 p)
+{	
+    // Calculate the areas of the four triangles formed by the point and the vertices
+    float area1 = getAreaOfTriangle(p, quad.q1, quad.q2);
+    float area2 = getAreaOfTriangle(p, quad.q2, quad.q3);
+    float area3 = getAreaOfTriangle(p, quad.q3, quad.q4);
+    float area4 = getAreaOfTriangle(p, quad.q4, quad.q1);
+
+    // Calculate the total area of the quadrilateral
+    float totalArea = getAreaOfTriangle(quad.q1, quad.q2, quad.q3) + getAreaOfTriangle(quad.q1, quad.q3, quad.q4);
+
+    // Check if the point is inside the quadrilateral
+    bool inside = true;
+    if (area1 < 0 || area2 < 0 || area3 < 0 || area4 < 0) {
+        inside = false;
+    } else if (fabsf(area1 + area2 + area3 + area4 - totalArea) > 0.001f) {
+        inside = false;
+    }
+
+    return inside;
 }
