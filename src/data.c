@@ -144,6 +144,11 @@ typedef enum WalkboxID
 	w_dining_2,
 	w_dining_3,
 	w_dining_4,
+	w_luggage_1,
+	w_luggage_2,
+	w_luggage_3,
+	w_luggage_4,
+	w_hallway_1,
 	//
 	w_MAX,
 } WalkboxID;
@@ -156,15 +161,26 @@ typedef struct BoxSides
 	bool bottom;
 } BoxSides;
 
-typedef enum QuadType
-{
-	q_nil = 0,
-	q_walkbox,
-	q_door,
-	q_object,
+typedef enum ObjectID
+{	
+	o_nil,
+	o_bartender,
+	o_door_diningL,
+	o_door_diningR,
 	//
-	q_MAX,
-} QuadType;
+	o_MAX,
+} ObjectID;
+
+typedef enum ObjectType
+{
+	ot_nil = 0,
+	ot_walkbox,
+	ot_door,
+	ot_object,
+	ot_npc,
+	//
+	ot_MAX,
+} ObjectType;
 
 typedef struct Quad
 {
@@ -172,9 +188,8 @@ typedef struct Quad
 	Vector2 q2; // bottom right
 	Vector2 q3; // top right
 	Vector2 q4; // top left
-	BoxSides isSideOpen;
-	QuadType quadType;
 } Quad;
+
 
 typedef struct Walkbox
 {
@@ -258,6 +273,21 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 
 #define MAX_ENTITY_COUNT 1024
 
+typedef struct Object
+{
+	Quad quad;
+	Vector2 interactPos;
+	Vector2 warpPos;
+	ObjectType type;
+	ObjectID objectID;
+	Entity* warpBG;
+	bool justClicked;
+	float64 interactRadius;
+	bool isInRangeToInteract;
+	CursorID hoverCursor;
+} Object;
+
+
 typedef enum UXStateID 
 {
 	ux_nil = 0,
@@ -266,6 +296,15 @@ typedef enum UXStateID
 	ux_menu,
 } UXStateID;
 
+typedef struct Fade
+{
+	float32 startTime;
+	float32 duration;
+	float32 fadeAmount;
+	Vector4 color;
+	bool currentlyFadingOut;
+	bool currentlyFadingIn;
+} Fade;
 
 typedef struct World
 {
@@ -274,13 +313,17 @@ typedef struct World
 	Cursor cursors[c_MAX];
 	Walkbox walkboxes[w_MAX];
 	Sprite sprites[s_MAX];
+	Object objects[o_MAX];
 	// Room rooms[r_MAX];
-	UXStateID uxStateID;				
+	UXStateID uxStateID;
+	Fade screenFade;
+	Vector2 warpPos;	
 	float inventoryAlpha; 			// this is randy caveman shit. not sure about this approach
 	float inventoryAlphaTarget;		// this is randy caveman shit. not sure about this approach
-	SpriteID currentBG;
+	Entity* currentBG;
 	Entity* activeEntity;
 	Item* activeItem;
+	Object* activeObject;
 	CursorID currentCursor;
 	bool isHWCursor;
 	bool mouseActive;
@@ -288,6 +331,7 @@ typedef struct World
 	float64 textBoxTime;
 	Range2f dialogueBox;
 	Range2f gameBox;
+
 	bool debugOn;
 } World;
 
@@ -296,6 +340,7 @@ World* world = 0;
 typedef struct WorldFrame
 {
 	Entity* activeEntity;
+	Object* activeObject;
 	Entity* bg;
 	Item* activeItem; // or inventoryFrame?
 	bool onEntity;
@@ -352,6 +397,13 @@ Walkbox* getWalkbox(WalkboxID walkboxID)
 	else return &world->walkboxes[0];
 }
 
+Object* getObject(ObjectID objectID)
+{
+	if (objectID >= 0 && objectID < i_MAX) return &world->objects[objectID];
+	else return &world->objects[0];
+}
+
+
 Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 pos, string hoverText, bool clickable, u64 flags) // flags - clickable, active, render etc..
 {
 	Entity* entityFound = 0;
@@ -379,7 +431,9 @@ Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 
 	entityFound->isMoving = false;
 	entityFound->interactPos = pos;
 	entityFound->destPos = pos;
-	entityFound->isScrollable = true;
+	if (getSprite(entityFound->spriteID)->size.x <= 400.0) entityFound->isScrollable = false;
+	else entityFound->isScrollable = true;
+
 	entityFound->scrollPos = v2(0.0, 400.0);
 	if (hoverText.count != 0) entityFound->hoverText = hoverText;
 	else entityFound->hoverText = STR("");
@@ -504,9 +558,24 @@ void loadInventoryItem(ItemID itemID, string name, string path, bool inInventory
 	item.pos = v2(0.0, 0.0);
 	item.justClicked = false;
 
-
 	world->inventory[itemID] = item;
 } 
+
+void createObject(ObjectID objectID, Quad quad, ObjectType type, Vector2 interactPos, Vector2 warpPos, Entity* warpBG, CursorID cursor)
+{	
+	Object object;
+	object.quad = quad;
+	object.interactPos = interactPos;
+	object.type = type;
+	object.warpPos = warpPos;
+	object.warpBG = warpBG;
+	object.justClicked = false;
+	object.interactRadius = 20.0f;
+	object.isInRangeToInteract = false;
+	object.hoverCursor = cursor;
+
+	world->objects[objectID] = object;
+}
 
 Walkbox boxMake(Vector2 min, Vector2 max, bool left, bool right, bool top, bool bottom)
 {
@@ -535,6 +604,13 @@ void drawQuadLines(Quad quad, float lineWidth, Vector4 color)
 float getAreaOfTriangle(Vector2 p1, Vector2 p2, Vector2 p3) 
 {
     return (p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y)) / 2.0f;
+}
+
+Quad makeQuad(Vector2 q1, Vector2 q2, Vector2 q3, Vector2 q4)
+{
+	Quad quad;
+	quad.q1 = q1; quad.q2 = q2; quad.q3 = q3; quad.q4 = q4;
+	return quad;
 }
 
 bool isPointInConvexQuad(Quad quad, Vector2 p)

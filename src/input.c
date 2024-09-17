@@ -38,6 +38,9 @@
     {	
         // Need to know if mouse is in UI or world space.
         consume_key_just_pressed(MOUSE_BUTTON_LEFT); // because ordering is important (UI v World clicks...)
+
+        if (world->debugOn) log("v2(%i, %i)", (int)worldFrame.mousePosWorld.x, (int)worldFrame.mousePosWorld.y);
+
         if (world->uxStateID == ux_dialog)
         {
             if (range2f_contains(world->dialogueBox, worldFrame.mousePosScreen))
@@ -54,12 +57,17 @@
                 if (activeEntity && activeEntity->clickable) // check if in interact rad
                 {	
                     entityClicked(activeEntity, player, true);
-                    movePlayerToObject(player, activeEntity, worldFrame);
+                    movePlayerToObject(player, activeEntity->interactPos, worldFrame);
                     log("Moving to Object: %s", activeEntity->hoverText);
                 }
                 else
                 {
                     movePlayerToClick(player, worldFrame);
+                }
+                if (worldFrame.activeObject->objectID > 0)
+                {
+                    objectClicked(worldFrame.activeObject, player, true);
+                    movePlayerToObject(player, worldFrame.activeObject->interactPos, worldFrame);
                 }
             }
             if (range2f_contains(world->dialogueBox, worldFrame.mousePosScreen))

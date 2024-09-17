@@ -131,10 +131,81 @@ void animate(Entity* entity, float64 nowTime, float64 deltaTime)
 
 void smoothCam(Vector2* cameraPos, Vector2 targetPos, float deltaTime, float rate)
 {
+    if (worldFrame.bg != null)
+    {
+        float32 rightLimit = worldFrame.bg->pos.x + (getSprite(worldFrame.bg->spriteID)->image->width - 200);    
+        float32 leftLimit = worldFrame.bg->pos.x + 200.0;
 
-	float32 bgScrollLimit = getSprite(worldFrame.bg->spriteID)->image->width - 200;
-	if (worldFrame.bg->isScrollable && targetPos.x >= 200.0 && targetPos.x <= bgScrollLimit)
-	{
-		animateF32ToTarget(&(cameraPos->x), targetPos.x, deltaTime, rate);
+        if (cameraPos->x < leftLimit) cameraPos->x = leftLimit; // do i need this?
+        if (cameraPos->x > rightLimit) cameraPos->x = rightLimit;
+        
+        if (worldFrame.bg->isScrollable && targetPos.x >= leftLimit && targetPos.x <= rightLimit)
+        {
+            animateF32ToTarget(&(cameraPos->x), targetPos.x, deltaTime, rate);
+        }
+        else if (!worldFrame.bg->isScrollable)
+        {
+            cameraPos->x = worldFrame.bg->pos.x + 200;
+        }
+    }
+}
+
+void fadeOutScreen(Fade* fade, float32 duration, Vector4 color, WorldFrame worldF)
+{
+	if (fade->startTime == 0)
+	{   
+		fade->startTime = worldF.nowTime;
+        fade->duration = duration;
+        fade->fadeAmount = 0.0f;
+        // fade->color = color;
 	}
+
+    if (fade->currentlyFadingOut)
+    {
+        float32 elapsedTime = worldF.nowTime - fade->startTime;
+        if (elapsedTime < fade->duration)
+        {
+            fade->fadeAmount = elapsedTime / fade->duration;
+            // fade->fadeAmount = fade->fadeAmount * fade->fadeAmount * (3 - (2 * fade->fadeAmount)); // smoothstep function
+        }
+        else 
+        {
+            fade->fadeAmount = 1.0f;
+            fade->currentlyFadingOut = false;
+            fade->startTime = 0.0f;
+        }
+
+        fade->color = v4(color.r, color.g, color.b, fade->fadeAmount);
+    }
+    
+}
+
+void fadeInScreen(Fade* fade, float32 duration, WorldFrame worldF)
+{
+    if (fade->startTime == 0.0)
+	{   
+		fade->startTime = worldF.nowTime;
+        fade->duration = duration;
+        fade->fadeAmount = 1.0f;
+	}
+
+    Vector4 color = fade->color;
+
+    if (fade->currentlyFadingIn)
+    {
+        float32 elapsedTime = worldF.nowTime - fade->startTime;
+        if (elapsedTime < fade->duration) 
+        {
+            fade->fadeAmount = 1.0f - (elapsedTime / fade->duration);
+            // fade->fadeAmount = fade->fadeAmount * fade->fadeAmount * (3 - 2 * fade->fadeAmount); // smoothstep function
+        } 
+        else 
+        {
+            fade->fadeAmount = 0.0f;
+            fade->currentlyFadingIn = false;
+            fade->startTime = 0.0f;
+        }
+        
+        fade->color = v4(color.r, color.g, color.b, fade->fadeAmount);
+    }
 }

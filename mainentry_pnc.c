@@ -52,15 +52,20 @@ int entry(int argc, char **argv)
 	loadWalkbox(w_dining_3, boxMake(v2(340.0, 123.0), v2(400.0, 150.0), false, false, false, true));
 	loadWalkbox(w_dining_4, boxMake(v2(400.0, 97.0), v2(530.0, 123.0), true, false, false, false));
 
-	// quad test - bartender
-	Quad test = {0};
-	test.q1 = v2(440.0, 170.0);
-	test.q2 = v2(470.0, 170.0);
-	test.q3 = v2(470.0, 213.0);
-	test.q4 = v2(440.0, 213.0);
-	test.quadType = q_object;
+	loadWalkbox(w_luggage_1, boxMake(v2(-220.0, 123.0), v2(-135.0, 150.0), false, false, false, true));
+	loadWalkbox(w_luggage_2, boxMake(v2(-330.0, 97.0), v2(-220.0, 123.0), false, true, false, false));
+	loadWalkbox(w_luggage_3, boxMake(v2(-220.0, 97.0), v2(-135.0, 123.0), true, true, true, false));
+	loadWalkbox(w_luggage_4, boxMake(v2(-135.0, 97.0), v2(-70.0, 123.0), true, false, false, false));
 
-	
+	loadWalkbox(w_hallway_1, boxMake(v2(670.0, 97.0), v2(1130.0, 120.0), true, false, false, false));
+
+	// loadWalkbox(w_dining_4, boxMake(v2(400.0, 97.0), v2(530.0, 123.0), true, false, false, false));
+	// loadWalkbox(w_dining_4, boxMake(v2(400.0, 97.0), v2(530.0, 123.0), true, false, false, false));
+	// loadWalkbox(w_dining_4, boxMake(v2(400.0, 97.0), v2(530.0, 123.0), true, false, false, false));
+	// loadWalkbox(w_dining_4, boxMake(v2(400.0, 97.0), v2(530.0, 123.0), true, false, false, false));
+	// loadWalkbox(w_dining_4, boxMake(v2(400.0, 97.0), v2(530.0, 123.0), true, false, false, false));
+
+
 	// :loadCursors
 	world->isHWCursor = true;
 	loadCursor(c_click, STR("jamAssets/cursors/click.png"));
@@ -100,12 +105,13 @@ int entry(int argc, char **argv)
 	Entity* bgDining = createEntity(t_background, s_bg_dining, i_nil, v2(0, 0), null_string, false, 0);
 	Entity* bgHallway = createEntity(t_background, s_bg_hallway, i_nil, v2(600.0, 0), null_string, false, 0);
 	Entity* bgLounge = createEntity(t_background, s_bg_lounge, i_nil, v2(1200.0, 0), null_string, false, 0);
-	Entity* bgLuggage = createEntity(t_background, s_bg_luggage, i_nil, v2(1800, 0), null_string, false, 0);
-	Entity* bgCargo = createEntity(t_background, s_bg_cargo, i_nil, v2(-400, 0), null_string, false, 0);
-	Entity* bgSleeper = createEntity(t_background, s_bg_sleeper, i_nil, v2(-800, 0), null_string, false, 0);
+	Entity* bgLuggage = createEntity(t_background, s_bg_luggage, i_nil, v2(-400, 0), null_string, false, 0);
+	Entity* bgCargo = createEntity(t_background, s_bg_cargo, i_nil, v2(-800, 0), null_string, false, 0);
+	Entity* bgSleeper = createEntity(t_background, s_bg_sleeper, i_nil, v2(-1200, 0), null_string, false, 0);
+  	// [sleeper] : [cargo]-[luggage]-[dining]-[hallway]-[lounge]
 
 	// :createEntities and Objects
-	Entity* player = createEntity(t_player, s_player, i_nil, v2(175, 110), null_string, false, 0);
+	Entity* player = createEntity(t_player, s_player, i_nil, v2(671.0, 106.0), null_string, false, 0);
 	Entity* conductor = createEntity(t_npc, s_ch_conductor, i_nil, v2(110, 110), STR("Conductor"), true, 0);
 	Entity* reporter = createEntity(t_npc, s_ch_reporter, i_nil, v2(500, 110), STR("Reporter"), true, 0);
 
@@ -115,15 +121,19 @@ int entry(int argc, char **argv)
 	Entity* headshot = createEntity(t_item, s_item_headshot, i_headshot, v2(-100, 0), STR("Headshot of Starlet"), true, 0);
 	Entity* key = createEntity(t_item, s_item_key, i_key, v2(-100, 0), STR("Brass Key"), true, 0);
 
-	// :createDoors - do these need to be a struct?
-	Range2f doorL_Dining = range2f_make(v2(40.0,95.0), v2(70.0, 195.0));
-	Range2f doorR_Dining = range2f_make(v2(530.0, 95.0), v2(560.0, 195.0));
+	// quad test - bartender
+	Quad tempQuad = makeQuad(v2(440.0, 170.0), v2(470.0, 170.0), v2(470.0, 213.0), v2(440.0, 213.0));
+	createObject(o_bartender, tempQuad, ot_npc, v2(435.0, 122.0), v2(0,0), bgDining, c_talk);
+
+	// :createDoors
+	tempQuad = makeQuad(v2(40.0,95.0), v2(70.0, 95.0), v2(70.0, 195.0), v2(40.0, 195.0));
+	createObject(o_door_diningL, tempQuad, ot_door, v2(71.0, 106.0), v2(-71.0, 106.0), bgLuggage, c_left);
+	tempQuad = makeQuad(v2(530.0, 95.0), v2(560.0, 95.0),  v2(560.0, 195.0),  v2(530.0, 195.0));
+	createObject(o_door_diningR, tempQuad, ot_door, v2(529.0, 106.0), v2(671, 106.0), bgHallway, c_right);
 
 	// add this to createEntity() 
 	conductor->interactPos.x = conductor->pos.x + 30.0; // + if facing right, - if facing left
 	reporter->interactPos.x = reporter->pos.x - 30.0;
-
-
 
 
 	// :createInventoryItems
@@ -142,13 +152,15 @@ int entry(int argc, char **argv)
 	world->currentCursor = c_click;
 	world->mouseActive = false;
 	Matrix4 camera_xform = m4_scalar(1.0);
-	Vector2 camera_pos = v2(200, 110);
+	Vector2 camera_pos = v2(player->pos.x, 150.0);
 	float zoom = 3.0;
 	world->uxStateID = ux_inventory;
 	world->playerText = STR("");
 	world->dialogueBox = range2f_make(v2(30.0, 15.0), v2(370.0, 75.0));
-	world->gameBox = range2f_make(v2(20.0, 76.0), v2(380.0, 300.0));
+	world->gameBox = range2f_make(v2(10.0, 76.0), v2(390.0, 300.0));
 	world->debugOn = false;
+	// world->screenFade = {0};
+	world->currentBG = bgHallway;
 
 	while (!window.should_close)
 	{
@@ -162,7 +174,7 @@ int entry(int argc, char **argv)
 		worldFrame.deltaTime = deltaTime;
 		prevTime = worldFrame.nowTime;
 
-		worldFrame.bg = bgDining; // = world.current bg or something...
+		worldFrame.bg = world->currentBG; // = world.current bg or something...
 		worldFrame.player = player; 
 
 		// :camera - 
@@ -238,6 +250,22 @@ int entry(int argc, char **argv)
 
 			}	
 		}
+		// :updateLoop over all objects (doors, static npcs, objects etc)
+		for (int i = 0; i < o_MAX; i++)
+		{
+			Object* obj = &world->objects[i];
+
+			if (fabsf(v2_dist(obj->interactPos, player->pos)) < obj->interactRadius) obj->isInRangeToInteract = true;
+			else obj->isInRangeToInteract = false;
+
+			if (isPointInConvexQuad(obj->quad, worldFrame.mousePosWorld)) 
+			{
+				worldFrame.activeObject = obj;
+				if (world->currentCursor != c_drag && obj->isInRangeToInteract) world->currentCursor = obj->hoverCursor;
+			
+			}
+		}
+
 		// :update loop over inventory
 		for (int i = 0; i < i_MAX; i++)
 		{
@@ -262,9 +290,11 @@ int entry(int argc, char **argv)
 		// :render loop over entities - pull out to function - z indexing??
 		
 		// :renderBackground
-		Sprite* bgSprite = getSprite(worldFrame.bg->spriteID); 
-		draw_image(bgSprite->image, worldFrame.bg->pos, bgSprite->size, COLOR_WHITE);
-
+		if (worldFrame.bg != null)
+		{
+			Sprite* bgSprite = getSprite(worldFrame.bg->spriteID); 
+			draw_image(bgSprite->image, worldFrame.bg->pos, bgSprite->size, COLOR_WHITE);
+		}
 		// :renderObjects
 		for (int i = 0; i < MAX_ENTITY_COUNT; i++)
 		{
@@ -330,7 +360,7 @@ int entry(int argc, char **argv)
 					set_world_space();
 				}
 			}
-			else if (world->mouseActive) world->currentCursor = worldFrame.bg->hoverCursor;
+			else if (world->mouseActive && worldFrame.bg != null) world->currentCursor = worldFrame.bg->hoverCursor;
 
 
 			// :Dialogue box?
@@ -439,7 +469,7 @@ int entry(int argc, char **argv)
 			}
 			else if (world->uxStateID == ux_menu)
 			{}
-
+			
 
 			// :cursor
 			{	
@@ -475,6 +505,27 @@ int entry(int argc, char **argv)
 
 			}
 
+			// :fadeScreen
+			if (world->screenFade.currentlyFadingOut) 
+			{
+				fadeOutScreen(&world->screenFade, 0.5f, COLOR_BLACK, worldFrame);
+				draw_rect(v2(0.0, 0.0), v2(window.width, window.height), world->screenFade.color);
+			} 
+			if (world->screenFade.fadeAmount == 1.0f) 
+			{	
+				world->screenFade.currentlyFadingIn = true;
+				world->currentBG = worldFrame.activeObject->warpBG;
+				player->pos = world->warpPos;
+				camera_pos.x = player->pos.x;
+				// world->screenFade.startTime = worldFrame.nowTime;
+			}
+			if (world->screenFade.currentlyFadingIn)
+			{
+				fadeInScreen(&world->screenFade, 0.5f, worldFrame);
+				draw_rect(v2(0.0, 0.0), v2(window.width, window.height), world->screenFade.color);
+			}
+
+
 		} // end :UI
 
 		{
@@ -486,16 +537,19 @@ int entry(int argc, char **argv)
 				draw_text(font, tprint("ScreenPos: [ %i, %i ]", (int)mouseProjPos.x, (int)mouseProjPos.y), fontHeight, v2(10, 10), v2(0.1, 0.1), COLOR_RED);
 				draw_text(font, tprint("WorldPos: [ %i, %i ]", (int)worldFrame.mousePosWorld.x, (int)worldFrame.mousePosWorld.y), fontHeight, v2(100, 10), v2(0.1, 0.1), COLOR_RED);
 				// draw_text(font, tprint("InputPos: [ %i, %i ]", (int)input_frame.mouse_x, (int)input_frame.mouse_y), fontHeight, v2(200, 10), v2(0.1, 0.1), COLOR_RED);
-				// draw_text(font, tprint("CameraPos: [ %i, %i ]", (int)camera_pos.x, (int)camera_pos.y), fontHeight, v2(300, 10), v2(0.1, 0.1), COLOR_RED);
+				draw_text(font, tprint("CameraPos: [ %i, %i ]", (int)camera_pos.x, (int)camera_pos.y), fontHeight, v2(300, 10), v2(0.1, 0.1), COLOR_RED);
 
-				// draw walkboxes
+				// draw walkboxes and doors objects etc
 				set_world_space();
-				drawBoxFromRange2f(doorL_Dining, 1.0, COLOR_BLUE);
-				drawBoxFromRange2f(doorR_Dining, 1.0, COLOR_BLUE);
-				drawQuadLines(test, 1.0, COLOR_GREEN);
-				if (isPointInConvexQuad(test, worldFrame.mousePosWorld)) 
+
+				for (int i = 0; i < o_MAX; i++)
 				{
-					drawQuadLines(test, 1.0, COLOR_BLUE);
+					Object* obj = &world->objects[i];
+					drawQuadLines(obj->quad, 1.0, COLOR_GREEN);
+					if (isPointInConvexQuad(obj->quad, worldFrame.mousePosWorld)) 
+					{
+						drawQuadLines(obj->quad, 1.0, COLOR_BLUE);
+					}
 				}
 
 				for (int i = 0; i < w_MAX; i++)
@@ -505,7 +559,6 @@ int entry(int argc, char **argv)
 				}
 
 				// test line intersection
-
 
 
 				set_screen_space();

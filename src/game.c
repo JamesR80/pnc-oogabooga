@@ -28,7 +28,6 @@ void itemClicked(Item* item, bool isLeftClick)
 
 void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity clicked or just screen clicked?
 {
-
 	switch (isLeftClick)
 	{
 		case true: 
@@ -49,12 +48,53 @@ void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity c
 				world->uxStateID = ux_dialog;
 				break;
 			case t_object:
-				world->playerText = entity->useText;
+				// world->playerText = entity->useText;
 				world->textBoxTime = worldFrame.nowTime;
 				world->inventory[entity->itemID].inInventory = true;
 				destroyEntity(entity);
 				break;
 			case t_door:
+				// do transition
+				break;
+			default:
+				break;
+
+		}
+		
+		// else e->useText = STR("I can't use it from here");
+		// and set text flag...
+	}
+
+	// some delay set justClicked to false.
+}
+void objectClicked(Object* object, Entity* player, bool isLeftClick) // entity clicked or just screen clicked?
+{
+	switch (isLeftClick)
+	{
+		case true: 
+			object->justClicked = true;
+			log("left click!");
+
+		case false:
+			object->justClicked = true;
+			log("right click!");
+			break;
+	}
+	if (object->isInRangeToInteract)
+	{	
+		switch (object->type)
+		{
+			case ot_door:
+				world->screenFade.currentlyFadingOut = true;
+				
+				// world->currentBG = object->warpBG;
+				world->warpPos = object->warpPos;
+
+				break;
+			case ot_npc:
+				world->uxStateID = ux_dialog;
+				break;
+			case ot_object:
 				// do transition
 				break;
 			default:
@@ -94,11 +134,11 @@ void movePlayer(Entity* player, Entity* background, float64 nowTime, float64 del
 			player->pos.x += direction.x * movement;
 			player->pos.y += direction.y * movement;
 
-			if (doLinesIntersect(player->pos, player->destPos, worldFrame.activeWalkbox->box.max, 
-								v2(worldFrame.activeWalkbox->box.max.x, worldFrame.activeWalkbox->box.min.y)))
-								{
-									// log("true");
-								}
+			// if (doLinesIntersect(player->pos, player->destPos, worldFrame.activeWalkbox->box.max, 
+			// 					v2(worldFrame.activeWalkbox->box.max.x, worldFrame.activeWalkbox->box.min.y)))
+			// 					{
+			// 						// log("true");
+			// 					}
 
 			if (direction.x < 0) { anim = a_walk_left; }
 			if (direction.x > 0) { anim = a_walk_right; }
@@ -135,10 +175,10 @@ void movePlayer(Entity* player, Entity* background, float64 nowTime, float64 del
 
 }
 
-void movePlayerToObject(Entity* player, Entity* object, WorldFrame worldF)
+void movePlayerToObject(Entity* player, Vector2 interactPos, WorldFrame worldF)
 {	
 	// get best available interact Pos based on npc dir.
-	player->destPos = object->interactPos; 
+	player->destPos = interactPos; 
 	player->isMoving = true;
 	movePlayer(player, worldF.bg, worldF.nowTime, worldF.deltaTime);
 }

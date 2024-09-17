@@ -98,7 +98,7 @@ Vector2 getCenterRange2f(Range2f r)
 	return (Vector2) { ((r.max.x - r.min.x) * 0.5 + r.min.x), ((r.max.y - r.min.y) * 0.5 + r.min.y)};
 }
 
-// not using
+// not using - DONT USE THIS
 Vector2 getUIPosFromWorldPos(Vector2 pos)
 {
 	Vector4 worldProj = v4(window.pixel_width * -0.5, window.pixel_width * 0.5, window.pixel_height * -0.5, window.pixel_height * 0.5);
@@ -129,7 +129,7 @@ void drawBoxFromRange2f(Range2f box, float lineWidth, Vector4 color)
 
 }
 
-bool doLinesIntersect(Vector2 line1Start, Vector2 line1End, Vector2 line2Start, Vector2 line2End)
+bool doLinesIntersect(Vector2 line1Start, Vector2 line1End, Vector2 line2Start, Vector2 line2End) // or return Vector2 if getting intersect point
 {
     float epsilon = 0.1;
     float tolerance = 0.1;
@@ -139,7 +139,7 @@ bool doLinesIntersect(Vector2 line1Start, Vector2 line1End, Vector2 line2Start, 
                         (line1Start.y - line1End.y) * (line2Start.x - line2End.x);
 
     // If the denominator is close to zero, the lines are parallel and do not intersect
-    if (fabsf(denominator) < epsilon) return false;
+    if (fabsf(denominator) < epsilon) return false; // // return (Vector2){NAN, NAN};
 
     // Calculate the intersection point
     float t = ((line1Start.x - line2Start.x) * (line2Start.y - line2End.y) -
@@ -151,6 +151,21 @@ bool doLinesIntersect(Vector2 line1Start, Vector2 line1End, Vector2 line2Start, 
     bool line1Intersection = t >= -tolerance && t <= 1 + tolerance;
     bool line2Intersection = u >= -tolerance && u <= 1 + tolerance;
 
+	// If the intersection point is within both line segments, return the intersection point
+    if (line1Intersection && line2Intersection) 
+	{
+        float intersectionX = line1Start.x + t * (line1End.x - line1Start.x);
+        float intersectionY = line1Start.y + t * (line1End.y - line1Start.y);
+        // return (Vector2){intersectionX, intersectionY};
+    }
+
+	
+    // Return a special "no intersection" value
+    // return (Vector2){NAN, NAN};
+
+	// do i want to return the line?
+
     // If the intersection point is within both line segments, return true
     return line1Intersection && line2Intersection;
 }
+
