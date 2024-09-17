@@ -85,10 +85,16 @@ void objectClicked(Object* object, Entity* player, bool isLeftClick) // entity c
 		switch (object->type)
 		{
 			case ot_door:
-				world->screenFade.currentlyFadingOut = true;
-				
-				// world->currentBG = object->warpBG;
-				world->warpPos = object->warpPos;
+				if (object->warpBG != null)
+				{
+					world->screenFade.currentlyFadingOut = true;;
+					world->warpPos = object->warpPos;
+				}
+				else 
+				{
+					world->playerText = STR("Can't go this way");
+					world->textTimer = worldFrame.nowTime;
+				}
 
 				break;
 			case ot_npc:

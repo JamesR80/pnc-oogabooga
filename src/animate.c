@@ -139,9 +139,12 @@ void smoothCam(Vector2* cameraPos, Vector2 targetPos, float deltaTime, float rat
         if (cameraPos->x < leftLimit) cameraPos->x = leftLimit; // do i need this?
         if (cameraPos->x > rightLimit) cameraPos->x = rightLimit;
         
-        if (worldFrame.bg->isScrollable && targetPos.x >= leftLimit && targetPos.x <= rightLimit)
+        if (worldFrame.bg->isScrollable && cameraPos->x >= leftLimit && cameraPos->x <= rightLimit)
         {
             animateF32ToTarget(&(cameraPos->x), targetPos.x, deltaTime, rate);
+            
+            if (cameraPos->x < leftLimit) cameraPos->x = leftLimit; // do i need this?
+            if (cameraPos->x > rightLimit) cameraPos->x = rightLimit;
         }
         else if (!worldFrame.bg->isScrollable)
         {

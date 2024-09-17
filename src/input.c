@@ -64,7 +64,7 @@
                 {
                     movePlayerToClick(player, worldFrame);
                 }
-                if (worldFrame.activeObject->objectID > 0)
+                if (worldFrame.activeObject != null)
                 {
                     objectClicked(worldFrame.activeObject, player, true);
                     movePlayerToObject(player, worldFrame.activeObject->interactPos, worldFrame);
@@ -92,14 +92,16 @@
         if (activeEntity)
         {
             world->playerText = activeEntity->lookText;
+            world->textTimer = worldFrame.nowTime;
             entityClicked(activeEntity, player, false);
         }
         else if (activeItem)
         {
-            // world->playerText = activeItem->lookText;
+            world->playerText = activeItem->lookText;
+            world->textTimer = worldFrame.nowTime;
             itemClicked(activeItem, false);
         }
-        world->textBoxTime = worldFrame.nowTime;
+        // world->textBoxTime = worldFrame.nowTime;
         
     }
     

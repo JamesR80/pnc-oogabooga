@@ -149,6 +149,12 @@ typedef enum WalkboxID
 	w_luggage_3,
 	w_luggage_4,
 	w_hallway_1,
+	w_lounge_1,
+	w_cargo_1,
+	w_sleeper_1,
+	w_sleeper_2,
+	w_sleeper_3,
+	w_sleeper_4,
 	//
 	w_MAX,
 } WalkboxID;
@@ -167,6 +173,16 @@ typedef enum ObjectID
 	o_bartender,
 	o_door_diningL,
 	o_door_diningR,
+	o_door_hallwayL,
+	o_door_hallwayR,
+	o_door_loungeL,
+	o_door_loungeR,
+	o_door_luggageL,
+	o_door_luggageR,
+	o_door_cargoL,
+	o_door_cargoR,
+	o_door_sleeperD,
+	o_door_hallwayU,
 	//
 	o_MAX,
 } ObjectID;
@@ -210,6 +226,8 @@ typedef enum CursorID
 	c_drag,
 	c_left,
 	c_right,
+	c_up,
+	c_down,
 	c_walk,
 	c_MAX,
 } CursorID;
@@ -331,6 +349,7 @@ typedef struct World
 	float64 textBoxTime;
 	Range2f dialogueBox;
 	Range2f gameBox;
+	float32 textTimer;
 
 	bool debugOn;
 } World;
@@ -570,7 +589,7 @@ void createObject(ObjectID objectID, Quad quad, ObjectType type, Vector2 interac
 	object.warpPos = warpPos;
 	object.warpBG = warpBG;
 	object.justClicked = false;
-	object.interactRadius = 20.0f;
+	object.interactRadius = 15.0f;
 	object.isInRangeToInteract = false;
 	object.hoverCursor = cursor;
 

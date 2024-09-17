@@ -57,14 +57,16 @@ int entry(int argc, char **argv)
 	loadWalkbox(w_luggage_3, boxMake(v2(-220.0, 97.0), v2(-135.0, 123.0), true, true, true, false));
 	loadWalkbox(w_luggage_4, boxMake(v2(-135.0, 97.0), v2(-70.0, 123.0), true, false, false, false));
 
-	loadWalkbox(w_hallway_1, boxMake(v2(670.0, 97.0), v2(1130.0, 120.0), true, false, false, false));
+	loadWalkbox(w_hallway_1, boxMake(v2(670.0, 97.0), v2(1130.0, 119.0), false, false, false, false));
 
-	// loadWalkbox(w_dining_4, boxMake(v2(400.0, 97.0), v2(530.0, 123.0), true, false, false, false));
-	// loadWalkbox(w_dining_4, boxMake(v2(400.0, 97.0), v2(530.0, 123.0), true, false, false, false));
-	// loadWalkbox(w_dining_4, boxMake(v2(400.0, 97.0), v2(530.0, 123.0), true, false, false, false));
-	// loadWalkbox(w_dining_4, boxMake(v2(400.0, 97.0), v2(530.0, 123.0), true, false, false, false));
-	// loadWalkbox(w_dining_4, boxMake(v2(400.0, 97.0), v2(530.0, 123.0), true, false, false, false));
+	loadWalkbox(w_lounge_1, boxMake(v2(1270.0, 97.0), v2(1730.0, 150.0), false, false, false, false));
 
+	loadWalkbox(w_cargo_1, boxMake(v2(-730.0, 97.0), v2(-470.0, 150.0), false, false, false, false));
+
+	loadWalkbox(w_sleeper_1, boxMake(v2(-1130.0, 97.0), v2(-955.0, 123.0), false, true, false, false));
+	loadWalkbox(w_sleeper_2, boxMake(v2(-955.0, 97.0), v2(-910.0, 105.0), true, false, true, false));
+	loadWalkbox(w_sleeper_3, boxMake(v2(-955.0, 105.0), v2(-910.0, 123.0), true, true, false, true));
+	loadWalkbox(w_sleeper_4, boxMake(v2(-910.0, 105.0), v2(-870.0, 123.0), true, false, false, false));
 
 	// :loadCursors
 	world->isHWCursor = true;
@@ -75,6 +77,8 @@ int entry(int argc, char **argv)
 	loadCursor(c_left, STR("jamAssets/cursors/left.png"));
 	loadCursor(c_right, STR("jamAssets/cursors/right.png"));
 	loadCursor(c_drag, STR("jamAssets/cursors/drag.png"));
+	loadCursor(c_up, STR("jamAssets/cursors/up.png"));
+	loadCursor(c_down, STR("jamAssets/cursors/down.png"));
 
 	// :loadCharacters
 	loadSprite(s_player, STR("jamAssets/characters/Adaline-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 8, 5);
@@ -108,10 +112,10 @@ int entry(int argc, char **argv)
 	Entity* bgLuggage = createEntity(t_background, s_bg_luggage, i_nil, v2(-400, 0), null_string, false, 0);
 	Entity* bgCargo = createEntity(t_background, s_bg_cargo, i_nil, v2(-800, 0), null_string, false, 0);
 	Entity* bgSleeper = createEntity(t_background, s_bg_sleeper, i_nil, v2(-1200, 0), null_string, false, 0);
-  	// [sleeper] : [cargo]-[luggage]-[dining]-[hallway]-[lounge]
+  	// [sleeper] : [cargo]-[luggage]-(0,0)[dining]-[hallway]-[lounge]
 
 	// :createEntities and Objects
-	Entity* player = createEntity(t_player, s_player, i_nil, v2(671.0, 106.0), null_string, false, 0);
+	Entity* player = createEntity(t_player, s_player, i_nil, v2(175.0, 106.0), null_string, false, 0);
 	Entity* conductor = createEntity(t_npc, s_ch_conductor, i_nil, v2(110, 110), STR("Conductor"), true, 0);
 	Entity* reporter = createEntity(t_npc, s_ch_reporter, i_nil, v2(500, 110), STR("Reporter"), true, 0);
 
@@ -121,15 +125,55 @@ int entry(int argc, char **argv)
 	Entity* headshot = createEntity(t_item, s_item_headshot, i_headshot, v2(-100, 0), STR("Headshot of Starlet"), true, 0);
 	Entity* key = createEntity(t_item, s_item_key, i_key, v2(-100, 0), STR("Brass Key"), true, 0);
 
-	// quad test - bartender
+	// :createObjects
 	Quad tempQuad = makeQuad(v2(440.0, 170.0), v2(470.0, 170.0), v2(470.0, 213.0), v2(440.0, 213.0));
 	createObject(o_bartender, tempQuad, ot_npc, v2(435.0, 122.0), v2(0,0), bgDining, c_talk);
 
 	// :createDoors
-	tempQuad = makeQuad(v2(40.0,95.0), v2(70.0, 95.0), v2(70.0, 195.0), v2(40.0, 195.0));
+	// DiningRoom
+	tempQuad = makeQuad(v2(40.0, 95.0), v2(70.0, 95.0), v2(70.0, 195.0), v2(40.0, 195.0));
 	createObject(o_door_diningL, tempQuad, ot_door, v2(71.0, 106.0), v2(-71.0, 106.0), bgLuggage, c_left);
-	tempQuad = makeQuad(v2(530.0, 95.0), v2(560.0, 95.0),  v2(560.0, 195.0),  v2(530.0, 195.0));
+
+	tempQuad = makeQuad(v2(530.0, 95.0), v2(560.0, 95.0), v2(560.0, 195.0), v2(530.0, 195.0));
 	createObject(o_door_diningR, tempQuad, ot_door, v2(529.0, 106.0), v2(671, 106.0), bgHallway, c_right);
+
+	// Hallway
+	tempQuad = makeQuad(v2(640.0, 95.0), v2(670.0, 95.0), v2(670.0, 195.0), v2(640.0, 195.0));
+	createObject(o_door_hallwayL, tempQuad, ot_door, v2(671.0, 106.0), v2(529.0, 106.0), bgDining, c_left);
+
+	tempQuad = makeQuad(v2(1130.0, 95.0), v2(1160.0, 95.0), v2(1160.0, 195.0), v2(1130.0, 195.0));
+	createObject(o_door_hallwayR, tempQuad, ot_door, v2(1129.0, 106.0), v2(1271, 106.0), bgLounge, c_right);
+
+	tempQuad = makeQuad(v2(940.0, 120.0), v2(976.0, 120.0), v2(976.0, 185.0), v2(940.0, 185.0));
+	createObject(o_door_hallwayU, tempQuad, ot_door, v2(960.0, 115.0), v2(-885.0, 106.0), bgSleeper, c_up);
+
+	// Lounge
+	tempQuad = makeQuad(v2(1240.0, 95.0), v2(1270.0, 95.0), v2(1270.0, 195.0), v2(1240.0, 195.0));
+	createObject(o_door_loungeL, tempQuad, ot_door, v2(1271.0, 106.0), v2(1129.0, 106.0), bgHallway, c_left);
+
+	tempQuad = makeQuad(v2(1730.0, 95.0), v2(1760.0, 95.0), v2(1760.0, 195.0), v2(1730.0, 195.0));
+	createObject(o_door_loungeR, tempQuad, ot_door, v2(1729.0, 106.0), v2(0.0, 0.0), null, c_right); // put check in for 0
+
+	// Luggage
+	tempQuad = makeQuad(v2(-360.0, 95.0), v2(-330.0, 95.0), v2(-330.0, 195.0), v2(-360.0, 195.0));
+	createObject(o_door_luggageL, tempQuad, ot_door, v2(-329.0, 106.0), v2(-471.0, 106.0), bgCargo, c_left);
+
+	tempQuad = makeQuad(v2(-70.0, 95.0), v2(-40.0, 95.0), v2(-40.0, 195.0), v2(-70.0, 195.0));
+	createObject(o_door_luggageR, tempQuad, ot_door, v2(-71.0, 106.0), v2(71, 106.0), bgDining, c_right);
+
+	// Cargo
+	tempQuad = makeQuad(v2(-760.0, 95.0), v2(-730.0, 95.0), v2(-730.0, 195.0), v2(-760.0, 195.0));
+	createObject(o_door_cargoL, tempQuad, ot_door, v2(-729.0, 106.0), v2(0.0, 0.0), null, c_left);
+
+	tempQuad = makeQuad(v2(-470.0, 95.0), v2(-440.0, 95.0), v2(-440.0, 195.0), v2(-470.0, 195.0));
+	createObject(o_door_cargoR, tempQuad, ot_door, v2(-471.0, 106.0), v2(-329, 106.0), bgLuggage, c_right);
+
+	// Sleeper
+	tempQuad = makeQuad(v2(-910.0, 95.0), v2(-860.0, 95.0), v2(-860.0, 105.0), v2(-910.0, 105.0));
+	createObject(o_door_sleeperD, tempQuad, ot_door, v2(-885.0, 106.0), v2(960.0, 115.0), bgHallway, c_down);
+
+
+
 
 	// add this to createEntity() 
 	conductor->interactPos.x = conductor->pos.x + 30.0; // + if facing right, - if facing left
@@ -160,7 +204,9 @@ int entry(int argc, char **argv)
 	world->gameBox = range2f_make(v2(10.0, 76.0), v2(390.0, 300.0));
 	world->debugOn = false;
 	// world->screenFade = {0};
-	world->currentBG = bgHallway;
+	world->currentBG = bgSleeper;
+	player->pos = v2(-885.0, 106.0);
+	float32 textDuration = 2.0f;
 
 	while (!window.should_close)
 	{
@@ -183,7 +229,7 @@ int entry(int argc, char **argv)
 
 		worldFrame.world_proj = m4_make_orthographic_projection(window.width * -0.5, window.width * 0.5, window.height * -0.5, window.height * 0.5, -1, 10);
 		Vector2 target_pos = player->pos;
-		smoothCam(&camera_pos, target_pos, deltaTime, 5.0f);
+		smoothCam(&camera_pos, target_pos, deltaTime, 4.0f);
 
 		worldFrame.world_view = m4_identity;
 		// translate into position
@@ -241,28 +287,33 @@ int entry(int argc, char **argv)
 						world->mouseActive = false;
 						if (world->currentCursor != c_drag) world->currentCursor = entity->hoverCursor;
 					}
-					if (world->activeEntity && (world->textBoxTime - worldFrame.nowTime < -3))
+					if (world->activeEntity && (world->textTimer - worldFrame.nowTime < -2.0f))
 					{
 						world->activeEntity->justClicked = false; 
-						world->playerText = STR("");
+						// world->playerText = STR("");
 					}
 				}
 
 			}	
 		}
 		// :updateLoop over all objects (doors, static npcs, objects etc)
-		for (int i = 0; i < o_MAX; i++)
+		for (int i = 1; i < o_MAX; i++)
 		{
 			Object* obj = &world->objects[i];
-
-			if (fabsf(v2_dist(obj->interactPos, player->pos)) < obj->interactRadius) obj->isInRangeToInteract = true;
-			else obj->isInRangeToInteract = false;
-
-			if (isPointInConvexQuad(obj->quad, worldFrame.mousePosWorld)) 
+			if (obj->objectID != o_nil)
 			{
-				worldFrame.activeObject = obj;
-				if (world->currentCursor != c_drag && obj->isInRangeToInteract) world->currentCursor = obj->hoverCursor;
-			
+				if (fabsf(v2_dist(obj->interactPos, player->pos)) < obj->interactRadius) obj->isInRangeToInteract = true;
+				else obj->isInRangeToInteract = false;
+
+				if (isPointInConvexQuad(obj->quad, worldFrame.mousePosWorld)) 
+				{
+					worldFrame.activeObject = obj;
+					if (world->currentCursor != c_drag && obj->isInRangeToInteract)
+					{
+						world->currentCursor = obj->hoverCursor;
+					} 
+				
+				}
 			}
 		}
 
@@ -295,6 +346,7 @@ int entry(int argc, char **argv)
 			Sprite* bgSprite = getSprite(worldFrame.bg->spriteID); 
 			draw_image(bgSprite->image, worldFrame.bg->pos, bgSprite->size, COLOR_WHITE);
 		}
+
 		// :renderObjects
 		for (int i = 0; i < MAX_ENTITY_COUNT; i++)
 		{
@@ -351,29 +403,33 @@ int entry(int argc, char **argv)
 					hoverTextPos = centerTextToPos(e->hoverText, font, fontHeight, textScaling, hoverTextPos);
 					draw_text(font, e->hoverText, fontHeight, hoverTextPos, textScaling, COLOR_GREEN);
 				}
-				if (world->activeEntity->justClicked)
+
+				if (world->playerText.data > 0)
 				{
-
-					set_screen_space();
-					Vector2 dialogueBoxPos = centerTextToPos(world->playerText, font, fontHeight, textScaling, v2(200.0, 75.0));
-					draw_text(font, world->playerText, fontHeight, dialogueBoxPos, textScaling, COLOR_WHITE);
-					set_world_space();
+					if (world->textTimer > textDuration)
+					{
+						world->textTimer = 0;
+						world->playerText = STR("");
+					}
+					if (world->textTimer > 0 && world->textTimer < textDuration)
+					{
+						set_screen_space();
+						Vector2 dialogueBoxPos = centerTextToPos(world->playerText, font, fontHeight, textScaling, v2(200.0, 75.0));
+						draw_text(font, world->playerText, fontHeight, dialogueBoxPos, textScaling, COLOR_WHITE);
+						set_world_space();
+					}
+					
 				}
+
 			}
-			else if (world->mouseActive && worldFrame.bg != null) world->currentCursor = worldFrame.bg->hoverCursor;
+			// else if (world->mouseActive && worldFrame.bg != null) world->currentCursor = worldFrame.bg->hoverCursor;
 
 
-			// :Dialogue box?
-
-
-			
 			{
 				// TODO : get appropriate text - need a better data structure
 
 				// get state from entity,
 				// draw relative state text
-				
-				
 			}
 		}
 		// :UI
@@ -545,10 +601,14 @@ int entry(int argc, char **argv)
 				for (int i = 0; i < o_MAX; i++)
 				{
 					Object* obj = &world->objects[i];
-					drawQuadLines(obj->quad, 1.0, COLOR_GREEN);
-					if (isPointInConvexQuad(obj->quad, worldFrame.mousePosWorld)) 
+					if (obj->objectID != o_nil)
 					{
-						drawQuadLines(obj->quad, 1.0, COLOR_BLUE);
+						drawQuadLines(obj->quad, 1.0, COLOR_GREEN);
+						if (isPointInConvexQuad(obj->quad, worldFrame.mousePosWorld)) 
+						{
+							drawQuadLines(obj->quad, 1.0, COLOR_BLUE);
+							log("mouse in obj quad");
+						}
 					}
 				}
 
