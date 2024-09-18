@@ -45,8 +45,9 @@ void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity c
 		{
 			case t_npc:
 				log("dialog?");
-				world->uxStateID = ux_dialog;
 				world->actorR = entity;
+				world->dialogID = entity->dialogID;
+				world->uxStateID = ux_dialog;
 				break;
 			case t_object:
 				// world->playerText = entity->useText;

@@ -247,6 +247,18 @@ typedef struct Cursor
 
 } Cursor;
 
+typedef struct Dialog
+{
+    bool isValid;
+	u32 dialogID;
+	u32 nextDialogID;
+	u32 flag;
+	string text;
+	
+} Dialog;
+
+#define MAX_DIALOG_COUNT 5
+
 typedef enum EntityFlags
 {
     ACTIVE = 1 << 0,
@@ -293,6 +305,8 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 	float64 speed;
 	float64 interactRadius; // look radius?
 	CursorID hoverCursor;
+	s32 dialogID;
+	s32 nextDialogID;
 } Entity;
 
 #define MAX_ENTITY_COUNT 256
@@ -309,14 +323,8 @@ typedef struct Object
 	float64 interactRadius;
 	bool isInRangeToInteract;
 	CursorID hoverCursor;
+	string lookText;
 } Object;
-
-typedef struct Dialog
-{
-	s32 DialogID;
-	string text;
-	s32 NextDialogID;
-} Dialog;
 
 typedef enum UXStateID 
 {
@@ -344,6 +352,7 @@ typedef struct World
 	Walkbox walkboxes[w_MAX];
 	Sprite sprites[s_MAX];
 	Object objects[o_MAX];
+	Dialog dialogs[MAX_DIALOG_COUNT];
 	// Room rooms[r_MAX];
 	UXStateID uxStateID;
 	Fade screenFade;
@@ -351,6 +360,7 @@ typedef struct World
 	Entity* warpBG;	
 	Entity* currentBG;
 	Entity* activeEntity;
+	Entity* activeSpeaker;
 	Item* activeItem;
 	Object* activeObject;
 	CursorID currentCursor;
@@ -363,6 +373,8 @@ typedef struct World
 	float32 textTimer;
 	Entity* actorR;
 	bool debugOn;
+	s32 dialogID;
+	Dialog* dialog;
 } World;
 
 World* world = 0;
@@ -433,6 +445,18 @@ Object* getObject(ObjectID objectID)
 	else return &world->objects[0];
 }
 
+Dialog* getDialog(s32 dialogID)
+{
+	for (int i = 0; i < MAX_DIALOG_COUNT; i++)
+	{
+		Dialog* d = &world->dialogs[i];
+		if (d->isValid && dialogID == d->dialogID) 
+		{
+			return d;
+		}
+	}
+	return 0;
+}
 
 Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 pos, string hoverText, bool clickable, u64 flags) // flags - clickable, active, render etc..
 {
@@ -569,6 +593,29 @@ void loadCursor(CursorID cursorID, string path)
 	world->cursors[cursorID] = cursor;	
 
 }
+
+void loadDialog(s32 dialogID, s32 nextDialogID, s32 flag, string text)
+{
+    Dialog* dialog = 0;
+
+	for (int i = 0; i < MAX_DIALOG_COUNT; i++)
+	{
+		Dialog* d = &world->dialogs[i];
+		if (!d->isValid) // ie if no dialog exists here, memory is free, use that
+		{
+			dialog = d;
+			break;
+		}
+	}
+	assert(dialog, "No more free entities");
+
+	dialog->isValid = true;
+    dialog->dialogID = dialogID; // need a way to make these IDs unique or at least to check.
+    dialog->nextDialogID = nextDialogID;
+    dialog->flag = flag;
+    dialog->text = text; // maybe check this is within spec
+}
+
 void loadInventoryItem(ItemID itemID, string name, string path, bool inInventory, u64 flags)
 {
 	Item item;
@@ -622,6 +669,7 @@ void loadWalkbox(WalkboxID walkboxID, Walkbox walkbox)
 {	
 	world->walkboxes[walkboxID] = walkbox;
 }
+
 
 void drawQuadLines(Quad quad, float lineWidth, Vector4 color)
 {

@@ -45,9 +45,20 @@
         {
             if (range2f_contains(world->dialogueBox, worldFrame.mousePosScreen))
             {
-                // draw_rect(world->dialogueBox.min, world->dialogueBox.max, COLOR_RED);
-                // skip to next dialog
-                world->uxStateID = ux_inventory;
+                
+                if (world->dialogID > 0)
+                {
+                    world->actorR->dialogID = world->actorR->nextDialogID;
+                    // get actor from range
+                    // set string to world
+                }
+                else 
+                {
+                    world->actorR = 0;
+                    world->uxStateID = ux_inventory;
+                    
+                }
+                world->dialogID = world->actorR->dialogID;
             }
         }
         else if (world->uxStateID == ux_inventory)

@@ -4,7 +4,10 @@
 #include "src/animate.c"
 #include "src/game.c"
 #include "src/input.c"
+
 #include "src/init.c"
+
+
 
 
 // TODO:
@@ -45,6 +48,8 @@ int entry(int argc, char **argv)
 	// :Memory
 	world = alloc(get_heap_allocator(), sizeof(World));
 	memset(world, 0, sizeof(World));
+
+	#include "src/dialog.c"
 	
 	// :loadWalkboxes // [sleeper] : [cargo]-[luggage]-(0,0)[dining]-[hallway]-[lounge]
 	loadWalkbox(w_dining_1, boxMake(v2(70.0, 97.0), v2(340.0, 123.0), false, true, false, false));
@@ -204,6 +209,14 @@ int entry(int argc, char **argv)
 	// valet->portraitID.x = s_po_valet;
 	professor->portraitID = s_po_professor;
 
+	conductor->lookText = STR("It's the train conductor, I wonder what he is doing here.");
+	reporter->lookText = STR("She looks like a reporter, I wonder what she is doing here.");
+	baron->lookText = STR("That's quite the moustache, I wonder what he is doing here.");
+	detective->lookText = STR("He looks like a policeman, I wonder what he is doing here.");
+	starlet->lookText = STR("She looks familiar, I wonder what she is doing here.");
+	// valet->lookText = STR("That must be the valet.");
+	professor->lookText = STR("He's a studious sort, I wonder what he is doing here.");
+
 
 	// :createInventoryItems
 	loadInventoryItem(i_coupon, STR("Drink Coupon"), STR("jamAssets/objects/coupon.png"), false, 0); // load this when needed? How?
@@ -231,7 +244,13 @@ int entry(int argc, char **argv)
 	world->debugOn = false;
 	// world->screenFade = {0};
 	world->currentBG = bgSleeper;
+	world->activeSpeaker = player;
 	player->pos = v2(-1000.0, 106.0);
+
+	conductor->pos = v2(-1100.0, 106.0);
+	conductor->interactPos.x = conductor->pos.x + 30.0;
+	conductor->dialogID = 101;
+
 	float32 textDuration = 2.0f;
 
 	while (!window.should_close)
@@ -310,20 +329,6 @@ int entry(int argc, char **argv)
 							if (world->currentCursor != c_drag) world->currentCursor = c_hot;
 							if (world->currentCursor != c_drag && entity->isInRangeToInteract) world->currentCursor = entity->hoverCursor;
 						}
-
-						// if (entity == worldFrame.bg) 
-						// {
-						// 	world->activeEntity = 0;
-						// 	world->mouseActive = false;
-						// 	world->playerText = STR("");
-						// 	world->currentCursor = c_click;
-						// 	if (world->currentCursor != c_drag) world->currentCursor = entity->hoverCursor;
-						// }
-						// if (world->activeEntity && (world->textTimer - worldFrame.nowTime < -2.0f))
-						// {
-						// 	world->activeEntity->justClicked = false; 
-						// 	// world->playerText = STR("");
-						// }
 					}
 
 				}	
@@ -432,7 +437,7 @@ int entry(int argc, char **argv)
 		animate(player, worldFrame.nowTime, worldFrame.deltaTime);
 
 		{
-			// :renderActiveEntity stuff
+			// :render hover text
 			Entity* entity = world->activeEntity;
 			Object* object = world->activeObject;
 			if (entity != 0 && world->mouseActive) 
@@ -453,24 +458,10 @@ int entry(int argc, char **argv)
 					hoverTextPos = centerTextToPos(entity->hoverText, font, fontHeight, textScaling, hoverTextPos);
 					draw_text(font, entity->hoverText, fontHeight, hoverTextPos, textScaling, COLOR_GREEN);
 				}
-
-				if (world->playerText.data > 0)
-				{
-					if (worldFrame.nowTime - world->textTimer > textDuration)
-					{
-						world->textTimer = 0;
-						world->playerText = STR("");
-					}
-					if (world->textTimer > 0 && worldFrame.nowTime - world->textTimer  < textDuration)
-					{
-						set_screen_space();
-						Vector2 dialogueBoxPos = centerTextToPos(world->playerText, font, fontHeight, textScaling, v2(200.0, 80.0));
-						draw_text(font, world->playerText, fontHeight, dialogueBoxPos, textScaling, COLOR_WHITE);
-						set_world_space();
-					}
-					
-				}
-
+			}
+			else if (object != 0 && world->mouseActive)
+			{
+				//hover text
 			}
 			else if (!world->mouseActive) 
 			{
@@ -478,12 +469,22 @@ int entry(int argc, char **argv)
 				world->currentCursor = c_click;
 			}
 
+			if (world->playerText.data > 0)
 			{
-				// TODO : get appropriate text - need a better data structure
-
-				// get state from entity,
-				// draw relative state text
+				if (worldFrame.nowTime - world->textTimer > textDuration)
+				{
+					world->textTimer = 0;
+					world->playerText = STR("");
+				}
+				if (world->textTimer > 0 && worldFrame.nowTime - world->textTimer  < textDuration)
+				{
+					set_screen_space();
+					Vector2 dialogueBoxPos = centerTextToPos(world->playerText, font, fontHeight, textScaling, v2(200.0, 84.0));
+					draw_text(font, world->playerText, fontHeight, dialogueBoxPos, textScaling, COLOR_WHITE);
+					set_world_space();
+				}
 			}
+
 		}
 		// :UI
 		{
@@ -565,16 +566,38 @@ int entry(int argc, char **argv)
 				Vector2 dlgBoxPos = v2(35.0, 10.0);
 				Vector2 dlgBoxSize = v2(330.0, 64.0);
 				Vector2 textBoxPos = v2(99.0, 16.0);
-				Vector2 textBoxSize = v2(198.0, 52.0);
+				Vector2 textBoxSize = v2(260.0, 52.0);
 				// draw_rect(dlgBoxPos, dlgBoxSize, v4(1.0, 1.0, 1.0, 0.15));
 				// draw_rect(textBoxPos, textBoxSize, v4(1.0, 1.0, 1.0, 0.30));
+				//string long_text = STR("Jaunty jackrabbits juggle quaint quilts \nand quirky quinces, quickly queuing \nup for a jubilant, jazzy jamboree \nin the jungle. CLICK ME");
 
-				draw_image(actorLSprite->image, dlgBoxPos, actorLSprite->size, COLOR_WHITE);
-				draw_image(actorRSprite->image, v2(dlgBoxPos.x + 266.0, dlgBoxPos.y), actorRSprite->size, COLOR_WHITE);
-				string text = STR("Lorem ipsum dolor sit amet");
-				string long_text = STR("Jaunty jackrabbits juggle \nquaint quilts and quirky \nquinces, quickly queuing up \nfor a jubilant, jazzy jamboree \nin the jungle. CLICK ME");
+				if (world->dialogID == 0) world->uxStateID = ux_inventory;
+				else
+				{
+					Dialog* d = getDialog(world->dialogID); // maybe need a better way to collect the dialog than a for loop.
 
-				draw_text(font, long_text, fontHeight, v2(textBoxPos.x, textBoxPos.y + 45), textScaling, COLOR_WHITE);
+					if (d->dialogID > 0 && d->dialogID < 200)
+					{
+						draw_image(actorLSprite->image, dlgBoxPos, actorLSprite->size, COLOR_WHITE);
+						draw_text(font, d->text, fontHeight, v2(textBoxPos.x, textBoxPos.y + 40), textScaling, COLOR_WHITE);
+						world->actorR->nextDialogID = d->nextDialogID;
+					}
+					if (d->dialogID >= 200)
+					{
+						draw_image(actorRSprite->image, v2(dlgBoxPos.x + 266.0, dlgBoxPos.y), actorRSprite->size, COLOR_WHITE);
+						draw_text(font, d->text, fontHeight, v2(textBoxPos.x - 54, textBoxPos.y + 40), textScaling, COLOR_WHITE);
+						world->actorR->nextDialogID = d->nextDialogID;
+					}
+
+				}
+
+
+
+				// draw_image(actorLSprite->image, dlgBoxPos, actorLSprite->size, COLOR_WHITE);
+				// draw_image(actorRSprite->image, v2(dlgBoxPos.x + 266.0, dlgBoxPos.y), actorRSprite->size, COLOR_WHITE);
+				// string text = STR("Lorem ipsum dolor sit amet");
+
+				
 								
 
 			}
@@ -599,7 +622,7 @@ int entry(int argc, char **argv)
 						world->activeItem->inInventory = false;
 						world->currentCursor = c_drag;
 					}
-					else if (world->mouseActive == false) world->currentCursor = worldFrame.bg->hoverCursor;
+					// else if (world->mouseActive == false) world->currentCursor = worldFrame.bg->hoverCursor;
 
 				}
 				else
