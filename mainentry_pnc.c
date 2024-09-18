@@ -37,7 +37,7 @@ int entry(int argc, char **argv)
 	// below is the window offest from bottom left of screen - maybe get screen dimensions and center it.
 	window.point_x = 300;
 	window.point_y = 300;
-	window.clear_color = hex_to_rgba(0x6495EDff); // background color
+	window.clear_color = COLOR_BLACK; // background color
 
 	// disable windows cursor
 	ShowCursor(false);
@@ -76,12 +76,14 @@ int entry(int argc, char **argv)
 	loadCursor(c_click, STR("jamAssets/cursors/click.png"));
 	loadCursor(c_grab, STR("jamAssets/cursors/grab.png"));
 	loadCursor(c_look, STR("jamAssets/cursors/look.png"));
-	loadCursor(c_talk, STR("jamAssets/cursors/talk.png"));
+	loadCursor(c_talk, STR("jamAssets/cursors/talk2.png"));
 	loadCursor(c_left, STR("jamAssets/cursors/left.png"));
 	loadCursor(c_right, STR("jamAssets/cursors/right.png"));
-	loadCursor(c_drag, STR("jamAssets/cursors/drag.png"));
+	loadCursor(c_drag, STR("jamAssets/cursors/finger.png"));
 	loadCursor(c_up, STR("jamAssets/cursors/up.png"));
 	loadCursor(c_down, STR("jamAssets/cursors/down.png"));
+	loadCursor(c_hot, STR("jamAssets/cursors/hot.png"));
+
 
 	// :loadCharacters
 	loadSprite(s_player, STR("jamAssets/characters/Adaline-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 8, 5);
@@ -130,7 +132,7 @@ int entry(int argc, char **argv)
 
 	// :createEntities and Objects
 	Entity* player = createEntity(t_player, s_player, i_nil, v2(175.0, 106.0), null_string, false, 0);
-	Entity* conductor = createEntity(t_npc, s_ch_conductor, i_nil, v2(-330, 110), STR("Conductor"), true, 0);
+	Entity* conductor = createEntity(t_npc, s_ch_conductor, i_nil, v2(-310, 110), STR("Conductor"), true, 0);
 	Entity* reporter = createEntity(t_npc, s_ch_reporter, i_nil, v2(1100, 110), STR("Reporter"), true, 0);
 	Entity* baron = createEntity(t_npc, s_ch_baron, i_nil, v2(110, 120), STR("Baron"), true, 0);
 	Entity* detective = createEntity(t_npc, s_ch_detective, i_nil, v2(805, 115), STR("Detective"), true, 0);
@@ -194,6 +196,14 @@ int entry(int argc, char **argv)
 	// valet->interactPos.x = valet->pos.x - 30.0;
 	professor->interactPos.x = professor->pos.x - 30.0;
 
+	conductor->portraitID = s_po_conductor; 
+	reporter->portraitID = s_po_reporter;
+	baron->portraitID = s_po_baron;
+	detective->portraitID = s_po_detective;
+	starlet->portraitID = s_po_starlet;
+	// valet->portraitID.x = s_po_valet;
+	professor->portraitID = s_po_professor;
+
 
 	// :createInventoryItems
 	loadInventoryItem(i_coupon, STR("Drink Coupon"), STR("jamAssets/objects/coupon.png"), false, 0); // load this when needed? How?
@@ -202,7 +212,8 @@ int entry(int argc, char **argv)
 	// :init timers and fps etc
 	float64 prevTime = os_get_elapsed_seconds();
 	float64 secCounter = 0.0;
-	s32 frameCounter = 0.0;
+	s32 frameCounter = 0;
+	s32 framerate = 0;
 	int delayCounter = 0; // maybe add a data struct to keep a bunch of timers
 
 	// :init game misc
@@ -248,7 +259,7 @@ int entry(int argc, char **argv)
 
 		worldFrame.world_view = m4_identity;
 		// translate into position
-		worldFrame.world_view = m4_translate(worldFrame.world_view, v3(camera_pos.x, 150.0, 0));
+		worldFrame.world_view = m4_translate(worldFrame.world_view, v3(camera_pos.x, 140.0, 0));
 
 		// scale the zoom
 		worldFrame.world_view = m4_scale(worldFrame.world_view, v3(1.0/zoom, 1.0/zoom, 1.0));
@@ -271,68 +282,91 @@ int entry(int argc, char **argv)
 			
 
 		// :update loop over all entities
-		for (int i = 0; i < MAX_ENTITY_COUNT; i++)
 		{
-			Entity* entity = &world->entities[i];
-
-			// :mouseOver
-			if (entity->isValid)
+			bool activeFound = false;
+			for (int i = 0; i < MAX_ENTITY_COUNT; i++)
 			{
+				Entity* entity = &world->entities[i];
 
-				Sprite* sprite = getSprite(entity->spriteID);
-				
-				// check mouse in entity box - pull out to function
-				// Range2f hotspot = range2f_make(v2_add(entity->pos, sprite->origin), v2_add(entity->pos, sprite->clickableSize));
-				Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
-				hotspot = range2f_shift(hotspot, entity->pos);
-				if (entity != player)
+				// :mouseOver
+				if (entity->isValid)
 				{
-					if (fabsf(v2_dist(entity->pos, player->pos)) < entity->interactRadius) entity->isInRangeToInteract = true;
-					else entity->isInRangeToInteract = false;
+					Sprite* sprite = getSprite(entity->spriteID);
+					
+					// check mouse in entity box - pull out to function
+					// Range2f hotspot = range2f_make(v2_add(entity->pos, sprite->origin), v2_add(entity->pos, sprite->clickableSize));
+					Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
+					hotspot = range2f_shift(hotspot, entity->pos);
+					if (entity->type != t_player && entity->type != t_background)
+					{
+						if (fabsf(v2_dist(entity->pos, player->pos)) < entity->interactRadius) entity->isInRangeToInteract = true;
+						else entity->isInRangeToInteract = false;
 
-					if (range2f_contains(hotspot, worldFrame.mousePosWorld))
-					{
-						world->activeEntity = entity;
-						world->mouseActive = true;
-						if (world->currentCursor != c_drag && entity->isInRangeToInteract) world->currentCursor = entity->hoverCursor;
-					}
-					if (entity == worldFrame.bg) 
-					{
-						world->activeEntity = 0;
-						world->mouseActive = false;
-						if (world->currentCursor != c_drag) world->currentCursor = entity->hoverCursor;
-					}
-					if (world->activeEntity && (world->textTimer - worldFrame.nowTime < -2.0f))
-					{
-						world->activeEntity->justClicked = false; 
-						// world->playerText = STR("");
-					}
-				}
+						if (range2f_contains(hotspot, worldFrame.mousePosWorld))
+						{
+							world->activeEntity = entity;
+							world->mouseActive = true;
+							activeFound = true;
+							if (world->currentCursor != c_drag) world->currentCursor = c_hot;
+							if (world->currentCursor != c_drag && entity->isInRangeToInteract) world->currentCursor = entity->hoverCursor;
+						}
 
-			}	
+						// if (entity == worldFrame.bg) 
+						// {
+						// 	world->activeEntity = 0;
+						// 	world->mouseActive = false;
+						// 	world->playerText = STR("");
+						// 	world->currentCursor = c_click;
+						// 	if (world->currentCursor != c_drag) world->currentCursor = entity->hoverCursor;
+						// }
+						// if (world->activeEntity && (world->textTimer - worldFrame.nowTime < -2.0f))
+						// {
+						// 	world->activeEntity->justClicked = false; 
+						// 	// world->playerText = STR("");
+						// }
+					}
+
+				}	
+			}
+			if (!activeFound)
+			{
+				world->activeEntity = 0;
+				if (world->activeObject == 0) world->mouseActive = false;
+			} 
 		}
 		// :updateLoop over all objects (doors, static npcs, objects etc)
-		for (int i = 1; i < o_MAX; i++)
 		{
-			Object* obj = &world->objects[i];
-			if (obj->objectID != o_nil)
+			bool activeFound = false;
+			for (int i = 1; i < o_MAX; i++)
 			{
-				if (fabsf(v2_dist(obj->interactPos, player->pos)) < obj->interactRadius) obj->isInRangeToInteract = true;
-				else obj->isInRangeToInteract = false;
-
-				// if (isPointInConvexQuad(obj->quad, worldFrame.mousePosWorld))
-				if (range2f_contains(range2f_make(obj->quad.q1, obj->quad.q3),worldFrame.mousePosWorld))
+				Object* obj = &world->objects[i];
+				if (obj->objectID != o_nil)
 				{
-					worldFrame.activeObject = obj;
-					if (world->currentCursor != c_drag && obj->isInRangeToInteract)
+					if (fabsf(v2_dist(obj->interactPos, player->pos)) < obj->interactRadius) obj->isInRangeToInteract = true;
+					else obj->isInRangeToInteract = false;
+
+					// if (isPointInConvexQuad(obj->quad, worldFrame.mousePosWorld))
+					if (range2f_contains(range2f_make(obj->quad.q1, obj->quad.q3),worldFrame.mousePosWorld))
 					{
-						world->currentCursor = obj->hoverCursor;
-					} 
-				
+						worldFrame.activeObject = obj;
+						activeFound = true;
+						world->mouseActive = true;
+						if (world->currentCursor != c_drag) world->currentCursor = c_hot;
+						if (world->currentCursor != c_drag && obj->isInRangeToInteract)
+						{
+							world->currentCursor = obj->hoverCursor;
+						} 
+					
+					}
+					
 				}
 			}
+			if (!activeFound)
+			{
+				world->activeObject = 0;
+				if (world->activeEntity == 0) world->mouseActive = false;
+			} 
 		}
-
 		// :update loop over inventory
 		for (int i = 0; i < i_MAX; i++)
 		{
@@ -399,37 +433,38 @@ int entry(int argc, char **argv)
 
 		{
 			// :renderActiveEntity stuff
-			Entity* e = world->activeEntity; 
-			if (world->mouseActive && e->type != t_background) 
+			Entity* entity = world->activeEntity;
+			Object* object = world->activeObject;
+			if (entity != 0 && world->mouseActive) 
 			{
-				Sprite* sprite = getSprite(e->spriteID);
+				Sprite* sprite = getSprite(entity->spriteID);
 				// Item* item = getItem(world.activeItem);
 				
 				{ 
 					Vector4 color = v4(1, 1, 1, 0.2f);
 					// make rect around sprite and highlight on mouse over
 					Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
-					hotspot = range2f_shift(hotspot, e->pos);
+					hotspot = range2f_shift(hotspot, entity->pos);
 					if (world->debugOn) { draw_circle(hotspot.min, range2f_size(hotspot), color); }
 					// maybe draw the interact rad or something else that is causing the issue?
 
 					// draw hover text -  TODO: do measure text and center
-					Vector2 hoverTextPos = v2(e->pos.x, hotspot.max.y + 5.0);
-					hoverTextPos = centerTextToPos(e->hoverText, font, fontHeight, textScaling, hoverTextPos);
-					draw_text(font, e->hoverText, fontHeight, hoverTextPos, textScaling, COLOR_GREEN);
+					Vector2 hoverTextPos = v2(entity->pos.x, hotspot.max.y + 5.0);
+					hoverTextPos = centerTextToPos(entity->hoverText, font, fontHeight, textScaling, hoverTextPos);
+					draw_text(font, entity->hoverText, fontHeight, hoverTextPos, textScaling, COLOR_GREEN);
 				}
 
 				if (world->playerText.data > 0)
 				{
-					if (world->textTimer > textDuration)
+					if (worldFrame.nowTime - world->textTimer > textDuration)
 					{
 						world->textTimer = 0;
 						world->playerText = STR("");
 					}
-					if (world->textTimer > 0 && world->textTimer < textDuration)
+					if (world->textTimer > 0 && worldFrame.nowTime - world->textTimer  < textDuration)
 					{
 						set_screen_space();
-						Vector2 dialogueBoxPos = centerTextToPos(world->playerText, font, fontHeight, textScaling, v2(200.0, 75.0));
+						Vector2 dialogueBoxPos = centerTextToPos(world->playerText, font, fontHeight, textScaling, v2(200.0, 80.0));
 						draw_text(font, world->playerText, fontHeight, dialogueBoxPos, textScaling, COLOR_WHITE);
 						set_world_space();
 					}
@@ -437,8 +472,11 @@ int entry(int argc, char **argv)
 				}
 
 			}
-			// else if (world->mouseActive && worldFrame.bg != null) world->currentCursor = worldFrame.bg->hoverCursor;
-
+			else if (!world->mouseActive) 
+			{
+				world->playerText = STR("");
+				world->currentCursor = c_click;
+			}
 
 			{
 				// TODO : get appropriate text - need a better data structure
@@ -522,7 +560,7 @@ int entry(int argc, char **argv)
 				// Stop player from clicking on anything but text
 
 				Sprite* actorLSprite = getSprite(s_po_player);
-				Sprite* actorRSprite = getSprite(s_po_baron);
+				Sprite* actorRSprite = getSprite(world->actorR->portraitID);
 
 				Vector2 dlgBoxPos = v2(35.0, 10.0);
 				Vector2 dlgBoxSize = v2(330.0, 64.0);
@@ -587,9 +625,14 @@ int entry(int argc, char **argv)
 			if (world->screenFade.fadeAmount == 1.0f) 
 			{	
 				world->screenFade.currentlyFadingIn = true;
-				if (worldFrame.activeObject != null) world->currentBG = worldFrame.activeObject->warpBG;
-				player->pos = world->warpPos;
-				camera_pos.x = player->pos.x;
+				// if (worldFrame.activeObject != null) // this happens if the mouse moves out of the active object - need to fix.
+				{
+					world->currentBG = world->warpBG;
+					world->warpBG = 0;
+					player->pos = world->warpPos;
+					camera_pos.x = player->pos.x;
+				}
+				
 				// world->screenFade.startTime = worldFrame.nowTime;
 			}
 			if (world->screenFade.currentlyFadingIn)
@@ -607,10 +650,10 @@ int entry(int argc, char **argv)
 			{
 				Vector2 mouseProjPos = getMouseCurrentProj();
 				// draw_text(font, tprint("Mouse: %v2", v2(input_frame.mouse_x / 3.0, input_frame.mouse_y / 3.0)), fontHeight, v2(10, 10), v2(0.2, 0.2), COLOR_RED);
-				draw_text(font, tprint("ScreenPos: [ %i, %i ]", (int)mouseProjPos.x, (int)mouseProjPos.y), fontHeight, v2(10, 10), v2(0.1, 0.1), COLOR_RED);
-				draw_text(font, tprint("WorldPos: [ %i, %i ]", (int)worldFrame.mousePosWorld.x, (int)worldFrame.mousePosWorld.y), fontHeight, v2(100, 10), v2(0.1, 0.1), COLOR_RED);
+				draw_text(font, tprint("ScreenPos: [ %i, %i ]", (int)mouseProjPos.x, (int)mouseProjPos.y), fontHeight, v2(10, 290), v2(0.1, 0.1), COLOR_RED);
+				draw_text(font, tprint("WorldPos: [ %i, %i ]", (int)worldFrame.mousePosWorld.x, (int)worldFrame.mousePosWorld.y), fontHeight, v2(100, 290), v2(0.1, 0.1), COLOR_RED);
 				// draw_text(font, tprint("InputPos: [ %i, %i ]", (int)input_frame.mouse_x, (int)input_frame.mouse_y), fontHeight, v2(200, 10), v2(0.1, 0.1), COLOR_RED);
-				draw_text(font, tprint("CameraPos: [ %i, %i ]", (int)camera_pos.x, (int)camera_pos.y), fontHeight, v2(300, 10), v2(0.1, 0.1), COLOR_RED);
+				//draw_text(font, tprint("CameraPos: [ %i, %i ]", (int)camera_pos.x, (int)camera_pos.y), fontHeight, v2(300, 10), v2(0.1, 0.1), COLOR_RED);
 
 				// draw walkboxes and doors objects etc
 				set_world_space();
@@ -622,7 +665,7 @@ int entry(int argc, char **argv)
 					{
 						drawQuadLines(obj->quad, 1.0, COLOR_GREEN);
 						// if (isPointInConvexQuad(obj->quad, worldFrame.mousePosWorld)) 
-						if (range2f_contains(range2f_make(obj->quad.q1, obj->quad.q3),worldFrame.mousePosWorld))
+						if (range2f_contains(range2f_make(obj->quad.q1, obj->quad.q3), worldFrame.mousePosWorld))
 						{
 							drawQuadLines(obj->quad, 1.0, COLOR_BLUE);
 							// log("mouse in obj quad");
@@ -638,23 +681,29 @@ int entry(int argc, char **argv)
 
 				// test line intersection
 
-
 				set_screen_space();
 
 			}
 		}
-		
-		os_update(); 		
-		gfx_update();
 
 		secCounter += worldFrame.deltaTime;
 		frameCounter += 1;
 		if (secCounter > 1.0f)
 		{
-			// log("fps: %i", frameCounter);
+			framerate = frameCounter;
 			secCounter = 0.0f;
 			frameCounter = 0;
 		}
+				if (world->debugOn)
+		{
+			draw_text(font, tprint("FPS: %i", framerate), fontHeight, v2(200, 290), v2(0.1, 0.1), COLOR_RED);
+		}
+
+		
+		os_update(); 		
+		gfx_update();
+
+
 
 	} // game loop
 

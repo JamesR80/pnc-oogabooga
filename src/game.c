@@ -46,6 +46,7 @@ void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity c
 			case t_npc:
 				log("dialog?");
 				world->uxStateID = ux_dialog;
+				world->actorR = entity;
 				break;
 			case t_object:
 				// world->playerText = entity->useText;
@@ -74,6 +75,7 @@ void objectClicked(Object* object, Entity* player, bool isLeftClick) // entity c
 		case true: 
 			object->justClicked = true;
 			log("left click!");
+			break;
 
 		case false:
 			object->justClicked = true;
@@ -87,8 +89,9 @@ void objectClicked(Object* object, Entity* player, bool isLeftClick) // entity c
 			case ot_door:
 				if (object->warpBG != null)
 				{
-					world->screenFade.currentlyFadingOut = true;;
 					world->warpPos = object->warpPos;
+					world->warpBG = object->warpBG;
+					world->screenFade.currentlyFadingOut = true;
 				}
 				else 
 				{

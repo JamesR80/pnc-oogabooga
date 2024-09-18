@@ -233,6 +233,7 @@ typedef enum CursorID
 	c_up,
 	c_down,
 	c_walk,
+	c_hot,
 	c_MAX,
 } CursorID;
 
@@ -276,6 +277,7 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 	Vector2 destPos;
 	Vector2 scrollPos;
 	SpriteID spriteID;
+	SpriteID portraitID;
 	ItemID itemID;
 	RoomID roomID;
 	bool clickable;
@@ -293,7 +295,7 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 	CursorID hoverCursor;
 } Entity;
 
-#define MAX_ENTITY_COUNT 1024
+#define MAX_ENTITY_COUNT 256
 
 typedef struct Object
 {
@@ -309,6 +311,12 @@ typedef struct Object
 	CursorID hoverCursor;
 } Object;
 
+typedef struct Dialog
+{
+	s32 DialogID;
+	string text;
+	s32 NextDialogID;
+} Dialog;
 
 typedef enum UXStateID 
 {
@@ -339,9 +347,8 @@ typedef struct World
 	// Room rooms[r_MAX];
 	UXStateID uxStateID;
 	Fade screenFade;
-	Vector2 warpPos;	
-	float inventoryAlpha; 			// this is randy caveman shit. not sure about this approach
-	float inventoryAlphaTarget;		// this is randy caveman shit. not sure about this approach
+	Vector2 warpPos;
+	Entity* warpBG;	
 	Entity* currentBG;
 	Entity* activeEntity;
 	Item* activeItem;
@@ -354,7 +361,7 @@ typedef struct World
 	Range2f dialogueBox;
 	Range2f gameBox;
 	float32 textTimer;
-
+	Entity* actorR;
 	bool debugOn;
 } World;
 
