@@ -49,14 +49,11 @@
                 if (world->dialogID > 0)
                 {
                     world->actorR->dialogID = world->actorR->nextDialogID;
-                    // get actor from range
-                    // set string to world
                 }
-                else 
-                {
-                    world->actorR = 0;
-                    world->uxStateID = ux_inventory;
-                    
+                else
+                {   
+
+                
                 }
                 world->dialogID = world->actorR->dialogID;
             }

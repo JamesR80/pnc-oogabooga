@@ -1,3 +1,4 @@
+#define HAS_MET 1
 
 typedef enum AnimType
 {	
@@ -252,9 +253,8 @@ typedef struct Dialog
     bool isValid;
 	u32 dialogID;
 	u32 nextDialogID;
-	u32 flag;
 	string text;
-	
+	u32 flag;
 } Dialog;
 
 #define MAX_DIALOG_COUNT 5
@@ -307,6 +307,7 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 	CursorID hoverCursor;
 	s32 dialogID;
 	s32 nextDialogID;
+	s32 dialogFlag;
 } Entity;
 
 #define MAX_ENTITY_COUNT 256
@@ -594,7 +595,7 @@ void loadCursor(CursorID cursorID, string path)
 
 }
 
-void loadDialog(s32 dialogID, s32 nextDialogID, s32 flag, string text)
+void loadDialog(u32 dialogID, u32 nextDialogID, u32 flag, string text)
 {
     Dialog* dialog = 0;
 
@@ -612,7 +613,7 @@ void loadDialog(s32 dialogID, s32 nextDialogID, s32 flag, string text)
 	dialog->isValid = true;
     dialog->dialogID = dialogID; // need a way to make these IDs unique or at least to check.
     dialog->nextDialogID = nextDialogID;
-    dialog->flag = flag;
+	dialog->flag = flag;
     dialog->text = text; // maybe check this is within spec
 }
 

@@ -571,25 +571,39 @@ int entry(int argc, char **argv)
 				// draw_rect(textBoxPos, textBoxSize, v4(1.0, 1.0, 1.0, 0.30));
 				//string long_text = STR("Jaunty jackrabbits juggle quaint quilts \nand quirky quinces, quickly queuing \nup for a jubilant, jazzy jamboree \nin the jungle. CLICK ME");
 
-				if (world->dialogID == 0) world->uxStateID = ux_inventory;
-				else
+				Dialog* d = getDialog(world->dialogID);
+				world->dialog = d; // maybe need a better way to collect the dialog than a for loop.
+
+				if (d->dialogID > 0 && d->dialogID < 200)
 				{
-					Dialog* d = getDialog(world->dialogID); // maybe need a better way to collect the dialog than a for loop.
-
-					if (d->dialogID > 0 && d->dialogID < 200)
-					{
-						draw_image(actorLSprite->image, dlgBoxPos, actorLSprite->size, COLOR_WHITE);
-						draw_text(font, d->text, fontHeight, v2(textBoxPos.x, textBoxPos.y + 40), textScaling, COLOR_WHITE);
-						world->actorR->nextDialogID = d->nextDialogID;
-					}
-					if (d->dialogID >= 200)
-					{
-						draw_image(actorRSprite->image, v2(dlgBoxPos.x + 266.0, dlgBoxPos.y), actorRSprite->size, COLOR_WHITE);
-						draw_text(font, d->text, fontHeight, v2(textBoxPos.x - 54, textBoxPos.y + 40), textScaling, COLOR_WHITE);
-						world->actorR->nextDialogID = d->nextDialogID;
-					}
-
+					draw_image(actorLSprite->image, dlgBoxPos, actorLSprite->size, COLOR_WHITE);
+					draw_text(font, d->text, fontHeight, v2(textBoxPos.x, textBoxPos.y + 40), textScaling, COLOR_WHITE);
+					world->actorR->nextDialogID = d->nextDialogID;
 				}
+				else if (d->dialogID >= 200)
+				{
+					draw_image(actorRSprite->image, v2(dlgBoxPos.x + 266.0, dlgBoxPos.y), actorRSprite->size, COLOR_WHITE);
+					draw_text(font, d->text, fontHeight, v2(textBoxPos.x - 50, textBoxPos.y + 40), textScaling, COLOR_WHITE);
+					world->actorR->nextDialogID = d->nextDialogID;
+				}
+				else if (d->dialogID == 0)
+				{
+					world->actorR = 0;
+					world->dialog = 0;
+					world->uxStateID = ux_inventory;
+					// u32 flag = world->dialog->flag;
+                    // if (flag > 0)
+					// {
+					// 	// do flag stuff with actorR
+					// 	if (flag == HAS_MET)
+					// 	{
+					// 		d->nextDialogID = 202;
+					// 	} 
+					// }
+				}
+
+
+				
 
 
 
