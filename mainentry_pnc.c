@@ -46,7 +46,7 @@ int entry(int argc, char **argv)
 	world = alloc(get_heap_allocator(), sizeof(World));
 	memset(world, 0, sizeof(World));
 	
-	// :loadWalkboxes
+	// :loadWalkboxes // [sleeper] : [cargo]-[luggage]-(0,0)[dining]-[hallway]-[lounge]
 	loadWalkbox(w_dining_1, boxMake(v2(70.0, 97.0), v2(340.0, 123.0), false, true, false, false));
 	loadWalkbox(w_dining_2, boxMake(v2(340.0, 97.0), v2(400.0, 123.0),true, true, true, false));
 	loadWalkbox(w_dining_3, boxMake(v2(340.0, 123.0), v2(400.0, 150.0), false, false, false, true));
@@ -59,7 +59,10 @@ int entry(int argc, char **argv)
 
 	loadWalkbox(w_hallway_1, boxMake(v2(670.0, 97.0), v2(1130.0, 119.0), false, false, false, false));
 
-	loadWalkbox(w_lounge_1, boxMake(v2(1270.0, 97.0), v2(1730.0, 150.0), false, false, false, false));
+	loadWalkbox(w_lounge_1, boxMake(v2(1300.0, 97.0), v2(1700.0, 123.0), true, true, true, false));
+	loadWalkbox(w_lounge_2, boxMake(v2(1270.0, 97.0), v2(1300.0, 123.0), false, true, false, false));
+	loadWalkbox(w_lounge_3, boxMake(v2(1700.0, 97.0), v2(1730.0, 123.0), true, false, false, false));
+	loadWalkbox(w_lounge_4, boxMake(v2(1300.0, 123.0), v2(1700.0, 150.0), false, false, false, true));
 
 	loadWalkbox(w_cargo_1, boxMake(v2(-730.0, 97.0), v2(-470.0, 150.0), false, false, false, false));
 
@@ -84,12 +87,23 @@ int entry(int argc, char **argv)
 	loadSprite(s_player, STR("jamAssets/characters/Adaline-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 8, 5);
 	loadSprite(s_ch_conductor, STR("jamAssets/characters/Conductor-Idle-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 4, 1);
 	loadSprite(s_ch_reporter, STR("jamAssets/characters/Reporter-Idle-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 4, 1);
+	loadSprite(s_ch_baron, STR("jamAssets/characters/Baron-Idle-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 4, 1);
+	loadSprite(s_ch_detective, STR("jamAssets/characters/Detective-Idle-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 4, 1);
+	loadSprite(s_ch_professor, STR("jamAssets/characters/Professor-Idle-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 4, 1);
+	loadSprite(s_ch_starlet, STR("jamAssets/characters/Starlet-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 4, 1);
+	loadSprite(s_ch_valet, STR("jamAssets/characters/Valet-Idle-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 4, 1);
 
 	// :loadPortraits
 	loadSprite(s_po_player, STR("jamAssets/portraits/MCPortrait.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
 	loadSprite(s_po_baron, STR("jamAssets/portraits/BaronPortrait.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
 	loadSprite(s_po_reporter, STR("jamAssets/portraits/ReporterPortrait.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
+	loadSprite(s_po_detective, STR("jamAssets/portraits/DetectivePortrait.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
+	loadSprite(s_po_conductor, STR("jamAssets/portraits/ConductorPortrait.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
+	loadSprite(s_po_professor, STR("jamAssets/portraits/ProfessorPortrait.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
+	loadSprite(s_po_valet, STR("jamAssets/portraits/ValetPortrait.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
+	loadSprite(s_po_starlet, STR("jamAssets/portraits/StarletPortrait.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
 
+	loadSprite(s_uibox, STR("jamAssets/portraits/UIBox.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
 
 	// :loadItems
 	loadSprite(s_item_coupon, STR("jamAssets/objects/coupon.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
@@ -116,8 +130,13 @@ int entry(int argc, char **argv)
 
 	// :createEntities and Objects
 	Entity* player = createEntity(t_player, s_player, i_nil, v2(175.0, 106.0), null_string, false, 0);
-	Entity* conductor = createEntity(t_npc, s_ch_conductor, i_nil, v2(110, 110), STR("Conductor"), true, 0);
-	Entity* reporter = createEntity(t_npc, s_ch_reporter, i_nil, v2(500, 110), STR("Reporter"), true, 0);
+	Entity* conductor = createEntity(t_npc, s_ch_conductor, i_nil, v2(-330, 110), STR("Conductor"), true, 0);
+	Entity* reporter = createEntity(t_npc, s_ch_reporter, i_nil, v2(1100, 110), STR("Reporter"), true, 0);
+	Entity* baron = createEntity(t_npc, s_ch_baron, i_nil, v2(110, 120), STR("Baron"), true, 0);
+	Entity* detective = createEntity(t_npc, s_ch_detective, i_nil, v2(805, 115), STR("Detective"), true, 0);
+	Entity* professor = createEntity(t_npc, s_ch_professor, i_nil, v2(1390, 140), STR("Professor"), true, 0);
+	Entity* starlet = createEntity(t_npc, s_ch_starlet, i_nil, v2(1665, 140), STR("Starlet"), true, 0);
+	Entity* valet = createEntity(t_npc, s_ch_valet, i_nil, v2(500, 500), STR("Valet"), true, 0);
 
 	// :createItems
 	Entity* coupon = createEntity(t_object, s_item_coupon, i_coupon, v2(300, 110), STR("Coupon"), true, 0);
@@ -133,38 +152,32 @@ int entry(int argc, char **argv)
 	// DiningRoom
 	tempQuad = makeQuad(v2(40.0, 95.0), v2(70.0, 95.0), v2(70.0, 195.0), v2(40.0, 195.0));
 	createObject(o_door_diningL, tempQuad, ot_door, v2(71.0, 106.0), v2(-71.0, 106.0), bgLuggage, c_left);
-
 	tempQuad = makeQuad(v2(530.0, 95.0), v2(560.0, 95.0), v2(560.0, 195.0), v2(530.0, 195.0));
 	createObject(o_door_diningR, tempQuad, ot_door, v2(529.0, 106.0), v2(671, 106.0), bgHallway, c_right);
 
 	// Hallway
 	tempQuad = makeQuad(v2(640.0, 95.0), v2(670.0, 95.0), v2(670.0, 195.0), v2(640.0, 195.0));
 	createObject(o_door_hallwayL, tempQuad, ot_door, v2(671.0, 106.0), v2(529.0, 106.0), bgDining, c_left);
-
 	tempQuad = makeQuad(v2(1130.0, 95.0), v2(1160.0, 95.0), v2(1160.0, 195.0), v2(1130.0, 195.0));
 	createObject(o_door_hallwayR, tempQuad, ot_door, v2(1129.0, 106.0), v2(1271, 106.0), bgLounge, c_right);
-
 	tempQuad = makeQuad(v2(940.0, 120.0), v2(976.0, 120.0), v2(976.0, 185.0), v2(940.0, 185.0));
 	createObject(o_door_hallwayU, tempQuad, ot_door, v2(960.0, 115.0), v2(-885.0, 106.0), bgSleeper, c_up);
 
 	// Lounge
 	tempQuad = makeQuad(v2(1240.0, 95.0), v2(1270.0, 95.0), v2(1270.0, 195.0), v2(1240.0, 195.0));
 	createObject(o_door_loungeL, tempQuad, ot_door, v2(1271.0, 106.0), v2(1129.0, 106.0), bgHallway, c_left);
-
 	tempQuad = makeQuad(v2(1730.0, 95.0), v2(1760.0, 95.0), v2(1760.0, 195.0), v2(1730.0, 195.0));
 	createObject(o_door_loungeR, tempQuad, ot_door, v2(1729.0, 106.0), v2(0.0, 0.0), null, c_right); // put check in for 0
 
 	// Luggage
 	tempQuad = makeQuad(v2(-360.0, 95.0), v2(-330.0, 95.0), v2(-330.0, 195.0), v2(-360.0, 195.0));
 	createObject(o_door_luggageL, tempQuad, ot_door, v2(-329.0, 106.0), v2(-471.0, 106.0), bgCargo, c_left);
-
 	tempQuad = makeQuad(v2(-70.0, 95.0), v2(-40.0, 95.0), v2(-40.0, 195.0), v2(-70.0, 195.0));
 	createObject(o_door_luggageR, tempQuad, ot_door, v2(-71.0, 106.0), v2(71, 106.0), bgDining, c_right);
 
 	// Cargo
 	tempQuad = makeQuad(v2(-760.0, 95.0), v2(-730.0, 95.0), v2(-730.0, 195.0), v2(-760.0, 195.0));
 	createObject(o_door_cargoL, tempQuad, ot_door, v2(-729.0, 106.0), v2(0.0, 0.0), null, c_left);
-
 	tempQuad = makeQuad(v2(-470.0, 95.0), v2(-440.0, 95.0), v2(-440.0, 195.0), v2(-470.0, 195.0));
 	createObject(o_door_cargoR, tempQuad, ot_door, v2(-471.0, 106.0), v2(-329, 106.0), bgLuggage, c_right);
 
@@ -172,12 +185,14 @@ int entry(int argc, char **argv)
 	tempQuad = makeQuad(v2(-910.0, 95.0), v2(-860.0, 95.0), v2(-860.0, 105.0), v2(-910.0, 105.0));
 	createObject(o_door_sleeperD, tempQuad, ot_door, v2(-885.0, 106.0), v2(960.0, 115.0), bgHallway, c_down);
 
-
-
-
-	// add this to createEntity() 
+	// add this to createEntity() ?
 	conductor->interactPos.x = conductor->pos.x + 30.0; // + if facing right, - if facing left
 	reporter->interactPos.x = reporter->pos.x - 30.0;
+	baron->interactPos.x = baron->pos.x + 30.0;
+	detective->interactPos.x = detective->pos.x - 30.0;
+	starlet->interactPos.x = starlet->pos.x - 30.0;
+	// valet->interactPos.x = valet->pos.x - 30.0;
+	professor->interactPos.x = professor->pos.x - 30.0;
 
 
 	// :createInventoryItems
@@ -205,7 +220,7 @@ int entry(int argc, char **argv)
 	world->debugOn = false;
 	// world->screenFade = {0};
 	world->currentBG = bgSleeper;
-	player->pos = v2(-885.0, 106.0);
+	player->pos = v2(-1000.0, 106.0);
 	float32 textDuration = 2.0f;
 
 	while (!window.should_close)
@@ -305,7 +320,8 @@ int entry(int argc, char **argv)
 				if (fabsf(v2_dist(obj->interactPos, player->pos)) < obj->interactRadius) obj->isInRangeToInteract = true;
 				else obj->isInRangeToInteract = false;
 
-				if (isPointInConvexQuad(obj->quad, worldFrame.mousePosWorld)) 
+				// if (isPointInConvexQuad(obj->quad, worldFrame.mousePosWorld))
+				if (range2f_contains(range2f_make(obj->quad.q1, obj->quad.q3),worldFrame.mousePosWorld))
 				{
 					worldFrame.activeObject = obj;
 					if (world->currentCursor != c_drag && obj->isInRangeToInteract)
@@ -325,7 +341,6 @@ int entry(int argc, char **argv)
 			{	
 				Range2f hotspot = getHotSpot(item->size, item->origin);
 				
-
 			}
 		}
 
@@ -438,27 +453,29 @@ int entry(int argc, char **argv)
 			set_screen_space();
 			draw_frame.camera_xform = m4_scalar(1.0);
 
+			{ // UIBOX
+				Matrix4 xform = m4_scalar(1.0); // m4_make_scale(v3(1,1,1))?
+				xform = m4_translate(xform, v3(35.0, 10.0, 0.0));
+				// draw_rect_xform(xform, v2(invWidth, invHeight), v4(1.0, 1.0, 1.0, 0.15));
+				Sprite* sprite = getSprite(s_uibox); 
+				draw_image_xform(sprite->image, xform, sprite->size, COLOR_WHITE);
+			}
 			 // maybe use backbuffer?
 
 			if (world->uxStateID == ux_inventory)
 			{	
 				// :UI inventory
-				float invStartPosX = 34.0; // inv screen position
+				float invStartPosX = 52.0; // inv screen position
 				float invStartPosY = 20.0;
 				float invSlotWidth = 32;
 				float invSlotHeight = 32;
 				float invSlotPadding = 4;
-				float invSlots = 9; // slots along bottom of screen, or 5 by 6 grid?
+				float invSlots = 8; // slots along bottom of screen, or 5 by 6 grid?
 				// Item* invPage0[invRenderSlots]; // Maybe add a resizeable array using the temp alloc?
 
 				float invWidth = invSlots * (invSlotWidth + invSlotPadding) + (invSlotPadding * 2.0);
 				float invHeight = invSlotHeight + (invSlotPadding * 2.0);
 
-				{
-					Matrix4 xform = m4_scalar(1.0); // m4_make_scale(v3(1,1,1))?
-					xform = m4_translate(xform, v3(invStartPosX, invStartPosY, 0.0));
-					draw_rect_xform(xform, v2(invWidth, invHeight), v4(1.0, 1.0, 1.0, 0.15));
-				}
 				// :render UI loop over inv
 				// if inventory currently visible?
 				int invItemCount = 0;
@@ -507,12 +524,12 @@ int entry(int argc, char **argv)
 				Sprite* actorLSprite = getSprite(s_po_player);
 				Sprite* actorRSprite = getSprite(s_po_baron);
 
-				Vector2 dlgBoxPos = v2(35.0, 15.0);
-				Vector2 dlgBoxSize = v2(330.0, 65.0);
-				Vector2 textBoxPos = v2(100.0, 20.0);
-				Vector2 textBoxSize = v2(200.0, 55.0);
-				draw_rect(dlgBoxPos, dlgBoxSize, v4(1.0, 1.0, 1.0, 0.15));
-				draw_rect(textBoxPos, textBoxSize, v4(1.0, 1.0, 1.0, 0.30));
+				Vector2 dlgBoxPos = v2(35.0, 10.0);
+				Vector2 dlgBoxSize = v2(330.0, 64.0);
+				Vector2 textBoxPos = v2(99.0, 16.0);
+				Vector2 textBoxSize = v2(198.0, 52.0);
+				// draw_rect(dlgBoxPos, dlgBoxSize, v4(1.0, 1.0, 1.0, 0.15));
+				// draw_rect(textBoxPos, textBoxSize, v4(1.0, 1.0, 1.0, 0.30));
 
 				draw_image(actorLSprite->image, dlgBoxPos, actorLSprite->size, COLOR_WHITE);
 				draw_image(actorRSprite->image, v2(dlgBoxPos.x + 266.0, dlgBoxPos.y), actorRSprite->size, COLOR_WHITE);
@@ -570,7 +587,7 @@ int entry(int argc, char **argv)
 			if (world->screenFade.fadeAmount == 1.0f) 
 			{	
 				world->screenFade.currentlyFadingIn = true;
-				world->currentBG = worldFrame.activeObject->warpBG;
+				if (worldFrame.activeObject != null) world->currentBG = worldFrame.activeObject->warpBG;
 				player->pos = world->warpPos;
 				camera_pos.x = player->pos.x;
 				// world->screenFade.startTime = worldFrame.nowTime;
@@ -604,10 +621,11 @@ int entry(int argc, char **argv)
 					if (obj->objectID != o_nil)
 					{
 						drawQuadLines(obj->quad, 1.0, COLOR_GREEN);
-						if (isPointInConvexQuad(obj->quad, worldFrame.mousePosWorld)) 
+						// if (isPointInConvexQuad(obj->quad, worldFrame.mousePosWorld)) 
+						if (range2f_contains(range2f_make(obj->quad.q1, obj->quad.q3),worldFrame.mousePosWorld))
 						{
 							drawQuadLines(obj->quad, 1.0, COLOR_BLUE);
-							log("mouse in obj quad");
+							// log("mouse in obj quad");
 						}
 					}
 				}

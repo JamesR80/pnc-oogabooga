@@ -57,6 +57,7 @@ typedef enum SpriteID
 	s_po_reporter,
 	s_po_starlet,
 	s_po_valet,
+	s_uibox,
 	s_MAX,
 } SpriteID;
 
@@ -150,6 +151,9 @@ typedef enum WalkboxID
 	w_luggage_4,
 	w_hallway_1,
 	w_lounge_1,
+	w_lounge_2,
+	w_lounge_3,
+	w_lounge_4,
 	w_cargo_1,
 	w_sleeper_1,
 	w_sleeper_2,
