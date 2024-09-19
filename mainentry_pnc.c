@@ -215,6 +215,13 @@ int entry(int argc, char **argv)
 	// valet->lookText = STR("That must be the valet.");
 	professor->lookText = STR("He's a studious sort, I wonder what he is doing here.");
 
+	conductor->dialogID = 1201;
+	reporter->dialogID = 1301;
+	baron->dialogID = 1401;
+	detective->dialogID = 1501;
+	starlet->dialogID = 1601;
+	// valet->dialogID = 1701;
+	professor->dialogID = 1801;
 
 	// :createInventoryItems
 	loadInventoryItem(i_coupon, STR("Drink Coupon"), STR("jamAssets/objects/coupon.png"), false, 0); // load this when needed? How?
@@ -245,9 +252,7 @@ int entry(int argc, char **argv)
 	world->activeSpeaker = player;
 	player->pos = v2(-1000.0, 106.0);
 
-	conductor->pos = v2(-1100.0, 106.0);
-	conductor->interactPos.x = conductor->pos.x + 30.0;
-	conductor->dialogID = 101;
+
 
 	float32 textDuration = 2.0f;
 
@@ -552,6 +557,8 @@ int entry(int argc, char **argv)
 			else if (world->uxStateID == ux_dialog)
 			{	
 				// Stop player from clicking on anything but text
+				world->currentCursor = c_click;
+				if (range2f_contains(world->dialogueBox, worldFrame.mousePosScreen)) world->currentCursor = c_hot;
 
 				Sprite* actorLSprite = getSprite(s_po_player);
 				Sprite* actorRSprite = getSprite(world->actorR->portraitID);
@@ -568,14 +575,14 @@ int entry(int argc, char **argv)
 				world->dialog = d; // maybe need a better way to collect the dialog than a for loop.
 				world->actorR->dialogFlag = d->flag;
 
-				if (d->dialogID > 0 && d->dialogID < 200)
+				if (d->dialogID > 1000)
 				{
 					draw_image(actorLSprite->image, dlgBoxPos, actorLSprite->size, COLOR_WHITE);
 					draw_text(font, d->text, fontHeight, v2(textBoxPos.x, textBoxPos.y + 40), textScaling, COLOR_WHITE);
 					world->actorR->nextDialogID = d->nextDialogID;
 					
 				}
-				else if (d->dialogID >= 200)
+				else if (d->dialogID >= 200 && d->dialogID < 1000)
 				{
 					draw_image(actorRSprite->image, v2(dlgBoxPos.x + 266.0, dlgBoxPos.y), actorRSprite->size, COLOR_WHITE);
 					draw_text(font, d->text, fontHeight, v2(textBoxPos.x - 50, textBoxPos.y + 40), textScaling, COLOR_WHITE);

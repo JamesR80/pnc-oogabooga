@@ -256,7 +256,7 @@ typedef struct Dialog
 	u32 flag;
 } Dialog;
 
-#define MAX_DIALOG_COUNT 5
+#define MAX_DIALOG_COUNT 256
 
 typedef enum EntityFlags
 {
