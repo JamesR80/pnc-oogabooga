@@ -1,4 +1,3 @@
-#define HAS_MET 1
 
 typedef enum AnimType
 {	
@@ -308,6 +307,7 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 	s32 dialogID;
 	s32 nextDialogID;
 	s32 dialogFlag;
+	s32 lastLineID;
 } Entity;
 
 #define MAX_ENTITY_COUNT 256
@@ -544,7 +544,7 @@ void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 o
 		Sprite sprite;
 		if (spriteID == 0) path = STR("missingTexture.png");
 		Gfx_Image* image = load_image_from_disk(path, get_heap_allocator());
-		assert(image, "failed to load image")
+		assert(image, "failed to load image");
 		sprite.image = image;
 
 		if (isAnimated)
@@ -713,3 +713,4 @@ bool isPointInConvexQuad(Quad quad, Vector2 p)
 
     return inside;
 }
+

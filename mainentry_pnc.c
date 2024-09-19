@@ -1,13 +1,11 @@
 
 #include "src/utils.c"
 #include "src/data.c"
+#include "src/dialog_flags.c"
 #include "src/animate.c"
 #include "src/game.c"
 #include "src/input.c"
-
 #include "src/init.c"
-
-
 
 
 // TODO:
@@ -330,7 +328,6 @@ int entry(int argc, char **argv)
 							if (world->currentCursor != c_drag && entity->isInRangeToInteract) world->currentCursor = entity->hoverCursor;
 						}
 					}
-
 				}	
 			}
 			if (!activeFound)
@@ -360,10 +357,8 @@ int entry(int argc, char **argv)
 						if (world->currentCursor != c_drag && obj->isInRangeToInteract)
 						{
 							world->currentCursor = obj->hoverCursor;
-						} 
-					
+						}
 					}
-					
 				}
 			}
 			if (!activeFound)
@@ -382,8 +377,6 @@ int entry(int argc, char **argv)
 				
 			}
 		}
-
-
 
 		// :mouse input/hover/click stuff ( func inside the above?)
 		// need to redo this to enter/exit hotspot I think, although it works for inventory for some reason.
@@ -573,46 +566,29 @@ int entry(int argc, char **argv)
 
 				Dialog* d = getDialog(world->dialogID);
 				world->dialog = d; // maybe need a better way to collect the dialog than a for loop.
+				world->actorR->dialogFlag = d->flag;
 
 				if (d->dialogID > 0 && d->dialogID < 200)
 				{
 					draw_image(actorLSprite->image, dlgBoxPos, actorLSprite->size, COLOR_WHITE);
 					draw_text(font, d->text, fontHeight, v2(textBoxPos.x, textBoxPos.y + 40), textScaling, COLOR_WHITE);
 					world->actorR->nextDialogID = d->nextDialogID;
+					
 				}
 				else if (d->dialogID >= 200)
 				{
 					draw_image(actorRSprite->image, v2(dlgBoxPos.x + 266.0, dlgBoxPos.y), actorRSprite->size, COLOR_WHITE);
 					draw_text(font, d->text, fontHeight, v2(textBoxPos.x - 50, textBoxPos.y + 40), textScaling, COLOR_WHITE);
 					world->actorR->nextDialogID = d->nextDialogID;
+					world->actorR->lastLineID = d->dialogID;
 				}
 				else if (d->dialogID == 0)
 				{
+					
 					world->actorR = 0;
 					world->dialog = 0;
 					world->uxStateID = ux_inventory;
-					// u32 flag = world->dialog->flag;
-                    // if (flag > 0)
-					// {
-					// 	// do flag stuff with actorR
-					// 	if (flag == HAS_MET)
-					// 	{
-					// 		d->nextDialogID = 202;
-					// 	} 
-					// }
 				}
-
-
-				
-
-
-
-				// draw_image(actorLSprite->image, dlgBoxPos, actorLSprite->size, COLOR_WHITE);
-				// draw_image(actorRSprite->image, v2(dlgBoxPos.x + 266.0, dlgBoxPos.y), actorRSprite->size, COLOR_WHITE);
-				// string text = STR("Lorem ipsum dolor sit amet");
-
-				
-								
 
 			}
 			else if (world->uxStateID == ux_menu)

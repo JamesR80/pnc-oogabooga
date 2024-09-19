@@ -50,12 +50,11 @@
                 {
                     world->actorR->dialogID = world->actorR->nextDialogID;
                 }
-                else
-                {   
 
-                
-                }
                 world->dialogID = world->actorR->dialogID;
+                
+                s32 flag = world->actorR->dialogFlag;
+                if (flag > 0) checkDialogFlags(world->actorR, flag);
             }
         }
         else if (world->uxStateID == ux_inventory)
