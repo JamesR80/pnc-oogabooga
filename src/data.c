@@ -44,6 +44,8 @@ typedef enum SpriteID
 	s_bg_cargo,
 	s_bg_luggage,
 	s_bg_sleeper,
+	s_bg_menu,
+	s_bg_settings,
 	s_door0,
 	s_item_key,
 	s_item_coupon,
@@ -187,6 +189,15 @@ typedef enum ObjectID
 	o_door_cargoR,
 	o_door_sleeperD,
 	o_door_hallwayU,
+	o_newgame,
+	o_settings,
+	o_quit,
+	o_resume,
+	o_2x,
+	o_3x,
+	o_4x,
+	o_volplus,
+	o_volminus,
 	//
 	o_MAX,
 } ObjectID;
@@ -198,6 +209,15 @@ typedef enum ObjectType
 	ot_door,
 	ot_object,
 	ot_npc,
+	ot_newgame,
+	ot_settings,
+	ot_quit,
+	ot_resume,
+	ot_2x,
+	ot_3x,
+	ot_4x,
+	ot_volplus,
+	ot_volminus,
 	//
 	ot_MAX,
 } ObjectType;
@@ -256,7 +276,7 @@ typedef struct Dialog
 	u32 flag;
 } Dialog;
 
-#define MAX_DIALOG_COUNT 256
+#define MAX_DIALOG_COUNT 512
 
 typedef enum EntityFlags
 {
@@ -294,8 +314,6 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 	bool clickable;
 	string hoverText;
 	string lookText;
-	string useText;
-	VerbState verbState;
 	bool isInRangeToInteract;
 	bool justClicked;
 	bool isMoving;
@@ -325,7 +343,9 @@ typedef struct Object
 	bool isInRangeToInteract;
 	CursorID hoverCursor;
 	string lookText;
+	Vector4 hlColor;
 } Object;
+
 
 typedef enum UXStateID 
 {
@@ -333,6 +353,7 @@ typedef enum UXStateID
 	ux_inventory,
 	ux_dialog,
 	ux_menu,
+	ux_settings,
 } UXStateID;
 
 typedef struct Fade
@@ -493,7 +514,6 @@ Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 
 	if (hoverText.count != 0) entityFound->hoverText = hoverText;
 	else entityFound->hoverText = STR("");
 	entityFound->lookText = STR("I'm looking at this");
-	entityFound->useText = STR("I am interacting with this");
 
 	switch (entityFound->type)
 	{
@@ -514,10 +534,8 @@ Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 
 			break;
 
 		case t_item:
-			entityFound->hoverCursor = c_grab; 
-
-		case t_player:
-			entityFound->verbState = v_look;  ///
+			entityFound->hoverCursor = c_grab;
+			break;
 
 		default:
 			entityFound->hoverCursor = c_click;
@@ -542,7 +560,7 @@ void loadBackground() {} 	// TODO
 void loadSprite(SpriteID spriteID, string path, Vector2 clickableSize, Vector2 origin, bool isAnimated, u32 cols, u32 rows)
 {
 		Sprite sprite;
-		if (spriteID == 0) path = STR("missingTexture.png");
+		if (spriteID == 0) path = STR("jamAssets/missingTexture.png");
 		Gfx_Image* image = load_image_from_disk(path, get_heap_allocator());
 		assert(image, "failed to load image");
 		sprite.image = image;
@@ -641,6 +659,7 @@ void loadInventoryItem(ItemID itemID, string name, string path, bool inInventory
 
 void createObject(ObjectID objectID, Quad quad, ObjectType type, Vector2 interactPos, Vector2 warpPos, Entity* warpBG, CursorID cursor)
 {	
+	
 	Object object;
 	object.quad = quad;
 	object.interactPos = interactPos;

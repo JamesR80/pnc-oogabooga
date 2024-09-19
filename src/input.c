@@ -52,12 +52,12 @@
                 }
 
                 world->dialogID = world->actorR->dialogID;
-                
+
                 s32 flag = world->actorR->dialogFlag;
                 if (flag > 0) checkDialogFlags(world->actorR, flag);
             }
         }
-        else if (world->uxStateID == ux_inventory)
+        else if (world->uxStateID == ux_inventory) // normal game state
         {
             if (range2f_contains(world->gameBox, worldFrame.mousePosScreen))
             {
@@ -87,8 +87,14 @@
             }
 
         }
-        else if (world->uxStateID == ux_menu || world->uxStateID == ux_nil)
-        { }
+        else if (world->uxStateID == ux_menu || world->uxStateID == ux_settings)
+        { 
+            if (worldFrame.activeObject != null)
+            {
+                objectClicked(worldFrame.activeObject, player, true);
+            }
+
+        }
     }
     
     if (is_key_just_pressed(MOUSE_BUTTON_RIGHT))

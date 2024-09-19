@@ -185,7 +185,7 @@ void movePlayer(Entity* player, Entity* background, float64 nowTime, float64 del
 
 }
 
-void movePlayerToObject(Entity* player, Vector2 interactPos, WorldFrame worldF)
+void movePlayerToObject(Entity* player, Vector2 interactPos, WorldFrame worldF) // this is not an actual object
 {	
 	// get best available interact Pos based on npc dir.
 	player->destPos = interactPos; 

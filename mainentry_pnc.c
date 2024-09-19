@@ -31,9 +31,14 @@ int entry(int argc, char **argv)
 	assert(font, "Failed loading font");
 	const u32 fontHeight = 48;
 	render_atlas_if_not_yet_rendered(font, fontHeight, 'A'); 
+	Vector2 textScaling = v2(0.2, 0.2);
+	Vector2 textScalingBig = v2(0.5, 0.5);
+	Vector2 textScalingSml = v2(0.1, 0.1);
 
 	window.point_width = 600;
-	window.point_height = 450; 
+	window.point_height = 450;
+	float zoom = 3.0;
+	u8 screenSize = 3;
 
 	// below is the window offest from bottom left of screen - maybe get screen dimensions and center it.
 	window.point_x = 300;
@@ -123,6 +128,9 @@ int entry(int argc, char **argv)
 	loadSprite(s_bg_luggage, STR("jamAssets/rooms/LuggageClosetBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
 	loadSprite(s_bg_cargo, STR("jamAssets/rooms/CargoBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
 	loadSprite(s_bg_sleeper, STR("jamAssets/rooms/MCSleeperCarBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_bg_menu, STR("jamAssets/rooms/BlankBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_bg_settings, STR("jamAssets/rooms/BlankBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+
 
 	// :createBackgrounds - these don't need to be entities in final hopefully
 	Entity* bgDining = createEntity(t_background, s_bg_dining, i_nil, v2(0, 0), null_string, false, 0);
@@ -132,6 +140,10 @@ int entry(int argc, char **argv)
 	Entity* bgCargo = createEntity(t_background, s_bg_cargo, i_nil, v2(-800, 0), null_string, false, 0);
 	Entity* bgSleeper = createEntity(t_background, s_bg_sleeper, i_nil, v2(-1200, 0), null_string, false, 0);
   	// [sleeper] : [cargo]-[luggage]-(0,0)[dining]-[hallway]-[lounge]
+
+	// :Menus
+	Entity* bgMenu = createEntity(t_background, s_bg_menu, i_nil, v2(1800, 0), null_string, false, 0);
+	Entity* bgSettings = createEntity(t_background, s_bg_settings, i_nil, v2(2200, 0), null_string, false, 0);
 
 	// :createEntities and Objects
 	Entity* player = createEntity(t_player, s_player, i_nil, v2(175.0, 106.0), null_string, false, 0);
@@ -152,6 +164,18 @@ int entry(int argc, char **argv)
 	// :createObjects
 	Quad tempQuad = makeQuad(v2(440.0, 170.0), v2(470.0, 170.0), v2(470.0, 213.0), v2(440.0, 213.0));
 	createObject(o_bartender, tempQuad, ot_npc, v2(435.0, 122.0), v2(0,0), bgDining, c_talk);
+
+	// :Menu and Settings Screen Buttons
+	Vector2 menuPos = v2(1960.0, 165.0);
+	tempQuad = makeQuad(menuPos, v2(menuPos.x + 80, menuPos.y), v2(menuPos.x + 80, menuPos.y + 16), v2(menuPos.x, menuPos.y + 16));
+	createObject(o_newgame, tempQuad, ot_newgame, v2(0.0, 0.0), v2(0,0), bgSleeper, c_hot);
+	menuPos = v2(1960.0, 135.0);
+	tempQuad = makeQuad(menuPos, v2(menuPos.x + 80, menuPos.y), v2(menuPos.x + 80, menuPos.y + 16), v2(menuPos.x, menuPos.y + 16));
+	createObject(o_settings, tempQuad, ot_settings, v2(0.0, 0.0), v2(0,0), bgSettings, c_hot);
+	menuPos = v2(1960.0, 105.0);
+	tempQuad = makeQuad(menuPos, v2(menuPos.x + 80, menuPos.y), v2(menuPos.x + 80, menuPos.y + 16), v2(menuPos.x, menuPos.y + 16));
+	createObject(o_quit, tempQuad, ot_quit, v2(0.0, 0.0), v2(0,0), null, c_hot);
+
 
 	// :createDoors
 	// DiningRoom
@@ -236,19 +260,24 @@ int entry(int argc, char **argv)
 
 	// :init game misc
 	player->speed = 100.0;
-	Vector2 textScaling = v2(0.2, 0.2);
+
 	world->currentCursor = c_click;
 	world->mouseActive = false;
 	Matrix4 camera_xform = m4_scalar(1.0);
 	Vector2 camera_pos = v2(player->pos.x, 150.0);
-	float zoom = 3.0;
-	world->uxStateID = ux_inventory;
+	
+	world->uxStateID = ux_menu;
+	world->currentBG = bgMenu;
+
+	// world->uxStateID = ux_inventory;
+	// world->currentBG = bgSleeper;
+
 	world->playerText = STR("");
 	world->dialogueBox = range2f_make(v2(30.0, 15.0), v2(370.0, 75.0));
 	world->gameBox = range2f_make(v2(10.0, 76.0), v2(390.0, 300.0));
 	world->debugOn = false;
 	// world->screenFade = {0};
-	world->currentBG = bgSleeper;
+
 	world->activeSpeaker = player;
 	player->pos = v2(-1000.0, 106.0);
 
@@ -351,11 +380,11 @@ int entry(int argc, char **argv)
 				{
 					if (fabsf(v2_dist(obj->interactPos, player->pos)) < obj->interactRadius) obj->isInRangeToInteract = true;
 					else obj->isInRangeToInteract = false;
-
 					// if (isPointInConvexQuad(obj->quad, worldFrame.mousePosWorld))
 					if (range2f_contains(range2f_make(obj->quad.q1, obj->quad.q3),worldFrame.mousePosWorld))
 					{
 						worldFrame.activeObject = obj;
+						world->activeObject = obj;
 						activeFound = true;
 						world->mouseActive = true;
 						if (world->currentCursor != c_drag) world->currentCursor = c_hot;
@@ -599,7 +628,76 @@ int entry(int argc, char **argv)
 
 			}
 			else if (world->uxStateID == ux_menu)
-			{}
+			{
+				// Background Color
+				draw_rect(v2(0.0, 0.0), v2(window.width, window.height), COLOR_BLACK);
+				Vector2 centerTop = v2(200.0, 240.0);
+				Vector2 pos = centerTop;
+				float32 padding = 60.0;
+				string text = STR("");
+				Vector4 color = COLOR_WHITE;
+				Object* objA = worldFrame.activeObject;
+
+				// Game Title
+				text = STR("Epic Game Title");
+				pos = centerTextToPos(text, font, fontHeight, textScalingBig, pos);
+				draw_text(font, text, fontHeight, pos, textScalingBig, color);
+				
+				// New Game
+				text = STR("New Game"); // or Resume Game
+				pos = v2(centerTop.x, centerTop.y - padding);
+				pos = centerTextToPos(text, font, fontHeight, textScaling, pos);
+				if (objA != null && objA->type == ot_newgame) color = COLOR_RED;
+				draw_text(font, text, fontHeight, pos, textScaling, color);
+				color = COLOR_WHITE;
+				
+				// Settings
+				text = STR("Settings");
+				pos = v2(centerTop.x, centerTop.y - (padding * 1.5));
+				pos = centerTextToPos(text, font, fontHeight, textScaling, pos);
+				if (objA != null && objA->type == ot_settings) color = COLOR_RED;
+				draw_text(font, text, fontHeight, pos, textScaling, color);
+				color = COLOR_WHITE;
+				
+				// Quit
+				text = STR("Quit Game");\
+				pos = v2(centerTop.x, centerTop.y - (padding * 2.0));
+				pos = centerTextToPos(text, font, fontHeight, textScaling, pos);
+				if (objA != null && objA->type == ot_quit) color = COLOR_RED;
+				draw_text(font, text, fontHeight, pos, textScaling, color);
+				color = COLOR_WHITE;
+				
+				// Credits
+				text = STR("Made by Cuplinks and Dangergoose"); 
+				pos = v2(centerTop.x, centerTop.y - (padding * 3.8));
+				pos = centerTextToPos(text, font, fontHeight, textScalingSml, pos);
+				draw_text(font, text, fontHeight, pos, textScalingSml, color);
+			
+			}
+			else if (world->uxStateID == ux_settings)
+			{
+				// draw_rect(v2(0.0, 0.0), v2(window.width, window.height), COLOR_BLACK);
+					
+				// 	switch (screenSize)
+				// 	{
+				// 		case 2:
+				// 			window.point_width = 400;
+				// 			window.point_height = 300;
+				// 			float zoom = 2.0;
+				// 			break;
+				// 		case 3:
+				// 			window.point_width = 600;
+				// 			window.point_height = 450;
+				// 			float zoom = 3.0;
+				// 			break;
+				// 		case 4:
+				// 			window.point_width = 800;
+				// 			window.point_height = 600;
+				// 			float zoom = 4.0;
+				// 			break;
+				// 	}
+
+			}
 			
 
 			// :cursor
@@ -670,10 +768,10 @@ int entry(int argc, char **argv)
 			{
 				Vector2 mouseProjPos = getMouseCurrentProj();
 				// draw_text(font, tprint("Mouse: %v2", v2(input_frame.mouse_x / 3.0, input_frame.mouse_y / 3.0)), fontHeight, v2(10, 10), v2(0.2, 0.2), COLOR_RED);
-				draw_text(font, tprint("ScreenPos: [ %i, %i ]", (int)mouseProjPos.x, (int)mouseProjPos.y), fontHeight, v2(10, 290), v2(0.1, 0.1), COLOR_RED);
-				draw_text(font, tprint("WorldPos: [ %i, %i ]", (int)worldFrame.mousePosWorld.x, (int)worldFrame.mousePosWorld.y), fontHeight, v2(100, 290), v2(0.1, 0.1), COLOR_RED);
-				// draw_text(font, tprint("InputPos: [ %i, %i ]", (int)input_frame.mouse_x, (int)input_frame.mouse_y), fontHeight, v2(200, 10), v2(0.1, 0.1), COLOR_RED);
-				//draw_text(font, tprint("CameraPos: [ %i, %i ]", (int)camera_pos.x, (int)camera_pos.y), fontHeight, v2(300, 10), v2(0.1, 0.1), COLOR_RED);
+				draw_text(font, tprint("ScreenPos: [ %i, %i ]", (int)mouseProjPos.x, (int)mouseProjPos.y), fontHeight, v2(10, 290), textScalingSml, COLOR_RED);
+				draw_text(font, tprint("WorldPos: [ %i, %i ]", (int)worldFrame.mousePosWorld.x, (int)worldFrame.mousePosWorld.y), fontHeight, v2(100, 290), textScalingSml, COLOR_RED);
+				// draw_text(font, tprint("InputPos: [ %i, %i ]", (int)input_frame.mouse_x, (int)input_frame.mouse_y), fontHeight, v2(200, 10), textScalingSml, COLOR_RED);
+				//draw_text(font, tprint("CameraPos: [ %i, %i ]", (int)camera_pos.x, (int)camera_pos.y), fontHeight, v2(300, 10), textScalingSml, COLOR_RED);
 
 				// draw walkboxes and doors objects etc
 				set_world_space();
@@ -716,7 +814,7 @@ int entry(int argc, char **argv)
 		}
 				if (world->debugOn)
 		{
-			draw_text(font, tprint("FPS: %i", framerate), fontHeight, v2(200, 290), v2(0.1, 0.1), COLOR_RED);
+			draw_text(font, tprint("FPS: %i", framerate), fontHeight, v2(200, 290), textScalingSml, COLOR_RED);
 		}
 
 		
