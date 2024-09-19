@@ -168,7 +168,7 @@ int entry(int argc, char **argv)
 	// :Menu and Settings Screen Buttons
 	Vector2 menuPos = v2(1960.0, 165.0);
 	tempQuad = makeQuad(menuPos, v2(menuPos.x + 80, menuPos.y), v2(menuPos.x + 80, menuPos.y + 16), v2(menuPos.x, menuPos.y + 16));
-	createObject(o_newgame, tempQuad, ot_newgame, v2(0.0, 0.0), v2(0,0), bgSleeper, c_hot);
+	createObject(o_newgame, tempQuad, ot_newgame, v2(0.0, 0.0), v2(-1000.0, 106.0), bgSleeper, c_hot);
 	menuPos = v2(1960.0, 135.0);
 	tempQuad = makeQuad(menuPos, v2(menuPos.x + 80, menuPos.y), v2(menuPos.x + 80, menuPos.y + 16), v2(menuPos.x, menuPos.y + 16));
 	createObject(o_settings, tempQuad, ot_settings, v2(0.0, 0.0), v2(0,0), bgSettings, c_hot);
@@ -749,6 +749,7 @@ int entry(int argc, char **argv)
 					world->warpBG = 0;
 					player->pos = world->warpPos;
 					camera_pos.x = player->pos.x;
+					world->uxStateID = ux_inventory;
 				}
 				
 				// world->screenFade.startTime = worldFrame.nowTime;

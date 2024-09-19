@@ -107,17 +107,36 @@ void objectClicked(Object* object, Entity* player, bool isLeftClick) // entity c
 			case ot_object:
 				// do transition
 				break;
+
 			default:
 				break;
-
 		}
-		
+	}
+	else
+	{
+		switch (object->type)
+		{
+			case ot_newgame:
+				world->warpBG = object->warpBG;
+				world->warpPos = object->warpPos;
+				world->screenFade.currentlyFadingOut = true;
+				break;
+			case ot_settings:
+				world->warpBG = object->warpBG;
+				world->uxStateID = ux_settings;
+				break;
+			case ot_quit:
+				window.should_close = true;
+				break;
+			default:
+				break;
+		}
+	}
 		// else e->useText = STR("I can't use it from here");
 		// and set text flag...
-	}
+}
 
 	// some delay set justClicked to false.
-}
 
 // set moving flag and keep moving until within radius, then change flag.
 // Move algorithm - 
