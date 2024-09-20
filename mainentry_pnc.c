@@ -35,10 +35,10 @@ int entry(int argc, char **argv)
 	Vector2 textScalingBig = v2(0.5, 0.5);
 	Vector2 textScalingSml = v2(0.1, 0.1);
 
-	window.point_width = 600;
-	window.point_height = 450;
-	float zoom = 3.0;
-	u8 screenSize = 3;
+	window.point_width = 800;
+	window.point_height = 600;
+	float zoom = 4.0;
+	//u8 screenSize = 3;
 
 	// below is the window offest from bottom left of screen - maybe get screen dimensions and center it.
 	window.point_x = 300;
@@ -48,11 +48,92 @@ int entry(int argc, char **argv)
 	// disable windows cursor
 	ShowCursor(false);
 
+
+
 	// :Memory
 	world = alloc(get_heap_allocator(), sizeof(World));
 	memset(world, 0, sizeof(World));
 
 	#include "src/dialog.c"
+
+	Allocator audioHeap = get_heap_allocator();
+
+	Audio_Source train, song1, song2, song3, song4, song5, song6, song7, sound1, sound2, sound3, sound4;
+
+	bool song1_ok = audio_open_source_stream(&song1, STR("jamAssets/audio/Kool-Kats.ogg"), audioHeap);
+	assert(song1_ok, "Could not load Kool-Kats.ogg");
+	bool song2_ok = audio_open_source_stream(&song2, STR("jamAssets/audio/Hard-Boiled.ogg"), audioHeap);
+	assert(song2_ok, "Could not load Hard-Boild.ogg");
+	bool song3_ok = audio_open_source_stream(&song3, STR("jamAssets/audio/I-Knew-a-Guy.ogg"), audioHeap);
+	assert(song3_ok, "Could not load I-Knew-a-Guy.ogg");
+	bool song4_ok = audio_open_source_stream(&song4, STR("jamAssets/audio/On-the-Cool-Side.ogg"), audioHeap);
+	assert(song4_ok, "Could not load On-the-Cool-Side.ogg");
+	bool song5_ok = audio_open_source_stream(&song5, STR("jamAssets/audio/Walking-Along.ogg"), audioHeap);
+	assert(song5_ok, "Could not load Walking-Along.ogg");
+	bool song6_ok = audio_open_source_stream(&song6, STR("jamAssets/audio/Clean-Soul.ogg"), audioHeap);
+	assert(song6_ok, "Could not load Clean-Soul.ogg");
+	bool song7_ok = audio_open_source_stream(&song7, STR("jamAssets/audio/Dances-and-Dames.ogg"), audioHeap);
+	assert(song7_ok, "Could not load Dances-and-Dames.ogg");
+	bool train_ok = audio_open_source_stream(&train, STR("jamAssets/audio/train2.ogg"), audioHeap);
+	assert(train_ok, "Could not load train2.ogg");
+
+	// bool sound1_ok = audio_open_source_load(&sound1, STR("oogabooga/examples/bruh.wav"), audioHeap);
+	// assert(sound1_ok, "Could not load bruh.wav");
+
+	Audio_Player* clipPlayer = audio_player_get_one();
+	Audio_Player* song1Player = audio_player_get_one();
+	Audio_Player* song2Player = audio_player_get_one();
+	Audio_Player* song3Player = audio_player_get_one();
+	Audio_Player* song4Player = audio_player_get_one();
+	Audio_Player* song5Player = audio_player_get_one();
+	Audio_Player* song6Player = audio_player_get_one();
+	Audio_Player* song7Player = audio_player_get_one();
+
+	Audio_Player* trainPlayer = audio_player_get_one();
+
+	// audio_player_set_source(clipPlayer, bruh);
+	audio_player_set_source(song1Player, song1);
+	audio_player_set_source(song2Player, song2);
+	audio_player_set_source(song3Player, song3);
+	audio_player_set_source(song4Player, song4);
+	audio_player_set_source(song5Player, song5);
+	audio_player_set_source(song6Player, song6);
+	audio_player_set_source(song7Player, song7);
+	audio_player_set_source(trainPlayer, train);
+	
+	audio_player_set_state(clipPlayer, AUDIO_PLAYER_STATE_PAUSED);
+	audio_player_set_state(song1Player, AUDIO_PLAYER_STATE_PAUSED);
+	audio_player_set_state(song2Player, AUDIO_PLAYER_STATE_PAUSED);
+	audio_player_set_state(song3Player, AUDIO_PLAYER_STATE_PAUSED);
+	audio_player_set_state(song4Player, AUDIO_PLAYER_STATE_PAUSED);
+	audio_player_set_state(song5Player, AUDIO_PLAYER_STATE_PAUSED);
+	audio_player_set_state(song6Player, AUDIO_PLAYER_STATE_PAUSED);
+	audio_player_set_state(song7Player, AUDIO_PLAYER_STATE_PAUSED);
+	audio_player_set_state(trainPlayer, AUDIO_PLAYER_STATE_PAUSED);
+
+
+	audio_player_set_looping(song1Player, true);
+	audio_player_set_looping(song2Player, true);
+	audio_player_set_looping(song3Player, true);
+	audio_player_set_looping(song4Player, true);
+	audio_player_set_looping(song5Player, true);
+	audio_player_set_looping(song6Player, true);
+	audio_player_set_looping(song7Player, true);
+	audio_player_set_looping(trainPlayer, true);
+
+	audio_player_set_looping(clipPlayer, false);
+
+	bool clipPlaying = clipPlayer->state == AUDIO_PLAYER_STATE_PLAYING;
+	bool song1Playing = song1Player->state == AUDIO_PLAYER_STATE_PLAYING;
+	bool song2Playing = song2Player->state == AUDIO_PLAYER_STATE_PLAYING;
+	bool song3Playing = song3Player->state == AUDIO_PLAYER_STATE_PLAYING;
+	bool song4Playing = song4Player->state == AUDIO_PLAYER_STATE_PLAYING;
+	bool song5Playing = song5Player->state == AUDIO_PLAYER_STATE_PLAYING;
+	bool song6Playing = song6Player->state == AUDIO_PLAYER_STATE_PLAYING;
+	bool song7Playing = song7Player->state == AUDIO_PLAYER_STATE_PLAYING;;
+	bool trainPlaying = trainPlayer->state == AUDIO_PLAYER_STATE_PLAYING;
+
+
 	
 	// :loadWalkboxes // [sleeper] : [cargo]-[luggage]-(0,0)[dining]-[hallway]-[lounge]
 	loadWalkbox(w_dining_1, boxMake(v2(70.0, 97.0), v2(340.0, 123.0), false, true, false, false));
@@ -299,6 +380,18 @@ int entry(int argc, char **argv)
 
 		worldFrame.bg = world->currentBG; // = world.current bg or something...
 		worldFrame.player = player; 
+
+		// dont think I need this in the game loop...
+		// clipPlaying = clipPlayer->state == AUDIO_PLAYER_STATE_PLAYING;
+		// song1Playing = song1Player->state == AUDIO_PLAYER_STATE_PLAYING;
+		// song2Playing = song2Player->state == AUDIO_PLAYER_STATE_PLAYING;
+		// song3Playing = song3Player->state == AUDIO_PLAYER_STATE_PLAYING;
+		// song4Playing = song4Player->state == AUDIO_PLAYER_STATE_PLAYING;
+		// song5Playing = song5Player->state == AUDIO_PLAYER_STATE_PLAYING;
+		// song6Playing = song6Player->state == AUDIO_PLAYER_STATE_PLAYING;
+		// song7Playing = song7Player->state == AUDIO_PLAYER_STATE_PLAYING;;
+		// trainPlayer = trainPlayer->state == AUDIO_PLAYER_STATE_PLAYING;
+
 
 		// :camera - 
 		// draw_frame.projection = m4_make_orthographic_projection(worldFrame.bg->scrollPos.x, worldFrame.bg->scrollPos.y, 0.0, 300.0, -1, 10);
@@ -629,6 +722,17 @@ int entry(int argc, char **argv)
 			}
 			else if (world->uxStateID == ux_menu)
 			{
+
+				// loop through players and set all to pause except menu? do this in transition!
+
+				if (!song1Playing) audio_player_set_state(song1Player, AUDIO_PLAYER_STATE_PLAYING);
+				// else 
+				// (
+				// 	for (int i = 0; i < song_Max, i++)
+					{
+					}
+				// )
+
 				// Background Color
 				draw_rect(v2(0.0, 0.0), v2(window.width, window.height), COLOR_BLACK);
 				Vector2 centerTop = v2(200.0, 240.0);
