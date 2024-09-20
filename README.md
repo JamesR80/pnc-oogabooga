@@ -24,7 +24,10 @@ The game is coded in C and uses the OogaBooga framework to open the game window 
 
 ooga booga
 
-## TOC
+
+
+
+
 - [What is ooga booga?](#what-is-ooga-booga)
 	- [A new C Standard](#a-new-c-standard)
 	- [SIMPLICITY IS KING](#simplicity-is-king)
