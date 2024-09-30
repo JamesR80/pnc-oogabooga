@@ -366,6 +366,13 @@ typedef struct Fade
 	bool currentlyFadingIn;
 } Fade;
 
+typedef struct Game
+{
+	bool isRunning;
+	// store all game state bools here?
+
+} Game;
+
 typedef struct World
 {
 	Entity entities[MAX_ENTITY_COUNT];

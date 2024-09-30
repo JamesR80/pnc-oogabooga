@@ -842,6 +842,7 @@ int entry(int argc, char **argv)
 			if (world->screenFade.currentlyFadingOut) 
 			{
 				fadeOutScreen(&world->screenFade, 0.5f, COLOR_BLACK, worldFrame);
+				// fadeOutAudio(world. currnet Auudio Source. volume do something....)
 				draw_rect(v2(0.0, 0.0), v2(window.width, window.height), world->screenFade.color);
 			} 
 			if (world->screenFade.fadeAmount == 1.0f) 
@@ -849,7 +850,9 @@ int entry(int argc, char **argv)
 				world->screenFade.currentlyFadingIn = true;
 				// if (worldFrame.activeObject != null) // this happens if the mouse moves out of the active object - need to fix.
 				{
+					
 					world->currentBG = world->warpBG;
+					// world . current bg . audio . set playing. set all others to not playing.
 					world->warpBG = 0;
 					player->pos = world->warpPos;
 					camera_pos.x = player->pos.x;
@@ -861,6 +864,7 @@ int entry(int argc, char **argv)
 			if (world->screenFade.currentlyFadingIn)
 			{
 				fadeInScreen(&world->screenFade, 0.5f, worldFrame);
+				// fade in audio....
 				draw_rect(v2(0.0, 0.0), v2(window.width, window.height), world->screenFade.color);
 			}
 
