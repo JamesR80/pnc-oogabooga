@@ -49,7 +49,9 @@ typedef struct Context_Extra {
 // #include "oogabooga/examples/sprite_animation.c"
 // #include "oogabooga/examples/window_test.c"
 // #include "oogabooga/examples/offscreen_drawing.c"
+// #include "oogabooga/examples/offscreen_drawing.c"
 // #include "oogabooga/examples/threaded_drawing.c"
+// #include "oogabooga/examples/bloom.c"
 
 // These examples require some extensions to be enabled. See top respective files for more info.
 // #include "oogabooga/examples/particles_example.c" // Requires OOGABOOGA_EXTENSION_PARTICLES
@@ -58,3 +60,5 @@ typedef struct Context_Extra {
 
 // This is where you swap in your own project!
 #include "mainentry_pnc.c"
+
+// #include "entry_randygame.c"
