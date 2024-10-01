@@ -142,7 +142,7 @@ void smoothCam(Vector2* cameraPos, Vector2 targetPos, float deltaTime, float rat
         if (worldFrame.bg->isScrollable && cameraPos->x >= leftLimit && cameraPos->x <= rightLimit)
         {
             animateF32ToTarget(&(cameraPos->x), targetPos.x, deltaTime, rate);
-            
+
             if (cameraPos->x < leftLimit) cameraPos->x = leftLimit; // do i need this?
             if (cameraPos->x > rightLimit) cameraPos->x = rightLimit;
         }
@@ -153,9 +153,23 @@ void smoothCam(Vector2* cameraPos, Vector2 targetPos, float deltaTime, float rat
     }
 }
 
+
+
+void fadeOutAudio(Audio_Player* audio, float32 duration)
+{
+    
+
+}
+
+void fadeInAudio(Audio_Player* audio, float32 duration)
+{
+    
+}
+
+
 void fadeOutScreen(Fade* fade, float32 duration, Vector4 color, WorldFrame worldF)
 {
-	if (fade->startTime == 0)
+	if (fade->startTime == 0.0f)
 	{   
 		fade->startTime = worldF.nowTime;
         fade->duration = duration;
@@ -185,7 +199,7 @@ void fadeOutScreen(Fade* fade, float32 duration, Vector4 color, WorldFrame world
 
 void fadeInScreen(Fade* fade, float32 duration, WorldFrame worldF)
 {
-    if (fade->startTime == 0.0)
+    if (fade->startTime == 0.0f)
 	{   
 		fade->startTime = worldF.nowTime;
         fade->duration = duration;

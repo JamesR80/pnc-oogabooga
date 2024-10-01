@@ -868,6 +868,10 @@ audio_source_sample_next_frames(Audio_Source *src, u64 first_frame_index, u64 nu
     	return first_frame_index;
     }
     
+	// :HACK
+	if (first_frame_index > src->number_of_frames) first_frame_index = src->number_of_frames - 1;
+	// :HACK
+
 	assert(first_frame_index < src->number_of_frames, "Invalid first_frame_index");
 	
     u64 new_index = first_frame_index;

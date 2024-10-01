@@ -6,6 +6,13 @@
 #include "src/game.c"
 #include "src/input.c"
 #include "src/init.c"
+#include "src/audio.c"
+
+
+
+// Audio_Player* getAudioPlayer(Entity* background);
+// void fadeOutAudio(Audio_Player* audio, float32 duration);
+// void fadeInAudio(Audio_Player* audio, float32 duration);
 
 
 // TODO:
@@ -25,7 +32,10 @@ int entry(int argc, char **argv)
 {
 	// :init OS stuff
 	window.title = STR("Point and Click");
-	window.allow_resize = false;
+	if (window.allow_resize)
+	{
+		window.allow_resize = !window.allow_resize;
+	} 
 
 	Gfx_Font *font = load_font_from_disk(STR("jamAssets/fonts/NotJamOldStyle11.ttf"), get_heap_allocator());
 	assert(font, "Failed loading font");
@@ -43,103 +53,53 @@ int entry(int argc, char **argv)
 	// below is the window offest from bottom left of screen - maybe get screen dimensions and center it.
 	window.point_x = 300;
 	window.point_y = 300;
-	window.clear_color = COLOR_BLACK; // background color
+	window.clear_color = COLOR_RED; // background color
 
 	// disable windows cursor
 	ShowCursor(false);
-
-
 
 	// :Memory
 	world = alloc(get_heap_allocator(), sizeof(World));
 	memset(world, 0, sizeof(World));
 
 	#include "src/dialog.c"
-
-	Allocator audioHeap = get_heap_allocator();
-
-	Audio_Source train, song1, song2, song3, song4, song5, song6, song7, sound1, sound2, sound3, sound4;
-
-	bool song1_ok = audio_open_source_stream(&song1, STR("jamAssets/audio/Kool-Kats.ogg"), audioHeap);
-	assert(song1_ok, "Could not load Kool-Kats.ogg");
-	bool song2_ok = audio_open_source_stream(&song2, STR("jamAssets/audio/Hard-Boiled.ogg"), audioHeap);
-	assert(song2_ok, "Could not load Hard-Boild.ogg");
-	bool song3_ok = audio_open_source_stream(&song3, STR("jamAssets/audio/I-Knew-a-Guy.ogg"), audioHeap);
-	assert(song3_ok, "Could not load I-Knew-a-Guy.ogg");
-	bool song4_ok = audio_open_source_stream(&song4, STR("jamAssets/audio/On-the-Cool-Side.ogg"), audioHeap);
-	assert(song4_ok, "Could not load On-the-Cool-Side.ogg");
-	bool song5_ok = audio_open_source_stream(&song5, STR("jamAssets/audio/Walking-Along.ogg"), audioHeap);
-	assert(song5_ok, "Could not load Walking-Along.ogg");
-	bool song6_ok = audio_open_source_stream(&song6, STR("jamAssets/audio/Clean-Soul.ogg"), audioHeap);
-	assert(song6_ok, "Could not load Clean-Soul.ogg");
-	bool song7_ok = audio_open_source_stream(&song7, STR("jamAssets/audio/Dances-and-Dames.ogg"), audioHeap);
-	assert(song7_ok, "Could not load Dances-and-Dames.ogg");
-	bool train_ok = audio_open_source_stream(&train, STR("jamAssets/audio/train2.ogg"), audioHeap);
-	assert(train_ok, "Could not load train2.ogg");
-
-	// bool sound1_ok = audio_open_source_load(&sound1, STR("oogabooga/examples/bruh.wav"), audioHeap);
-	// assert(sound1_ok, "Could not load bruh.wav");
-
-	Audio_Player* clipPlayer = audio_player_get_one();
-	Audio_Player* song1Player = audio_player_get_one();
-	Audio_Player* song2Player = audio_player_get_one();
-	Audio_Player* song3Player = audio_player_get_one();
-	Audio_Player* song4Player = audio_player_get_one();
-	Audio_Player* song5Player = audio_player_get_one();
-	Audio_Player* song6Player = audio_player_get_one();
-	Audio_Player* song7Player = audio_player_get_one();
-
-	Audio_Player* trainPlayer = audio_player_get_one();
-
-	// audio_player_set_source(clipPlayer, bruh);
-	audio_player_set_source(song1Player, song1);
-	audio_player_set_source(song2Player, song2);
-	audio_player_set_source(song3Player, song3);
-	audio_player_set_source(song4Player, song4);
-	audio_player_set_source(song5Player, song5);
-	audio_player_set_source(song6Player, song6);
-	audio_player_set_source(song7Player, song7);
-	audio_player_set_source(trainPlayer, train);
 	
-	audio_player_set_state(clipPlayer, AUDIO_PLAYER_STATE_PAUSED);
-	audio_player_set_state(song1Player, AUDIO_PLAYER_STATE_PAUSED);
-	audio_player_set_state(song2Player, AUDIO_PLAYER_STATE_PAUSED);
-	audio_player_set_state(song3Player, AUDIO_PLAYER_STATE_PAUSED);
-	audio_player_set_state(song4Player, AUDIO_PLAYER_STATE_PAUSED);
-	audio_player_set_state(song5Player, AUDIO_PLAYER_STATE_PAUSED);
-	audio_player_set_state(song6Player, AUDIO_PLAYER_STATE_PAUSED);
-	audio_player_set_state(song7Player, AUDIO_PLAYER_STATE_PAUSED);
-	audio_player_set_state(trainPlayer, AUDIO_PLAYER_STATE_PAUSED);
+	loadAudio(au_train, STR("jamAssets/audio/train2.ogg"));
+	loadAudio(au_song1, STR("jamAssets/audio/Kool-Kats.ogg"));
+	loadAudio(au_song2, STR("jamAssets/audio/Hard-Boiled.ogg"));
+	loadAudio(au_song3, STR("jamAssets/audio/I-Knew-a-Guy.ogg"));
+	loadAudio(au_song4, STR("jamAssets/audio/On-the-Cool-Side.ogg"));
+	loadAudio(au_song5, STR("jamAssets/audio/Walking-Along.ogg"));
+	loadAudio(au_song6, STR("jamAssets/audio/Clean-Soul.ogg"));
+	loadAudio(au_song7, STR("jamAssets/audio/Dances-and-Dames.ogg"));
+	//loadAudio(a_sound1, STR("jamAssets/audio/Kool-Kats.ogg"));
+	//loadAudio(a_sound2, STR("jamAssets/audio/Kool-Kats.ogg"));
 
+	Audio_Player* songPlayer = audio_player_get_one();
+	audio_player_set_source(songPlayer, *getAudioSource(au_song1));
+	audio_player_set_state(songPlayer, AUDIO_PLAYER_STATE_PAUSED);
+    audio_player_set_looping(songPlayer, false);
 
-	audio_player_set_looping(song1Player, true);
-	audio_player_set_looping(song2Player, true);
-	audio_player_set_looping(song3Player, true);
-	audio_player_set_looping(song4Player, true);
-	audio_player_set_looping(song5Player, true);
-	audio_player_set_looping(song6Player, true);
-	audio_player_set_looping(song7Player, true);
-	audio_player_set_looping(trainPlayer, true);
+	Audio_Player* bgNoisePlayer = audio_player_get_one();
+	audio_player_set_source(bgNoisePlayer, *getAudioSource(au_train));
+	audio_player_set_state(bgNoisePlayer, AUDIO_PLAYER_STATE_PAUSED);
+    audio_player_set_looping(bgNoisePlayer, false);
 
-	audio_player_set_looping(clipPlayer, false);
-
-	bool clipPlaying = clipPlayer->state == AUDIO_PLAYER_STATE_PLAYING;
-	bool song1Playing = song1Player->state == AUDIO_PLAYER_STATE_PLAYING;
-	bool song2Playing = song2Player->state == AUDIO_PLAYER_STATE_PLAYING;
-	bool song3Playing = song3Player->state == AUDIO_PLAYER_STATE_PLAYING;
-	bool song4Playing = song4Player->state == AUDIO_PLAYER_STATE_PLAYING;
-	bool song5Playing = song5Player->state == AUDIO_PLAYER_STATE_PLAYING;
-	bool song6Playing = song6Player->state == AUDIO_PLAYER_STATE_PLAYING;
-	bool song7Playing = song7Player->state == AUDIO_PLAYER_STATE_PLAYING;;
-	bool trainPlaying = trainPlayer->state == AUDIO_PLAYER_STATE_PLAYING;
-
-
+	// Audio_Player* clipPlayer = audio_player_get_one();
+	// audio_player_set_source(clipPlayer, getAudioSource(au_song1));
+	// audio_player_set_state(clipPlayer, AUDIO_PLAYER_STATE_PAUSED);
+    // audio_player_set_looping(clipPlayer, true);
 	
 	// :loadWalkboxes // [sleeper] : [cargo]-[luggage]-(0,0)[dining]-[hallway]-[lounge]
-	loadWalkbox(w_dining_1, boxMake(v2(70.0, 97.0), v2(340.0, 123.0), false, true, false, false));
-	loadWalkbox(w_dining_2, boxMake(v2(340.0, 97.0), v2(400.0, 123.0),true, true, true, false));
-	loadWalkbox(w_dining_3, boxMake(v2(340.0, 123.0), v2(400.0, 150.0), false, false, false, true));
+	loadWalkbox(w_dining_1, boxMake(v2(70.0, 97.0), v2(350.0, 123.0), false, true, false, false));
+	loadWalkbox(w_dining_2, boxMake(v2(350.0, 97.0), v2(400.0, 123.0),true, true, true, false));
+	loadWalkbox(w_dining_3, boxMake(v2(350.0, 123.0), v2(400.0, 147.0), false, false, false, true));
 	loadWalkbox(w_dining_4, boxMake(v2(400.0, 97.0), v2(530.0, 123.0), true, false, false, false));
+	
+	loadWalkbox(w_dining_5, boxMake(v2(400.0, 135.0), v2(412.0, 147.0), true, true, false, true));
+	loadWalkbox(w_dining_6, boxMake(v2(412.0, 135.0), v2(515.0, 147.0), true, false, false, false));
+	loadWalkbox(w_dining_7, boxMake(v2(400.0, 123.0), v2(412.0, 135.0), true, false, true, true));
+
 
 	loadWalkbox(w_luggage_1, boxMake(v2(-220.0, 123.0), v2(-135.0, 150.0), false, false, false, true));
 	loadWalkbox(w_luggage_2, boxMake(v2(-330.0, 97.0), v2(-220.0, 123.0), false, true, false, false));
@@ -182,7 +142,7 @@ int entry(int argc, char **argv)
 	loadSprite(s_ch_detective, STR("jamAssets/characters/Detective-Idle-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 4, 1);
 	loadSprite(s_ch_professor, STR("jamAssets/characters/Professor-Idle-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 4, 1);
 	loadSprite(s_ch_starlet, STR("jamAssets/characters/Starlet-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 4, 1);
-	loadSprite(s_ch_valet, STR("jamAssets/characters/Valet-Idle-Sheet.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 4, 1);
+	loadSprite(s_ch_valet, STR("jamAssets/characters/Valet-Idle-Sheet-half.png"), v2(32.0, 64.0), v2(16.0, 0.0), true, 4, 1);
 
 	// :loadPortraits
 	loadSprite(s_po_player, STR("jamAssets/portraits/MCPortrait.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
@@ -194,13 +154,17 @@ int entry(int argc, char **argv)
 	loadSprite(s_po_valet, STR("jamAssets/portraits/ValetPortrait.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
 	loadSprite(s_po_starlet, STR("jamAssets/portraits/StarletPortrait.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
 
-	loadSprite(s_uibox, STR("jamAssets/portraits/UIBox.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
+	// :loadUI
+	loadSprite(s_ui_dialog, STR("jamAssets/portraits/UI-Dialog.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
+	loadSprite(s_ui_inventory, STR("jamAssets/portraits/UI-Inventory.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 1, 1);
 
 	// :loadItems
 	loadSprite(s_item_coupon, STR("jamAssets/objects/coupon.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
 	loadSprite(s_item_drink, STR("jamAssets/objects/drink.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
 	loadSprite(s_item_headshot, STR("jamAssets/objects/headshot.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
-	loadSprite(s_item_key, STR("jamAssets/objects/key.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_item_key, STR("jamAssets/objects/wallkey.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_obj_bar, STR("jamAssets/objects/bar.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+
 
 	// :loadBackgrounds
 	loadSprite(s_bg_dining, STR("jamAssets/rooms/DiningCarBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
@@ -234,26 +198,30 @@ int entry(int argc, char **argv)
 	Entity* detective = createEntity(t_npc, s_ch_detective, i_nil, v2(805, 115), STR("Detective"), true, 0);
 	Entity* professor = createEntity(t_npc, s_ch_professor, i_nil, v2(1390, 140), STR("Professor"), true, 0);
 	Entity* starlet = createEntity(t_npc, s_ch_starlet, i_nil, v2(1665, 140), STR("Starlet"), true, 0);
-	Entity* valet = createEntity(t_npc, s_ch_valet, i_nil, v2(500, 500), STR("Valet"), true, 0);
+	Entity* valet = createEntity(t_npc, s_ch_valet, i_nil, v2(468, 145), STR("Valet"), true, 0);
 
 	// :createItems
-	Entity* coupon = createEntity(t_object, s_item_coupon, i_coupon, v2(300, 110), STR("Coupon"), true, 0);
-	Entity* drink = createEntity(t_item, s_item_drink, i_drink, v2(-100, 0), STR("Fancy Cocktail"), true, 0);
-	Entity* headshot = createEntity(t_item, s_item_headshot, i_headshot, v2(-100, 0), STR("Headshot of Starlet"), true, 0);
-	Entity* key = createEntity(t_item, s_item_key, i_key, v2(-100, 0), STR("Brass Key"), true, 0);
+	// Entity* coupon = createEntity(t_item, s_item_coupon, i_coupon, v2(-100, -100), STR("Coupon"), true, 0);
+	// Entity* drink = createEntity(t_item, s_item_drink, i_drink, v2(-100, -100), STR("Fancy Cocktail"), true, 0);
+	// Entity* headshot = createEntity(t_item, s_item_headshot, i_headshot, v2(-100, -100), STR("Headshot of Starlet"), true, 0);
+	Entity* key = createEntity(t_object, s_item_key, i_key, v2(521.5, 191.0), STR("Brass Key"), true, 0);
 
-	// :createObjects
-	Quad tempQuad = makeQuad(v2(440.0, 170.0), v2(470.0, 170.0), v2(470.0, 213.0), v2(440.0, 213.0));
-	createObject(o_bartender, tempQuad, ot_npc, v2(435.0, 122.0), v2(0,0), bgDining, c_talk);
+	//Entity* key = createEntity(t_object, s_item_key, i_key, v2(-100, -100), STR("Brass Key"), true, 0);
+	Entity* bar = createEntity(t_foreground, s_obj_bar, i_nil, v2(411, 128), STR(""), false, 0);
+
+	// :createObjects - HotSpots/Walkboxes/Doors etc...
+	Quad tempQuad = makeQuad(v2(412.0, 127.0), v2(524.0, 127.0), v2(524.0, 176.0), v2(412.0, 176.0));
+	// createObject(o_bartender, tempQuad, ot_npc, v2(435.0, 122.0), v2(0,0), bgDining, c_talk);
+	// createObject(o_bar, tempQuad, ot_object, v2(0, 0), v2(0,0), bgDining, c_click);
 
 	// :Menu and Settings Screen Buttons
-	Vector2 menuPos = v2(1960.0, 165.0);
+	Vector2 menuPos = v2(1960.0, 175.0);
 	tempQuad = makeQuad(menuPos, v2(menuPos.x + 80, menuPos.y), v2(menuPos.x + 80, menuPos.y + 16), v2(menuPos.x, menuPos.y + 16));
 	createObject(o_newgame, tempQuad, ot_newgame, v2(0.0, 0.0), v2(-1000.0, 106.0), bgSleeper, c_hot);
-	menuPos = v2(1960.0, 135.0);
+	menuPos = v2(1960.0, 145.0);
 	tempQuad = makeQuad(menuPos, v2(menuPos.x + 80, menuPos.y), v2(menuPos.x + 80, menuPos.y + 16), v2(menuPos.x, menuPos.y + 16));
 	createObject(o_settings, tempQuad, ot_settings, v2(0.0, 0.0), v2(0,0), bgSettings, c_hot);
-	menuPos = v2(1960.0, 105.0);
+	menuPos = v2(1960.0, 115.0);
 	tempQuad = makeQuad(menuPos, v2(menuPos.x + 80, menuPos.y), v2(menuPos.x + 80, menuPos.y + 16), v2(menuPos.x, menuPos.y + 16));
 	createObject(o_quit, tempQuad, ot_quit, v2(0.0, 0.0), v2(0,0), null, c_hot);
 
@@ -349,6 +317,10 @@ int entry(int argc, char **argv)
 	
 	world->uxStateID = ux_menu;
 	world->currentBG = bgMenu;
+	world->currentSongID = au_song1;
+	// audio_player_set_state(songPlayer, AUDIO_PLAYER_STATE_PLAYING);
+	songPlayer->config.volume = 0.2;
+	bgNoisePlayer->config.volume = 0.2;
 
 	// world->uxStateID = ux_inventory;
 	// world->currentBG = bgSleeper;
@@ -362,13 +334,18 @@ int entry(int argc, char **argv)
 	world->activeSpeaker = player;
 	player->pos = v2(-1000.0, 106.0);
 
-
-
 	float32 textDuration = 2.0f;
 
 	while (!window.should_close)
 	{
 		reset_temporary_storage();
+
+
+		audio_player_set_state(songPlayer, AUDIO_PLAYER_STATE_PLAYING);
+		if (audio_player_get_current_progression_factor(songPlayer) > 0.99)
+		{
+			audio_player_transition_to_source(songPlayer, *getAudioSource(world->currentSongID), 0.5);
+		}
 
 		worldFrame = (WorldFrame){0};  // worldFrame is reset everyframe
 
@@ -381,18 +358,6 @@ int entry(int argc, char **argv)
 		worldFrame.bg = world->currentBG; // = world.current bg or something...
 		worldFrame.player = player; 
 
-		// dont think I need this in the game loop...
-		// clipPlaying = clipPlayer->state == AUDIO_PLAYER_STATE_PLAYING;
-		// song1Playing = song1Player->state == AUDIO_PLAYER_STATE_PLAYING;
-		// song2Playing = song2Player->state == AUDIO_PLAYER_STATE_PLAYING;
-		// song3Playing = song3Player->state == AUDIO_PLAYER_STATE_PLAYING;
-		// song4Playing = song4Player->state == AUDIO_PLAYER_STATE_PLAYING;
-		// song5Playing = song5Player->state == AUDIO_PLAYER_STATE_PLAYING;
-		// song6Playing = song6Player->state == AUDIO_PLAYER_STATE_PLAYING;
-		// song7Playing = song7Player->state == AUDIO_PLAYER_STATE_PLAYING;;
-		// trainPlayer = trainPlayer->state == AUDIO_PLAYER_STATE_PLAYING;
-
-
 		// :camera - 
 		// draw_frame.projection = m4_make_orthographic_projection(worldFrame.bg->scrollPos.x, worldFrame.bg->scrollPos.y, 0.0, 300.0, -1, 10);
 		// worldFrame.world_proj = m4_make_orthographic_projection(0.0, screenWidth, 0.0, screenHeight, -1, 10);
@@ -403,7 +368,7 @@ int entry(int argc, char **argv)
 
 		worldFrame.world_view = m4_identity;
 		// translate into position
-		worldFrame.world_view = m4_translate(worldFrame.world_view, v3(camera_pos.x, 140.0, 0));
+		worldFrame.world_view = m4_translate(worldFrame.world_view, v3(camera_pos.x, 150.0, 0));
 
 		// scale the zoom
 		worldFrame.world_view = m4_scale(worldFrame.world_view, v3(1.0/zoom, 1.0/zoom, 1.0));
@@ -441,7 +406,7 @@ int entry(int argc, char **argv)
 					// Range2f hotspot = range2f_make(v2_add(entity->pos, sprite->origin), v2_add(entity->pos, sprite->clickableSize));
 					Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
 					hotspot = range2f_shift(hotspot, entity->pos);
-					if (entity->type != t_player && entity->type != t_background)
+					if (entity->type != t_player && entity->type != t_background && entity->type != t_foreground)
 					{
 						if (fabsf(v2_dist(entity->pos, player->pos)) < entity->interactRadius) entity->isInRangeToInteract = true;
 						else entity->isInRangeToInteract = false;
@@ -556,6 +521,26 @@ int entry(int argc, char **argv)
 		// :renderPlayer
 		animate(player, worldFrame.nowTime, worldFrame.deltaTime);
 
+		// :renderForeground
+		for (int i = 0; i < MAX_ENTITY_COUNT; i++)
+		{
+			Entity* e = &world->entities[i];
+			if (e->isValid) // && onscreen?
+			{
+
+				if (e->type == t_foreground) 
+				{	
+					Sprite* itemSprite = getSprite(e->spriteID);
+					Matrix4 xform = m4_scalar(1.0);
+					xform = m4_translate(xform, v3(e->pos.x, e->pos.y, 0));
+					// xform = m4_translate(xform, v3(itemSprite->image->width * -0.5, 0.0, 0));
+					// xform = m4_scale(xform, v3(0.5, 0.5, 1.0));
+					if (player->pos.y > e->pos.y) draw_image_xform(itemSprite->image, xform, itemSprite->size, COLOR_WHITE);
+				}
+				// do doors, items?
+			}
+		}
+
 		{
 			// :render hover text
 			Entity* entity = world->activeEntity;
@@ -611,21 +596,30 @@ int entry(int argc, char **argv)
 			// draw_frame.projection = m4_make_orthographic_projection(0.0, 400.0, 0.0, 300.0, -1, 10);
 			set_screen_space();
 			draw_frame.camera_xform = m4_scalar(1.0);
-
-			{ // UIBOX
-				Matrix4 xform = m4_scalar(1.0); // m4_make_scale(v3(1,1,1))?
-				xform = m4_translate(xform, v3(35.0, 10.0, 0.0));
-				// draw_rect_xform(xform, v2(invWidth, invHeight), v4(1.0, 1.0, 1.0, 0.15));
-				Sprite* sprite = getSprite(s_uibox); 
-				draw_image_xform(sprite->image, xform, sprite->size, COLOR_WHITE);
-			}
 			 // maybe use backbuffer?
 
 			if (world->uxStateID == ux_inventory)
 			{	
+				audio_player_set_state(bgNoisePlayer, AUDIO_PLAYER_STATE_PLAYING);
+				
+				if (audio_player_get_current_progression_factor(bgNoisePlayer) > 0.99)
+				{
+					audio_player_transition_to_source(bgNoisePlayer, *getAudioSource(au_train), 0.5);
+				}
+
+				// audio_player_set_progression_factor(song_player, 0);
+
+				
+				{ // UIBOX
+					Matrix4 xform = m4_scalar(1.0); // m4_make_scale(v3(1,1,1))?
+					xform = m4_translate(xform, v3(35.0, 15.0, 0.0));
+					// draw_rect_xform(xform, v2(invWidth, invHeight), v4(1.0, 1.0, 1.0, 0.15));
+					Sprite* sprite = getSprite(s_ui_inventory); 
+					draw_image_xform(sprite->image, xform, sprite->size, COLOR_WHITE);
+				}
 				// :UI inventory
-				float invStartPosX = 52.0; // inv screen position
-				float invStartPosY = 20.0;
+				float invStartPosX = 50.0; // inv screen position
+				float invStartPosY = 22.0;
 				float invSlotWidth = 32;
 				float invSlotHeight = 32;
 				float invSlotPadding = 4;
@@ -678,6 +672,14 @@ int entry(int argc, char **argv)
 			}
 			else if (world->uxStateID == ux_dialog)
 			{	
+				{ // UIBOX
+					Matrix4 xform = m4_scalar(1.0); // m4_make_scale(v3(1,1,1))?
+					xform = m4_translate(xform, v3(35.0, 10.0, 0.0));
+					// draw_rect_xform(xform, v2(invWidth, invHeight), v4(1.0, 1.0, 1.0, 0.15));
+					Sprite* sprite = getSprite(s_ui_dialog); 
+					draw_image_xform(sprite->image, xform, sprite->size, COLOR_WHITE);
+				}
+
 				// Stop player from clicking on anything but text
 				world->currentCursor = c_click;
 				if (range2f_contains(world->dialogueBox, worldFrame.mousePosScreen)) world->currentCursor = c_hot;
@@ -721,17 +723,14 @@ int entry(int argc, char **argv)
 
 			}
 			else if (world->uxStateID == ux_menu)
-			{
+			{	
 
-				// loop through players and set all to pause except menu? do this in transition!
-
-				if (!song1Playing) audio_player_set_state(song1Player, AUDIO_PLAYER_STATE_PLAYING);
-				// else 
-				// (
-				// 	for (int i = 0; i < song_Max, i++)
-					{
-					}
-				// )
+				if (world->currentSongID != au_song1) 
+				{
+					audio_player_transition_to_source(songPlayer, *getAudioSource(au_song1), 1.0);
+					audio_player_set_state(songPlayer, AUDIO_PLAYER_STATE_PLAYING);
+				}
+				audio_player_set_state(bgNoisePlayer, AUDIO_PLAYER_STATE_PAUSED);
 
 				// Background Color
 				draw_rect(v2(0.0, 0.0), v2(window.width, window.height), COLOR_BLACK);
@@ -850,10 +849,14 @@ int entry(int argc, char **argv)
 				world->screenFade.currentlyFadingIn = true;
 				// if (worldFrame.activeObject != null) // this happens if the mouse moves out of the active object - need to fix.
 				{
-					
 					world->currentBG = world->warpBG;
-					// world . current bg . audio . set playing. set all others to not playing.
-					world->warpBG = 0;
+					if (world->currentSongID != getAudioIDFromBG(world->warpBG))
+					{
+						world->currentSongID = getAudioIDFromBG(world->warpBG);
+						audio_player_transition_to_source(songPlayer, *getAudioSource(world->currentSongID), 1.0);
+					}
+					
+					// world->warpBG = 0; commenting this out seems to have fixed my black screen bug
 					player->pos = world->warpPos;
 					camera_pos.x = player->pos.x;
 					world->uxStateID = ux_inventory;
@@ -936,3 +939,4 @@ int entry(int argc, char **argv)
 
 	return 0;
 }
+

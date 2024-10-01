@@ -51,6 +51,7 @@ typedef enum SpriteID
 	s_item_coupon,
 	s_item_drink,
 	s_item_headshot,
+	s_obj_bar,
 	s_po_player,
 	s_po_baron,
 	s_po_conductor,
@@ -59,7 +60,8 @@ typedef enum SpriteID
 	s_po_reporter,
 	s_po_starlet,
 	s_po_valet,
-	s_uibox,
+	s_ui_dialog,
+	s_ui_inventory,
 	s_MAX,
 } SpriteID;
 
@@ -147,6 +149,9 @@ typedef enum WalkboxID
 	w_dining_2,
 	w_dining_3,
 	w_dining_4,
+	w_dining_5,
+	w_dining_6,
+	w_dining_7,
 	w_luggage_1,
 	w_luggage_2,
 	w_luggage_3,
@@ -176,7 +181,8 @@ typedef struct BoxSides
 typedef enum ObjectID
 {	
 	o_nil,
-	o_bartender,
+	o_bar,
+	o_key,
 	o_door_diningL,
 	o_door_diningR,
 	o_door_hallwayL,
@@ -291,9 +297,10 @@ typedef enum EntityType
 	t_player = 1,
 	t_npc = 2,
 	t_background = 3,
-	t_object = 4,
-	t_item = 5,
-	t_door = 6,
+	t_foreground = 4,
+	t_object = 5,
+	t_item = 6,
+	t_door = 7,
 	t_MAX,
 } EntityType;
 
@@ -373,6 +380,24 @@ typedef struct Game
 
 } Game;
 
+typedef enum AudioID
+{
+	au_nil = 0,
+	au_train,
+	au_song1,
+	au_song2,
+	au_song3,
+	au_song4,
+	au_song5,
+	au_song6,
+	au_song7,
+	au_sound1,
+	au_sound2,
+	au_sound3,
+	au_sound4,
+	au_MAX,
+} AudioID;
+
 typedef struct World
 {
 	Entity entities[MAX_ENTITY_COUNT];
@@ -382,6 +407,8 @@ typedef struct World
 	Sprite sprites[s_MAX];
 	Object objects[o_MAX];
 	Dialog dialogs[MAX_DIALOG_COUNT];
+	Audio_Source audioSources[au_MAX];
+	// Audio_Player audioPlayers[au_MAX];
 	// Room rooms[r_MAX];
 	UXStateID uxStateID;
 	Fade screenFade;
@@ -404,6 +431,7 @@ typedef struct World
 	bool debugOn;
 	s32 dialogID;
 	Dialog* dialog;
+	AudioID currentSongID;
 } World;
 
 World* world = 0;
