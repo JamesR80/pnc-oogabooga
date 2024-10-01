@@ -344,7 +344,8 @@ int entry(int argc, char **argv)
 		audio_player_set_state(songPlayer, AUDIO_PLAYER_STATE_PLAYING);
 		if (audio_player_get_current_progression_factor(songPlayer) > 0.99)
 		{
-			audio_player_transition_to_source(songPlayer, *getAudioSource(world->currentSongID), 0.5);
+			// get duration from number of frames left...
+			audio_player_transition_to_source(songPlayer, *getAudioSource(world->currentSongID), 1.0);
 		}
 
 		worldFrame = (WorldFrame){0};  // worldFrame is reset everyframe
@@ -584,7 +585,7 @@ int entry(int argc, char **argv)
 				if (world->textTimer > 0 && worldFrame.nowTime - world->textTimer  < textDuration)
 				{
 					set_screen_space();
-					Vector2 dialogueBoxPos = centerTextToPos(world->playerText, font, fontHeight, textScaling, v2(200.0, 84.0));
+					Vector2 dialogueBoxPos = centerTextToPos(world->playerText, font, fontHeight, textScaling, v2(200.0, 74.0));
 					draw_text(font, world->playerText, fontHeight, dialogueBoxPos, textScaling, COLOR_WHITE);
 					set_world_space();
 				}
