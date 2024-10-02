@@ -1,3 +1,30 @@
+void pushInventory(Item* item)
+{
+	for (int j = 0; j < i_MAX; j++)
+	{
+		if (world->currentInv[j] == 0)
+		{
+			world->currentInv[j] = item;
+			break;
+		}
+	}
+}
+
+void popInventory(Item* item)
+{
+	for (int j = 0; j < i_MAX; j++)
+	{
+		if (world->currentInv[j] == item)
+		{
+			world->currentInv[j] = 0;
+			break;
+		}
+	}
+}
+
+// do merge array func???
+
+
 
 void itemClicked(Item* item, bool isLeftClick)
 {
@@ -10,17 +37,22 @@ void itemClicked(Item* item, bool isLeftClick)
 		case true: 
 			item->justClicked = true;
 			log("item left click!");
-			item->onCursor = true;
+			// if () {} // check if item already on cursor?
 			item->inInventory = false;
+			popInventory(item);
+			item->onCursor = true;
+			world->itemOnCursor = item;
 			break;
 
 		case false:
 			item->justClicked = true;
 			log("item right click!");
-			if (item->onCursor)
+			if (world->itemOnCursor == item) // item->onCursor)
 			{
-				item->onCursor = false;
 				item->inInventory = true;
+				pushInventory(item);
+				item->onCursor = false;
+				world->itemOnCursor = null;
 			}
 			break;
 	}
@@ -53,6 +85,7 @@ void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity c
 				// world->playerText = entity->useText;
 				world->textBoxTime = worldFrame.nowTime;
 				world->inventory[entity->itemID].inInventory = true;
+				pushInventory(&world->inventory[entity->itemID]);
 				destroyEntity(entity);
 				break;
 			case t_door:

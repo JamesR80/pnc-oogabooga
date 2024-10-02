@@ -201,7 +201,7 @@ int entry(int argc, char **argv)
 	Entity* valet = createEntity(t_npc, s_ch_valet, i_nil, v2(468, 145), STR("Valet"), true, 0);
 
 	// :createItems
-	// Entity* coupon = createEntity(t_item, s_item_coupon, i_coupon, v2(-100, -100), STR("Coupon"), true, 0);
+	Entity* coupon = createEntity(t_object, s_item_coupon, i_coupon, v2(-900.0, 106.0), STR("Coupon"), true, 0);
 	// Entity* drink = createEntity(t_item, s_item_drink, i_drink, v2(-100, -100), STR("Fancy Cocktail"), true, 0);
 	// Entity* headshot = createEntity(t_item, s_item_headshot, i_headshot, v2(-100, -100), STR("Headshot of Starlet"), true, 0);
 	Entity* key = createEntity(t_object, s_item_key, i_key, v2(521.5, 191.0), STR("Brass Key"), true, 0);
@@ -269,7 +269,7 @@ int entry(int argc, char **argv)
 	baron->interactPos.x = baron->pos.x + 30.0;
 	detective->interactPos.x = detective->pos.x - 30.0;
 	starlet->interactPos.x = starlet->pos.x - 30.0;
-	// valet->interactPos.x = valet->pos.x - 30.0;
+	valet->interactPos.x = valet->pos.x - 30.0; // add pos.y
 	professor->interactPos.x = professor->pos.x - 30.0;
 
 	conductor->portraitID = s_po_conductor; 
@@ -277,7 +277,7 @@ int entry(int argc, char **argv)
 	baron->portraitID = s_po_baron;
 	detective->portraitID = s_po_detective;
 	starlet->portraitID = s_po_starlet;
-	// valet->portraitID.x = s_po_valet;
+	valet->portraitID = s_po_valet;
 	professor->portraitID = s_po_professor;
 
 	conductor->lookText = STR("It's the train conductor, I wonder what he is doing here.");
@@ -285,7 +285,7 @@ int entry(int argc, char **argv)
 	baron->lookText = STR("That's quite the moustache, I wonder what he is doing here.");
 	detective->lookText = STR("He looks like a policeman, I wonder what he is doing here.");
 	starlet->lookText = STR("She looks familiar, I wonder what she is doing here.");
-	// valet->lookText = STR("That must be the valet.");
+	valet->lookText = STR("That must be the valet.");
 	professor->lookText = STR("He's a studious sort, I wonder what he is doing here.");
 
 	conductor->dialogID = 1201;
@@ -293,12 +293,27 @@ int entry(int argc, char **argv)
 	baron->dialogID = 1401;
 	detective->dialogID = 1501;
 	starlet->dialogID = 1601;
-	// valet->dialogID = 1701;
+	valet->dialogID = 1701;
 	professor->dialogID = 1801;
 
 	// :createInventoryItems
+	loadInventoryItem(i_blank, STR("Blank"), STR("jamAssets/missingTexture.png"), true, 0);
 	loadInventoryItem(i_coupon, STR("Drink Coupon"), STR("jamAssets/objects/coupon.png"), false, 0); // load this when needed? How?
-	loadInventoryItem(i_key, STR("Brass Key"), STR("jamAssets/objects/key.png"), true, 0);
+	loadInventoryItem(i_key, STR("Brass Key"), STR("jamAssets/objects/key.png"), false, 0);
+	loadInventoryItem(i_book, STR("Old Book"), STR("jamAssets/objects/book.png"), true, 0);
+	loadInventoryItem(i_ticket, STR("Train Ticket"), STR("jamAssets/objects/ticket.png"), true, 0);
+	loadInventoryItem(i_drink, STR("Fancy Cocktail"), STR("jamAssets/objects/drink.png"), false, 0);
+	loadInventoryItem(i_headshot, STR("Autographed Photo"), STR("jamAssets/objects/headshot.png"), false, 0);
+
+	// :init loop over inventory
+	for (int i = 0; i < i_MAX; i++)
+	{
+		Item* item = &world->inventory[i];
+		if (item->inInventory)
+		{	
+			pushInventory(item);
+		}
+	}
 
 	// :init timers and fps etc
 	float64 prevTime = os_get_elapsed_seconds();
@@ -316,14 +331,12 @@ int entry(int argc, char **argv)
 	Vector2 camera_pos = v2(player->pos.x, 150.0);
 	
 	world->uxStateID = ux_menu;
+	world->itemOnCursor = null;
 	world->currentBG = bgMenu;
 	world->currentSongID = au_song1;
 	// audio_player_set_state(songPlayer, AUDIO_PLAYER_STATE_PLAYING);
 	songPlayer->config.volume = 0.2;
 	bgNoisePlayer->config.volume = 0.2;
-
-	// world->uxStateID = ux_inventory;
-	// world->currentBG = bgSleeper;
 
 	world->playerText = STR("");
 	world->dialogueBox = range2f_make(v2(30.0, 15.0), v2(370.0, 75.0));
@@ -635,8 +648,8 @@ int entry(int argc, char **argv)
 				int invItemCount = 0;
 				for (int i = 0; i < i_MAX; i++)
 				{
-					Item* item = &world->inventory[i];
-					if (item->inInventory) // && if dragged add alpha, and if successfully dropped delete
+					Item* item = world->currentInv[i];
+					if (item != null) // && if dragged add alpha, and if successfully dropped delete
 					{
 						// invPage0[invItemCount] = item; // if in inv put in new array for rendering?
 						invItemCount += 1;
@@ -658,8 +671,8 @@ int entry(int argc, char **argv)
 								xform = m4_scale(xform, v3(1.0, adjustScale, 1.0));
 								world->activeItem = item;
 
-								Vector2 pos = centerTextToPos(item->name, font, fontHeight, textScaling, v2(hotspot.min.x + (invSlotWidth / 2.0), hotspot.min.y - 10.0));
-								draw_text(font, item->name, fontHeight, pos, textScaling, COLOR_BLUE);
+								Vector2 pos = centerTextToPos(item->name, font, fontHeight, textScaling, v2(hotspot.min.x + (invSlotWidth / 2.0), hotspot.min.y - 20.0));
+								draw_text(font, item->name, fontHeight, pos, textScaling, COLOR_WHITE);
 
 								// invItemClicked(item, entity? )
 							}
@@ -813,12 +826,12 @@ int entry(int argc, char **argv)
 					Cursor* c = getCursor(world->currentCursor);
 					os_set_mouse_pointer_custom(c->hwCursor);
 
-					if (world->activeItem && world->activeItem->onCursor)
+					if (world->itemOnCursor) // && world->activeItem && world->activeItem->onCursor)
 					{
-						ShowCursor(false);
+						// ShowCursor(false);
 						Vector2 mouseOffset = v2(worldFrame.mousePosScreen.x + 5.0, worldFrame.mousePosScreen.y - 19.0);
-						draw_image(world->activeItem->image, mouseOffset, v2_mulf(world->activeItem->size, 0.5), COLOR_WHITE);
-						world->activeItem->inInventory = false;
+						draw_image(world->itemOnCursor->image, mouseOffset, v2_mulf(world->itemOnCursor->size, 0.5), COLOR_WHITE);
+						world->itemOnCursor->inInventory = false;
 						world->currentCursor = c_drag;
 					}
 					// else if (world->mouseActive == false) world->currentCursor = worldFrame.bg->hoverCursor;

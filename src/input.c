@@ -57,7 +57,7 @@
                 if (flag > 0) checkDialogFlags(world->actorR, flag);
             }
         }
-        else if (world->uxStateID == ux_inventory) // normal game state
+        else if (world->uxStateID == ux_inventory) // normal game state - check if item on cursor first!!!
         {
             if (range2f_contains(world->gameBox, worldFrame.mousePosScreen))
             {
@@ -97,7 +97,7 @@
         }
     }
     
-    if (is_key_just_pressed(MOUSE_BUTTON_RIGHT))
+    if (is_key_just_pressed(MOUSE_BUTTON_RIGHT)) // NEED TO EXPAND ON THIS
     {
         consume_key_just_pressed(MOUSE_BUTTON_RIGHT);
         
@@ -108,7 +108,7 @@
             world->textTimer = worldFrame.nowTime;
             entityClicked(activeEntity, player, false);
         }
-        else if (activeItem)
+        else if (activeItem) // HERE! need item on cursor
         {
             world->playerText = activeItem->lookText;
             world->textTimer = worldFrame.nowTime;

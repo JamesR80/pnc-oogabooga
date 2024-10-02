@@ -44,7 +44,7 @@ loadDialog(402, 0, D_REPEAT,
 loadDialog(1501, 501, 0, 
     STR("Hello."));
 loadDialog(501, 1502, 0,
-    STR("Greetings Miss...."));
+    STR("Greetings, Miss....?"));
 loadDialog(1502, 0, D_HAS_MET, 
     STR("Adaline. Bye."));
 loadDialog(502, 0, D_REPEAT, 

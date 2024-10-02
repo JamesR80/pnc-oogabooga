@@ -69,10 +69,13 @@ typedef enum SpriteID
 typedef enum ItemID
 {
 	i_nil = 0,
-	i_key,
-	i_coupon,
+	i_blank,
+	i_book,
+	i_ticket,
 	i_drink,
+	i_coupon,
 	i_headshot,
+	i_key,
 	i_MAX,
 } ItemID;
 
@@ -402,6 +405,7 @@ typedef struct World
 {
 	Entity entities[MAX_ENTITY_COUNT];
 	Item inventory[i_MAX];
+	Item* currentInv[i_MAX];
 	Cursor cursors[c_MAX];
 	Walkbox walkboxes[w_MAX];
 	Sprite sprites[s_MAX];
@@ -418,6 +422,7 @@ typedef struct World
 	Entity* activeEntity;
 	Entity* activeSpeaker;
 	Item* activeItem;
+	Item* itemOnCursor;
 	Object* activeObject;
 	CursorID currentCursor;
 	bool isHWCursor;
