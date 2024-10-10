@@ -101,8 +101,14 @@
     {
         consume_key_just_pressed(MOUSE_BUTTON_RIGHT);
         
+
+        if (world->itemOnCursor)
+        {
+            // do interact
+            // check other click events...
+        }
         // :examine
-        if (activeEntity)
+        else if (activeEntity)
         {
             world->playerText = activeEntity->lookText;
             world->textTimer = worldFrame.nowTime;

@@ -1,3 +1,5 @@
+
+
 void pushInventory(Item* item)
 {
 	for (int j = 0; j < i_MAX; j++)
@@ -22,8 +24,7 @@ void popInventory(Item* item)
 	}
 }
 
-// do merge array func???
-
+// do flatten array func??? Don't need it, I think... ???
 
 
 void itemClicked(Item* item, bool isLeftClick)

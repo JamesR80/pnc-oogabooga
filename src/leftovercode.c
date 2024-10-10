@@ -73,3 +73,51 @@
 					// // if text then get_measure text box etc, else min size
 					// Vector2 dialogueBoxSize = v2(70.0, 30.0);
 					// // draw_rect(dialogueBoxPos, dialogueBoxSize, v4(1.0, 1.0, 1.0, 0.5));
+
+
+
+
+
+// Background Color
+				// // draw_rect(v2(0.0, 0.0), v2(window.width, window.height), COLOR_BLACK);
+				// Vector2 centerTop = v2(200.0, 240.0);
+				// Vector2 pos = centerTop;
+				// float32 padding = 60.0;
+				// string text = STR("");
+				// Vector4 color = COLOR_WHITE;
+				// Object* objA = worldFrame.activeObject;
+
+				// // Game Title
+				// text = STR("Epic Game Title");
+				// pos = centerTextToPos(text, font, fontHeight, textScalingBig, pos);
+				// draw_text(font, text, fontHeight, pos, textScalingBig, color);
+				
+				// // New Game
+				// text = STR("New Game"); // or Resume Game
+				// pos = v2(centerTop.x, centerTop.y - padding);
+				// pos = centerTextToPos(text, font, fontHeight, textScaling, pos);
+				// if (objA != null && objA->type == ot_newgame) color = COLOR_RED;
+				// draw_text(font, text, fontHeight, pos, textScaling, color);
+				// color = COLOR_WHITE;
+				
+				// // Settings
+				// text = STR("Settings");
+				// pos = v2(centerTop.x, centerTop.y - (padding * 1.5));
+				// pos = centerTextToPos(text, font, fontHeight, textScaling, pos);
+				// if (objA != null && objA->type == ot_settings) color = COLOR_RED;
+				// draw_text(font, text, fontHeight, pos, textScaling, color);
+				// color = COLOR_WHITE;
+				
+				// // Quit
+				// text = STR("Quit Game");\
+				// pos = v2(centerTop.x, centerTop.y - (padding * 2.0));
+				// pos = centerTextToPos(text, font, fontHeight, textScaling, pos);
+				// if (objA != null && objA->type == ot_quit) color = COLOR_RED;
+				// draw_text(font, text, fontHeight, pos, textScaling, color);
+				// color = COLOR_WHITE;
+				
+				// // Credits
+				// text = STR("Made by Cuplinks and Dangergoose"); 
+				// pos = v2(centerTop.x, centerTop.y - (padding * 3.8));
+				// pos = centerTextToPos(text, font, fontHeight, textScalingSml, pos);
+				// draw_text(font, text, fontHeight, pos, textScalingSml, color);

@@ -32,10 +32,29 @@ int entry(int argc, char **argv)
 {
 	// :init OS stuff
 	window.title = STR("Point and Click");
-	if (window.allow_resize)
-	{
-		window.allow_resize = !window.allow_resize;
-	} 
+
+	window.point_width = 800;
+	window.point_height = 600;
+	float zoom = 4.0;
+	//u8 screenSize = 3;
+
+	// below is the window offest from bottom left of screen - TODO: maybe get screen dimensions and center it.
+	window.point_x = 300;
+	window.point_y = 300;
+	window.clear_color = COLOR_RED; // background color
+
+	// disable windows cursor
+	ShowCursor(false);
+
+	// HANDLE hConsole = GetConsoleWindow();
+    // if (hConsole != NULL)
+    // {
+    //     ShowWindow(hConsole, SW_HIDE);
+    // }
+
+	os_update();
+
+	window.allow_resize = false;
 
 	Gfx_Font *font = load_font_from_disk(STR("jamAssets/fonts/NotJamOldStyle11.ttf"), get_heap_allocator());
 	assert(font, "Failed loading font");
@@ -44,19 +63,6 @@ int entry(int argc, char **argv)
 	Vector2 textScaling = v2(0.2, 0.2);
 	Vector2 textScalingBig = v2(0.5, 0.5);
 	Vector2 textScalingSml = v2(0.1, 0.1);
-
-	window.point_width = 800;
-	window.point_height = 600;
-	float zoom = 4.0;
-	//u8 screenSize = 3;
-
-	// below is the window offest from bottom left of screen - maybe get screen dimensions and center it.
-	window.point_x = 300;
-	window.point_y = 300;
-	window.clear_color = COLOR_RED; // background color
-
-	// disable windows cursor
-	ShowCursor(false);
 
 	// :Memory
 	world = alloc(get_heap_allocator(), sizeof(World));
@@ -173,8 +179,26 @@ int entry(int argc, char **argv)
 	loadSprite(s_bg_luggage, STR("jamAssets/rooms/LuggageClosetBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
 	loadSprite(s_bg_cargo, STR("jamAssets/rooms/CargoBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
 	loadSprite(s_bg_sleeper, STR("jamAssets/rooms/MCSleeperCarBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
-	loadSprite(s_bg_menu, STR("jamAssets/rooms/BlankBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
-	loadSprite(s_bg_settings, STR("jamAssets/rooms/BlankBG.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+
+	// :loadMenus
+	loadSprite(s_bg_menu, STR("jamAssets/ui/StartScreen.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_bg_settings, STR("jamAssets/ui/SettingsScreen.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_button_about1, STR("jamAssets/ui/About1.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_button_about2, STR("jamAssets/ui/About2.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_button_start1, STR("jamAssets/ui/Start1.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_button_start2, STR("jamAssets/ui/Start2.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_button_load1, STR("jamAssets/ui/Load1.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	loadSprite(s_button_load2, STR("jamAssets/ui/Load2.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	// loadSprite(s_button_save1, STR("jamAssets/ui/Save1.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	// loadSprite(s_button_save2, STR("jamAssets/ui/Save2.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	// loadSprite(s_button_settings1, STR("jamAssets/ui/Settings1.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	// loadSprite(s_button_settings2, STR("jamAssets/ui/Settings2.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	// loadSprite(s_button_credits1, STR("jamAssets/ui/Credits1.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	// loadSprite(s_button_credits2, STR("jamAssets/ui/Credits2.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	// loadSprite(s_button_resume1, STR("jamAssets/ui/Resume1.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+	// loadSprite(s_button_resume2, STR("jamAssets/ui/Resume2.png"), v2(0.0, 0.0), v2(0.0, 0.0), false, 0, 0);
+
+
 
 
 	// :createBackgrounds - these don't need to be entities in final hopefully
@@ -184,11 +208,17 @@ int entry(int argc, char **argv)
 	Entity* bgLuggage = createEntity(t_background, s_bg_luggage, i_nil, v2(-400, 0), null_string, false, 0);
 	Entity* bgCargo = createEntity(t_background, s_bg_cargo, i_nil, v2(-800, 0), null_string, false, 0);
 	Entity* bgSleeper = createEntity(t_background, s_bg_sleeper, i_nil, v2(-1200, 0), null_string, false, 0);
-  	// [sleeper] : [cargo]-[luggage]-(0,0)[dining]-[hallway]-[lounge]
+  	// [sleeper] : [cargo]-[luggage]-(0,0)[dining]-[hallway]-[lounge] : [Menu]-[Settings]
 
 	// :Menus
 	Entity* bgMenu = createEntity(t_background, s_bg_menu, i_nil, v2(1800, 0), null_string, false, 0);
-	Entity* bgSettings = createEntity(t_background, s_bg_settings, i_nil, v2(2200, 0), null_string, false, 0);
+	Entity* bgSettings = createEntity(t_button, s_bg_settings, i_nil, v2(2200, 0), null_string, false, 0);
+	Entity* uiLoad = createEntity(t_button, s_button_load1, i_nil, v2(1893, 57), null_string, false, 0);
+	Entity* uiAbout = createEntity(t_button, s_button_about1, i_nil, v2(1950, 57), null_string, false, 0);
+	Entity* uiStart = createEntity(t_button, s_button_start1, i_nil, v2(1836, 57), null_string, false, 0);
+	// Entity* uiSettings = createEntity(t_button, s_button_settings1, i_nil, v2(2200, 0), null_string, false, 0);
+	// Entity* uiQuit = createEntity(t_button, s_button_quit1, i_nil, v2(2200, 0), null_string, false, 0);
+
 
 	// :createEntities and Objects
 	Entity* player = createEntity(t_player, s_player, i_nil, v2(175.0, 106.0), null_string, false, 0);
@@ -215,15 +245,20 @@ int entry(int argc, char **argv)
 	// createObject(o_bar, tempQuad, ot_object, v2(0, 0), v2(0,0), bgDining, c_click);
 
 	// :Menu and Settings Screen Buttons
-	Vector2 menuPos = v2(1960.0, 175.0);
-	tempQuad = makeQuad(menuPos, v2(menuPos.x + 80, menuPos.y), v2(menuPos.x + 80, menuPos.y + 16), v2(menuPos.x, menuPos.y + 16));
+	Vector2 menuPos = v2(1839.0, 57.0);
+	tempQuad = makeQuad(menuPos, v2(menuPos.x + 53, menuPos.y), v2(menuPos.x + 53, menuPos.y + 36), v2(menuPos.x, menuPos.y + 36));
 	createObject(o_newgame, tempQuad, ot_newgame, v2(0.0, 0.0), v2(-1000.0, 106.0), bgSleeper, c_hot);
-	menuPos = v2(1960.0, 145.0);
-	tempQuad = makeQuad(menuPos, v2(menuPos.x + 80, menuPos.y), v2(menuPos.x + 80, menuPos.y + 16), v2(menuPos.x, menuPos.y + 16));
-	createObject(o_settings, tempQuad, ot_settings, v2(0.0, 0.0), v2(0,0), bgSettings, c_hot);
-	menuPos = v2(1960.0, 115.0);
-	tempQuad = makeQuad(menuPos, v2(menuPos.x + 80, menuPos.y), v2(menuPos.x + 80, menuPos.y + 16), v2(menuPos.x, menuPos.y + 16));
-	createObject(o_quit, tempQuad, ot_quit, v2(0.0, 0.0), v2(0,0), null, c_hot);
+	menuPos = v2(1839+56, 57.0);
+	tempQuad = makeQuad(menuPos, v2(menuPos.x + 53, menuPos.y), v2(menuPos.x + 53, menuPos.y + 36), v2(menuPos.x, menuPos.y + 36));
+	createObject(o_load, tempQuad, ot_load, v2(0.0, 0.0), v2(0,0), bgMenu, c_hot);
+	menuPos = v2(1839 + (56 * 2), 57.0);
+	tempQuad = makeQuad(menuPos, v2(menuPos.x + 53, menuPos.y), v2(menuPos.x + 53, menuPos.y + 36), v2(menuPos.x, menuPos.y + 36));
+	createObject(o_about, tempQuad, ot_about, v2(0.0, 0.0), v2(0,0), null, c_hot);
+	// tempQuad = makeQuad(menuPos, v2(menuPos.x + 53, menuPos.y), v2(menuPos.x + 53, menuPos.y + 36), v2(menuPos.x, menuPos.y + 36));
+	// createObject(o_settings, tempQuad, ot_settings, v2(0.0, 0.0), v2(0,0), bgSettings, c_hot);
+	// menuPos = v2(1839 + (56 * 2), 57.0);
+	// tempQuad = makeQuad(menuPos, v2(menuPos.x + 53, menuPos.y), v2(menuPos.x + 53, menuPos.y + 36), v2(menuPos.x, menuPos.y + 36));
+	// createObject(o_quit, tempQuad, ot_quit, v2(0.0, 0.0), v2(0,0), null, c_hot);
 
 
 	// :createDoors
@@ -420,7 +455,7 @@ int entry(int argc, char **argv)
 					// Range2f hotspot = range2f_make(v2_add(entity->pos, sprite->origin), v2_add(entity->pos, sprite->clickableSize));
 					Range2f hotspot = getHotSpot(sprite->clickableSize, sprite->origin);
 					hotspot = range2f_shift(hotspot, entity->pos);
-					if (entity->type != t_player && entity->type != t_background && entity->type != t_foreground)
+					if (entity->type != t_player && entity->type != t_background && entity->type != t_foreground && entity->type != t_button)
 					{
 						if (fabsf(v2_dist(entity->pos, player->pos)) < entity->interactRadius) entity->isInRangeToInteract = true;
 						else entity->isInRangeToInteract = false;
@@ -542,7 +577,7 @@ int entry(int argc, char **argv)
 			if (e->isValid) // && onscreen?
 			{
 
-				if (e->type == t_foreground) 
+				if (e->type == t_foreground || e->type == t_button) 
 				{	
 					Sprite* itemSprite = getSprite(e->spriteID);
 					Matrix4 xform = m4_scalar(1.0);
@@ -746,11 +781,7 @@ int entry(int argc, char **argv)
 				}
 				audio_player_set_state(bgNoisePlayer, AUDIO_PLAYER_STATE_PAUSED);
 
-				// Background Color
-				draw_rect(v2(0.0, 0.0), v2(window.width, window.height), COLOR_BLACK);
-				Vector2 centerTop = v2(200.0, 240.0);
-				Vector2 pos = centerTop;
-				float32 padding = 60.0;
+				Vector2 pos = v2(200.0, 150.0);
 				string text = STR("");
 				Vector4 color = COLOR_WHITE;
 				Object* objA = worldFrame.activeObject;
@@ -761,34 +792,23 @@ int entry(int argc, char **argv)
 				draw_text(font, text, fontHeight, pos, textScalingBig, color);
 				
 				// New Game
-				text = STR("New Game"); // or Resume Game
-				pos = v2(centerTop.x, centerTop.y - padding);
-				pos = centerTextToPos(text, font, fontHeight, textScaling, pos);
-				if (objA != null && objA->type == ot_newgame) color = COLOR_RED;
-				draw_text(font, text, fontHeight, pos, textScaling, color);
-				color = COLOR_WHITE;
+				if (objA != null && objA->type == ot_newgame) uiStart->spriteID = s_button_start2;
+				else uiStart->spriteID = s_button_start1;
+
+				// Load
+				if (objA != null && objA->type == ot_load) uiLoad->spriteID = s_button_load2;
+				else uiLoad->spriteID = s_button_load1;
+
+				// About
+				if (objA != null && objA->type == ot_about) uiAbout->spriteID = s_button_about2;
+				else uiAbout->spriteID = s_button_about1;
 				
-				// Settings
-				text = STR("Settings");
-				pos = v2(centerTop.x, centerTop.y - (padding * 1.5));
-				pos = centerTextToPos(text, font, fontHeight, textScaling, pos);
-				if (objA != null && objA->type == ot_settings) color = COLOR_RED;
-				draw_text(font, text, fontHeight, pos, textScaling, color);
-				color = COLOR_WHITE;
+				// // Settings
+				// if (objA != null && objA->type == ot_settings) uiSettings->spriteID = s_button_settings2;
+
+				// // Quit
+				// if (objA != null && objA->type == ot_quit) uiQuit->spriteID = s_button_quit2;
 				
-				// Quit
-				text = STR("Quit Game");\
-				pos = v2(centerTop.x, centerTop.y - (padding * 2.0));
-				pos = centerTextToPos(text, font, fontHeight, textScaling, pos);
-				if (objA != null && objA->type == ot_quit) color = COLOR_RED;
-				draw_text(font, text, fontHeight, pos, textScaling, color);
-				color = COLOR_WHITE;
-				
-				// Credits
-				text = STR("Made by Cuplinks and Dangergoose"); 
-				pos = v2(centerTop.x, centerTop.y - (padding * 3.8));
-				pos = centerTextToPos(text, font, fontHeight, textScalingSml, pos);
-				draw_text(font, text, fontHeight, pos, textScalingSml, color);
 			
 			}
 			else if (world->uxStateID == ux_settings)
@@ -928,7 +948,7 @@ int entry(int argc, char **argv)
 				set_screen_space();
 
 			}
-		}
+		} // :endDebug
 
 		secCounter += worldFrame.deltaTime;
 		frameCounter += 1;
@@ -943,11 +963,8 @@ int entry(int argc, char **argv)
 			draw_text(font, tprint("FPS: %i", framerate), fontHeight, v2(200, 290), textScalingSml, COLOR_RED);
 		}
 
-		
 		os_update(); 		
 		gfx_update();
-
-
 
 	} // game loop
 
