@@ -21,6 +21,11 @@ float sinBob(float time, float rate)
 	return (sin(time * rate) + 1.0) / 2.0;
 }
 
+// int randFromRange(int min, int max)
+// {
+//   return (min + (rand() % (1 + max - min)));
+// }
+
 typedef struct Range1f {
   float min;
   float max;
@@ -131,42 +136,42 @@ void drawBoxFromRange2f(Range2f box, float lineWidth, Vector4 color)
 
 bool doLinesIntersect(Vector2 line1Start, Vector2 line1End, Vector2 line2Start, Vector2 line2End) // or return Vector2 if getting intersect point
 {
-    float epsilon = 0.1;
-    float tolerance = 0.1;
+  float epsilon = 0.1;
+  float tolerance = 0.1;
 
-    // Calculate the denominator of the intersection formula
-    float denominator = (line1Start.x - line1End.x) * (line2Start.y - line2End.y) -
-                        (line1Start.y - line1End.y) * (line2Start.x - line2End.x);
+  // Calculate the denominator of the intersection formula
+  float denominator = (line1Start.x - line1End.x) * (line2Start.y - line2End.y) -
+                      (line1Start.y - line1End.y) * (line2Start.x - line2End.x);
 
-    // If the denominator is close to zero, the lines are parallel and do not intersect
-    if (fabsf(denominator) < epsilon) return false; // // return (Vector2){NAN, NAN};
+  // If the denominator is close to zero, the lines are parallel and do not intersect
+  if (fabsf(denominator) < epsilon) return false; // // return (Vector2){NAN, NAN};
 
-    // Calculate the intersection point
-    float t = ((line1Start.x - line2Start.x) * (line2Start.y - line2End.y) -
-               (line1Start.y - line2Start.y) * (line2Start.x - line2End.x)) / denominator;
-    float u = -((line1Start.x - line1End.x) * (line1Start.y - line2Start.y) -
-                (line1Start.y - line1End.y) * (line1Start.x - line2Start.x)) / denominator;
+  // Calculate the intersection point
+  float t = ((line1Start.x - line2Start.x) * (line2Start.y - line2End.y) -
+              (line1Start.y - line2Start.y) * (line2Start.x - line2End.x)) / denominator;
+  float u = -((line1Start.x - line1End.x) * (line1Start.y - line2Start.y) -
+              (line1Start.y - line1End.y) * (line1Start.x - line2Start.x)) / denominator;
 
-    // Check if the intersection point is within the line segments, with a tolerance
-    bool line1Intersection = t >= -tolerance && t <= 1 + tolerance;
-    bool line2Intersection = u >= -tolerance && u <= 1 + tolerance;
+  // Check if the intersection point is within the line segments, with a tolerance
+  bool line1Intersection = t >= -tolerance && t <= 1 + tolerance;
+  bool line2Intersection = u >= -tolerance && u <= 1 + tolerance;
 
-	// If the intersection point is within both line segments, return the intersection point
-    if (line1Intersection && line2Intersection) 
-	{
-        float intersectionX = line1Start.x + t * (line1End.x - line1Start.x);
-        float intersectionY = line1Start.y + t * (line1End.y - line1Start.y);
-        // return (Vector2){intersectionX, intersectionY};
-    }
+  // If the intersection point is within both line segments, return the intersection point
+  if (line1Intersection && line2Intersection) 
+  {
+      float intersectionX = line1Start.x + t * (line1End.x - line1Start.x);
+      float intersectionY = line1Start.y + t * (line1End.y - line1Start.y);
+      // return (Vector2){intersectionX, intersectionY};
+  }
 
-	
-    // Return a special "no intersection" value
-    // return (Vector2){NAN, NAN};
 
-	// do i want to return the line?
+  // Return a special "no intersection" value
+  // return (Vector2){NAN, NAN};
 
-    // If the intersection point is within both line segments, return true
-    return line1Intersection && line2Intersection;
+  // do i want to return the line?
+
+  // If the intersection point is within both line segments, return true
+  return line1Intersection && line2Intersection;
 }
 
 

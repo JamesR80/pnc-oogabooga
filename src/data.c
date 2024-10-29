@@ -361,6 +361,7 @@ typedef struct Entity // MegaStruct approach? Or Character, Room, Object, Backgr
 	s32 nextDialogID;
 	s32 dialogFlag;
 	s32 lastLineID;
+	ItemID useableItemID;
 } Entity;
 
 #define MAX_ENTITY_COUNT 256
@@ -543,6 +544,35 @@ Dialog* getDialog(s32 dialogID)
 		}
 	}
 	return 0;
+}
+
+void doItemAction(ItemID itemID, Entity* entity, Object* object) // or get action?
+{
+	switch (itemID)
+	{
+		case i_book:
+			if (entity != null)
+			{
+				// if (entity.type or entity.name etc) or entity.flags?
+			}
+			if (object != null)
+			{
+
+			}
+			break;
+		case i_ticket:
+			break;
+		case i_drink:
+			break;
+		case i_coupon:
+			break;
+		case i_headshot:
+			break;
+		case i_key:
+			break;
+		default:
+			break;
+	}
 }
 
 Entity* createEntity(EntityType type, SpriteID spriteID, ItemID itemID, Vector2 pos, string hoverText, bool clickable, u64 flags) // flags - clickable, active, render etc..

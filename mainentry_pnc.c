@@ -46,11 +46,11 @@ int entry(int argc, char **argv)
 	// disable windows cursor
 	ShowCursor(false);
 
-	// HANDLE hConsole = GetConsoleWindow();
-    // if (hConsole != NULL)
-    // {
-    //     ShowWindow(hConsole, SW_HIDE);
-    // }
+	HANDLE hConsole = GetConsoleWindow();
+    if (hConsole != NULL)
+    {
+        ShowWindow(hConsole, SW_HIDE);
+    }
 
 	os_update();
 

@@ -38,11 +38,14 @@ void itemClicked(Item* item, bool isLeftClick)
 		case true: 
 			item->justClicked = true;
 			log("item left click!");
-			// if () {} // check if item already on cursor?
-			item->inInventory = false;
-			popInventory(item);
-			item->onCursor = true;
-			world->itemOnCursor = item;
+			if (world->itemOnCursor == null) 
+			{
+				item->inInventory = false;
+				popInventory(item);
+				item->onCursor = true;
+				world->itemOnCursor = item;
+			} // check if item already on cursor
+			// else do item combine logic. Big old switch statement? 
 			break;
 
 		case false:
@@ -55,9 +58,38 @@ void itemClicked(Item* item, bool isLeftClick)
 				item->onCursor = false;
 				world->itemOnCursor = null;
 			}
+			else // normal right click on item
+			{
+				log("describe item");
+				// init dialogue screen.
+			}
 			break;
 	}
 }
+
+void itemUsedOnEntity(Item* item, Entity* entity)
+{
+	// if (entity->isInRangeToInteract)
+
+	if (getItem(entity->useableItemID) == item)
+	{
+		// update cursor - do this on hover!!!
+
+		// do action with item. How to find appropriate action?
+		doItemAction(entity->useableItemID, entity, null);
+		
+	}
+	else
+	{
+		// "that doesn't work here"
+	}
+}
+
+void itemUsedOnObject(Item* item, Object* object)
+{
+
+}
+
 
 void entityClicked(Entity* entity, Entity* player, bool isLeftClick) // entity clicked or just screen clicked?
 {

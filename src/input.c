@@ -25,7 +25,7 @@
  void handleInput(Entity* player, Entity* activeEntity, Item* activeItem, float64 deltaTime)
  {
 
-    if (is_key_just_released(KEY_ESCAPE)) window.should_close = true;
+    if (is_key_just_released(KEY_ESCAPE)) window.should_close = true; // go to menu
 
     if (is_key_just_released(KEY_TAB)) 
     {
@@ -58,12 +58,19 @@
             }
         }
         else if (world->uxStateID == ux_inventory) // normal game state - check if item on cursor first!!!
-        {
+        {      
             if (range2f_contains(world->gameBox, worldFrame.mousePosScreen))
             {
                 if (activeEntity && activeEntity->clickable) // check if in interact rad
                 {	
-                    entityClicked(activeEntity, player, true);
+                    if (world->itemOnCursor)
+                    {
+                        itemUsedOnEntity(world->itemOnCursor, activeEntity); // do item use on world obj or npc
+                    }
+                    else 
+                    {
+                        entityClicked(activeEntity, player, true);
+                    }
                     movePlayerToObject(player, activeEntity->interactPos, worldFrame);
                     log("Moving to Object: %s", activeEntity->hoverText);
                 }
@@ -73,7 +80,15 @@
                 }
                 if (worldFrame.activeObject != null)
                 {
-                    objectClicked(worldFrame.activeObject, player, true);
+                    if (world->itemOnCursor)
+                    {
+                        itemUsedOnObject(world->itemOnCursor, worldFrame.activeObject); // do item use on world obj or npc
+                    }
+                    else 
+                    {
+                        objectClicked(worldFrame.activeObject, player, true);
+                    }
+                    
                     movePlayerToObject(player, worldFrame.activeObject->interactPos, worldFrame);
                 }
             }
@@ -105,6 +120,8 @@
         if (world->itemOnCursor)
         {
             // do interact
+            itemClicked(world->itemOnCursor, false);
+            
             // check other click events...
         }
         // :examine
