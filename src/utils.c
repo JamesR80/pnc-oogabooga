@@ -27,37 +27,37 @@ float sinBob(float time, float rate)
 // }
 
 typedef struct Range1f {
-  float min;
-  float max;
+	float min;
+	float max;
 } Range1f;
 // ...
 
 typedef struct Range2f {
-  Vector2 min;
-  Vector2 max;
+	Vector2 min;
+	Vector2 max;
 } Range2f;
 
 inline Range2f range2f_make(Vector2 min, Vector2 max) { return (Range2f) { min, max }; }
 
 Range2f range2f_shift(Range2f r, Vector2 shift) {
-  r.min = v2_add(r.min, shift);
-  r.max = v2_add(r.max, shift);
-  return r;
+	r.min = v2_add(r.min, shift);
+	r.max = v2_add(r.max, shift);
+	return r;
 }
 
 Range2f range2f_make_bottom_center(Vector2 size) {
-  Range2f range = {0};
-  range.max = size;
-  range = range2f_shift(range, v2(size.x * -0.5, 0.0));
-  return range;
+	Range2f range = {0};
+	range.max = size;
+	range = range2f_shift(range, v2(size.x * -0.5, 0.0));
+	return range;
 }
 
 Vector2 range2f_size(Range2f range) {
-  Vector2 size = {0};
-  size = v2_sub(range.min, range.max);
-  size.x = fabsf(size.x);
-  size.y = fabsf(size.y);
-  return size;
+	Vector2 size = {0};
+	size = v2_sub(range.min, range.max);
+	size.x = fabsf(size.x);
+	size.y = fabsf(size.y);
+	return size;
 }
 
 bool range2f_contains(Range2f range, Vector2 v) {
@@ -87,15 +87,15 @@ Vector2 getMouseCurrentProj()
 
 inline float v2_dist(Vector2 a, Vector2 b)
 {
-    return v2_length(v2_sub(a, b));
+	return v2_length(v2_sub(a, b));
 }
 
 Range2f getHotSpot(Vector2 size, Vector2 origin)
 {
-  Range2f range = {0};
-  range.max = size;
-  range = range2f_shift(range, v2_mulf(origin, -1.0));
-  return range;
+	Range2f range = {0};
+	range.max = size;
+  	range = range2f_shift(range, v2_mulf(origin, -1.0));
+  	return range;
 }
 
 Vector2 getCenterRange2f(Range2f r)
@@ -141,16 +141,16 @@ bool doLinesIntersect(Vector2 line1Start, Vector2 line1End, Vector2 line2Start, 
 
   // Calculate the denominator of the intersection formula
   float denominator = (line1Start.x - line1End.x) * (line2Start.y - line2End.y) -
-                      (line1Start.y - line1End.y) * (line2Start.x - line2End.x);
+					  (line1Start.y - line1End.y) * (line2Start.x - line2End.x);
 
   // If the denominator is close to zero, the lines are parallel and do not intersect
   if (fabsf(denominator) < epsilon) return false; // // return (Vector2){NAN, NAN};
 
   // Calculate the intersection point
   float t = ((line1Start.x - line2Start.x) * (line2Start.y - line2End.y) -
-              (line1Start.y - line2Start.y) * (line2Start.x - line2End.x)) / denominator;
+			  (line1Start.y - line2Start.y) * (line2Start.x - line2End.x)) / denominator;
   float u = -((line1Start.x - line1End.x) * (line1Start.y - line2Start.y) -
-              (line1Start.y - line1End.y) * (line1Start.x - line2Start.x)) / denominator;
+			  (line1Start.y - line1End.y) * (line1Start.x - line2Start.x)) / denominator;
 
   // Check if the intersection point is within the line segments, with a tolerance
   bool line1Intersection = t >= -tolerance && t <= 1 + tolerance;
@@ -159,9 +159,9 @@ bool doLinesIntersect(Vector2 line1Start, Vector2 line1End, Vector2 line2Start, 
   // If the intersection point is within both line segments, return the intersection point
   if (line1Intersection && line2Intersection) 
   {
-      float intersectionX = line1Start.x + t * (line1End.x - line1Start.x);
-      float intersectionY = line1Start.y + t * (line1End.y - line1Start.y);
-      // return (Vector2){intersectionX, intersectionY};
+	  float intersectionX = line1Start.x + t * (line1End.x - line1Start.x);
+	  float intersectionY = line1Start.y + t * (line1End.y - line1Start.y);
+	  // return (Vector2){intersectionX, intersectionY};
   }
 
 
